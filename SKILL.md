@@ -1,6 +1,6 @@
 ---
 name: rpg-tools
-description: Solo RPG mechanical tools for dice rolling, tarot draws, name generation, and story/folklore retrieval. Use when the user asks to roll dice, draw tarot cards, generate character names, or pull from story collections during RPG sessions.
+description: Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory management, and story retrieval. Use when the user asks to roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories, or pull from story collections during RPG sessions.
 ---
 
 # RPG Tools
@@ -92,6 +92,38 @@ python scripts/locations.py connections NAME             # Show all connections
 ```
 
 Filter options: `--tag`, `--parent`, `--type`
+
+## Memories
+
+Campaign memory tracking with cross-references. **Requires memory JSON files** in `memories/` directory relative to script parent.
+
+```bash
+python scripts/memories.py list --campaign NAME                    # List all memories
+python scripts/memories.py list --short --campaign NAME            # List with details (no text)
+python scripts/memories.py list --character NAME                   # Filter by character
+python scripts/memories.py list --type vivid-moment                # Filter by type
+python scripts/memories.py get ID                                  # Get specific memory
+python scripts/memories.py random --campaign NAME                  # Random memory
+python scripts/memories.py search "query" --campaign NAME          # Full-text search
+python scripts/memories.py character NAME                          # All memories with character
+python scripts/memories.py location NAME                           # All memories at location
+```
+
+Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
+
+## Oracle
+
+Multi-system oracle for injecting randomness and stimulating interpretation.
+
+```bash
+python scripts/oracle.py axis              # Multi-axis reading (tone/direction/element/action/twist)
+python scripts/oracle.py omni              # Full reading: axis + tarot + rune + I Ching + fate + prompt
+python scripts/oracle.py tarot [n]         # Draw tarot card(s)
+python scripts/oracle.py rune [n]          # Draw Elder Futhark rune(s)
+python scripts/oracle.py iching            # Cast I Ching hexagram
+python scripts/oracle.py fate [likelihood] # Yes/no oracle (impossible/unlikely/even/likely/certain)
+python scripts/oracle.py prompt            # Action + Theme word pair
+```
 
 ---
 
