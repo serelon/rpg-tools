@@ -3,113 +3,25 @@
 
 import json
 import random
-import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+
+from lib import parse_era, parse_session, discover_data, find_item
 
 
 # Memory storage
 memories: Dict[str, Dict] = {}
 
 
-def parse_era(era_str: str) -> int:
-    """Parse era string to sortable integer (negative for BCE)."""
-    if not era_str:
-        return 0
-
-    era = era_str.strip().lstrip('~').strip()
-    match = re.match(r'(\d+)\s*(BCE|BC|CE|AD)?', era, re.IGNORECASE)
-    if not match:
-        return 0
-
-    year = int(match.group(1))
-    suffix = (match.group(2) or 'CE').upper()
-
-    if suffix in ('BCE', 'BC'):
-        return -year
-    return year
-
-
-def parse_session(session_str: str) -> int:
-    """Parse session string to integer.
-
-    Handles formats: s01, session-01, 01, Session 1, etc.
-    """
-    if not session_str:
-        return 0
-
-    # Extract first sequence of digits
-    match = re.search(r'(\d+)', session_str)
-    if match:
-        return int(match.group(1))
-    return 0
-
-
 def discover_memories(search_root: Path) -> None:
     """Discover memory files from memories/ folder."""
     global memories
-
-    memory_paths = []
-
-    # Look in campaigns/*/memories/
-    campaigns_dir = search_root / "campaigns"
-    if campaigns_dir.exists():
-        for campaign_dir in campaigns_dir.iterdir():
-            if campaign_dir.is_dir():
-                memories_dir = campaign_dir / "memories"
-                if memories_dir.exists():
-                    memory_paths.extend(memories_dir.glob("*.json"))
-
-    # Look in root memories/ (for bundled usage)
-    root_memories = search_root / "memories"
-    if root_memories.exists():
-        memory_paths.extend(root_memories.glob("*.json"))
-
-    # Look in user uploads
-    uploads_memories = Path("/mnt/user-data/uploads/memories")
-    if uploads_memories.exists():
-        memory_paths.extend(uploads_memories.glob("*.json"))
-
-    uploads_root = Path("/mnt/user-data/uploads")
-    if uploads_root.exists():
-        memory_paths.extend(uploads_root.glob("*-memories.json"))
-
-    # Look in /home/claude/*/memories/ (extracted bundles)
-    home_claude = Path("/home/claude")
-    if home_claude.exists():
-        for subdir in home_claude.iterdir():
-            if subdir.is_dir():
-                memories_dir = subdir / "memories"
-                if memories_dir.exists():
-                    memory_paths.extend(memories_dir.glob("*.json"))
-
-    # Also check parent directories
-    if not memory_paths:
-        for parent in [search_root.parent, search_root.parent.parent]:
-            memories_dir = parent / "memories"
-            if memories_dir.exists():
-                memory_paths.extend(memories_dir.glob("*.json"))
-                break
-
-    # Load all discovered memories
-    for path in memory_paths:
-        try:
-            with open(path, encoding='utf-8') as f:
-                data = json.load(f)
-                # Handle both single memory and array of memories
-                if isinstance(data, list):
-                    for mem in data:
-                        mem_id = mem.get("id", f"{path.stem}-{len(memories)}")
-                        memories[mem_id] = mem
-                else:
-                    mem_id = data.get("id", path.stem)
-                    memories[mem_id] = data
-        except Exception as e:
-            print(f"Warning: Could not load memory file {path}: {e}", file=sys.stderr)
-
-    if not memories:
-        print("Warning: No memory files found in memories/", file=sys.stderr)
+    memories = discover_data(
+        "memories",
+        search_root,
+        loose_pattern="*-memories.json"
+    )
 
 
 def validate_connections() -> None:
@@ -363,20 +275,7 @@ def cmd_list(
 
 def cmd_get(mem_id: str) -> None:
     """Get a specific memory."""
-    mem_id_lower = mem_id.lower()
-
-    mem = None
-    for m in memories.values():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            break
-
-    if not mem:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        print(f"Available: {', '.join(list(memories.keys())[:10])}...", file=sys.stderr)
-        sys.exit(1)
-
+    mem = find_item(memories, mem_id, "Memory")
     print(format_memory(mem))
 
 
@@ -477,19 +376,7 @@ def cmd_search(query: str, campaign: Optional[str] = None) -> None:
 
 def cmd_connections(mem_id: str) -> None:
     """Show all connections for a memory."""
-    mem_id_lower = mem_id.lower()
-
-    mem = None
-    for m in memories.values():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            break
-
-    if not mem:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    mem = find_item(memories, mem_id, "Memory")
     title = mem.get("title", mem.get("id", "Untitled"))
     print(f"# Connections for: {title}\n")
 
@@ -538,21 +425,8 @@ def cmd_chain(mem_id: str, visited: Optional[Set[str]] = None) -> None:
     if visited is None:
         visited = set()
 
-    mem_id_lower = mem_id.lower()
-
-    # Find memory
-    mem = None
-    actual_id = None
-    for mid, m in memories.items():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            actual_id = mid
-            break
-
-    if not mem or not actual_id:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        sys.exit(1)
+    mem = find_item(memories, mem_id, "Memory")
+    actual_id = mem.get("id", mem_id)
 
     if actual_id in visited:
         return  # Prevent cycles

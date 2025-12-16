@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Name generation tool for solo RPG games. Uses namesets only."""
 
-import json
 import random
 import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+
+from lib import discover_data
 
 
 # Custom namesets storage
@@ -17,55 +18,17 @@ def discover_namesets(repo_root: Path):
     """Discover namesets from campaign folders, tools/data, root namesets/, and user uploads."""
     global custom_namesets
 
-    nameset_paths = []
+    def on_warning(msg: str) -> None:
+        # Suppress the standard "not found" warning, we have custom messaging
+        if "No namesets files found" not in msg:
+            print(msg, file=sys.stderr)
 
-    # Look in campaigns/*/namesets/
-    campaigns_dir = repo_root / "campaigns"
-    if campaigns_dir.exists():
-        for campaign_dir in campaigns_dir.iterdir():
-            if campaign_dir.is_dir():
-                namesets_dir = campaign_dir / "namesets"
-                if namesets_dir.exists():
-                    nameset_paths.extend(namesets_dir.glob("*.json"))
-
-    # Look in tools/data/namesets/
-    tools_namesets = repo_root / "tools" / "data" / "namesets"
-    if tools_namesets.exists():
-        nameset_paths.extend(tools_namesets.glob("*.json"))
-
-    # Look in root namesets/ (for bundled usage)
-    root_namesets = repo_root / "namesets"
-    if root_namesets.exists():
-        nameset_paths.extend(root_namesets.glob("*.json"))
-
-    # Look in user uploads (Claude.ai environment)
-    uploads_namesets = Path("/mnt/user-data/uploads/namesets")
-    if uploads_namesets.exists():
-        nameset_paths.extend(uploads_namesets.glob("*.json"))
-
-    # Also check for loose JSON files in uploads root
-    uploads_root = Path("/mnt/user-data/uploads")
-    if uploads_root.exists():
-        nameset_paths.extend(uploads_root.glob("*-names.json"))
-
-    # Look in /home/claude/*/namesets/ (extracted bundles)
-    home_claude = Path("/home/claude")
-    if home_claude.exists():
-        for subdir in home_claude.iterdir():
-            if subdir.is_dir():
-                namesets_dir = subdir / "namesets"
-                if namesets_dir.exists():
-                    nameset_paths.extend(namesets_dir.glob("*.json"))
-
-    # Load all discovered namesets
-    for path in nameset_paths:
-        try:
-            with open(path, encoding='utf-8') as f:
-                nameset = json.load(f)
-                nameset_id = nameset.get("id", path.stem)
-                custom_namesets[nameset_id] = nameset
-        except Exception as e:
-            print(f"Warning: Could not load nameset {path}: {e}", file=sys.stderr)
+    custom_namesets = discover_data(
+        "namesets",
+        repo_root,
+        loose_pattern="*-names.json",
+        on_warning=on_warning
+    )
 
     if not custom_namesets:
         print("Warning: No namesets found", file=sys.stderr)
