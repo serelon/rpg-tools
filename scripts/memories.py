@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from lib import parse_era, parse_session, discover_data
+from lib import parse_era, parse_session, discover_data, find_item
 
 
 # Memory storage
@@ -275,20 +275,7 @@ def cmd_list(
 
 def cmd_get(mem_id: str) -> None:
     """Get a specific memory."""
-    mem_id_lower = mem_id.lower()
-
-    mem = None
-    for m in memories.values():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            break
-
-    if not mem:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        print(f"Available: {', '.join(list(memories.keys())[:10])}...", file=sys.stderr)
-        sys.exit(1)
-
+    mem = find_item(memories, mem_id, "Memory")
     print(format_memory(mem))
 
 
@@ -389,19 +376,7 @@ def cmd_search(query: str, campaign: Optional[str] = None) -> None:
 
 def cmd_connections(mem_id: str) -> None:
     """Show all connections for a memory."""
-    mem_id_lower = mem_id.lower()
-
-    mem = None
-    for m in memories.values():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            break
-
-    if not mem:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    mem = find_item(memories, mem_id, "Memory")
     title = mem.get("title", mem.get("id", "Untitled"))
     print(f"# Connections for: {title}\n")
 
@@ -450,21 +425,8 @@ def cmd_chain(mem_id: str, visited: Optional[Set[str]] = None) -> None:
     if visited is None:
         visited = set()
 
-    mem_id_lower = mem_id.lower()
-
-    # Find memory
-    mem = None
-    actual_id = None
-    for mid, m in memories.items():
-        if (m.get("id", "").lower() == mem_id_lower or
-            m.get("title", "").lower() == mem_id_lower):
-            mem = m
-            actual_id = mid
-            break
-
-    if not mem or not actual_id:
-        print(f"Error: Memory '{mem_id}' not found", file=sys.stderr)
-        sys.exit(1)
+    mem = find_item(memories, mem_id, "Memory")
+    actual_id = mem.get("id", mem_id)
 
     if actual_id in visited:
         return  # Prevent cycles

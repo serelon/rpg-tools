@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from lib import parse_era, discover_data
+from lib import parse_era, discover_data, find_item
 
 
 # Story collections storage
@@ -228,6 +228,16 @@ def cmd_random(
     print(story.get("text", ""))
 
 
+def find_story(stories: List, story_id: str) -> Optional[Dict]:
+    """Find a story by ID or title in a list of stories."""
+    story_id_lower = story_id.lower()
+    for story in stories:
+        if (story.get("id", "").lower() == story_id_lower or
+            story.get("title", "").lower() == story_id_lower):
+            return story
+    return None
+
+
 def cmd_get(campaign: str, story_id: str) -> None:
     """Get a specific story by ID or title."""
     coll = get_collection(campaign)
@@ -235,16 +245,13 @@ def cmd_get(campaign: str, story_id: str) -> None:
         print(f"Error: No story collection found for campaign '{campaign}'", file=sys.stderr)
         sys.exit(1)
 
-    story_id_lower = story_id.lower()
-    for story in coll.get("stories", []):
-        if (story.get("id", "").lower() == story_id_lower or
-            story.get("title", "").lower() == story_id_lower):
-            print(f"# {story.get('title', 'Untitled')}\n")
-            print(story.get("text", ""))
-            return
+    story = find_story(coll.get("stories", []), story_id)
+    if not story:
+        print(f"Error: Story '{story_id}' not found", file=sys.stderr)
+        sys.exit(1)
 
-    print(f"Error: Story '{story_id}' not found", file=sys.stderr)
-    sys.exit(1)
+    print(f"# {story.get('title', 'Untitled')}\n")
+    print(story.get("text", ""))
 
 
 def cmd_show(campaign: str, story_id: str) -> None:
@@ -254,27 +261,24 @@ def cmd_show(campaign: str, story_id: str) -> None:
         print(f"Error: No story collection found for campaign '{campaign}'", file=sys.stderr)
         sys.exit(1)
 
-    story_id_lower = story_id.lower()
-    for story in coll.get("stories", []):
-        if (story.get("id", "").lower() == story_id_lower or
-            story.get("title", "").lower() == story_id_lower):
-            print(f"# {story.get('title', 'Untitled')}")
-            print(f"\n**ID:** {story.get('id', 'N/A')}")
-            print(f"**Era:** {story.get('era', 'Unknown')}")
-            print(f"**Collection:** {story.get('collection', 'N/A')}")
-            print(f"**Source:** {story.get('source', 'Unknown')}")
-            print(f"**Themes:** {', '.join(story.get('themes', []))}")
-            print(f"**Mood:** {story.get('mood', 'N/A')}")
-            if story.get("characters"):
-                print(f"**Characters:** {', '.join(story.get('characters', []))}")
-            if story.get("related"):
-                print(f"**Related:** {', '.join(story.get('related', []))}")
-            print(f"\n---\n")
-            print(story.get("text", ""))
-            return
+    story = find_story(coll.get("stories", []), story_id)
+    if not story:
+        print(f"Error: Story '{story_id}' not found", file=sys.stderr)
+        sys.exit(1)
 
-    print(f"Error: Story '{story_id}' not found", file=sys.stderr)
-    sys.exit(1)
+    print(f"# {story.get('title', 'Untitled')}")
+    print(f"\n**ID:** {story.get('id', 'N/A')}")
+    print(f"**Era:** {story.get('era', 'Unknown')}")
+    print(f"**Collection:** {story.get('collection', 'N/A')}")
+    print(f"**Source:** {story.get('source', 'Unknown')}")
+    print(f"**Themes:** {', '.join(story.get('themes', []))}")
+    print(f"**Mood:** {story.get('mood', 'N/A')}")
+    if story.get("characters"):
+        print(f"**Characters:** {', '.join(story.get('characters', []))}")
+    if story.get("related"):
+        print(f"**Related:** {', '.join(story.get('related', []))}")
+    print(f"\n---\n")
+    print(story.get("text", ""))
 
 
 def main():
