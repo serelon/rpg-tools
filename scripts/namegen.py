@@ -454,9 +454,15 @@ def list_groups(nameset_id: str):
 
 
 def main():
-    # Find repo root (look for .git or assume parent of tools/)
+    # Find repo root - handle being in a submodule (rpg-tools/scripts/)
     script_dir = Path(__file__).parent
-    repo_root = script_dir.parent
+    repo_root = script_dir.parent  # This is rpg-tools/
+
+    # If we're in a submodule, go up to the parent repo
+    # Check if parent has campaigns/ directory (indicates main repo)
+    parent_repo = repo_root.parent
+    if (parent_repo / "campaigns").exists():
+        repo_root = parent_repo
 
     # Load namesets
     discover_namesets(repo_root)
