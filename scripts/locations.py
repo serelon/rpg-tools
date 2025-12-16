@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Location tool for solo RPG games. Provides hierarchical/graph location data loading."""
 
-import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+
+from lib import discover_data, find_item
 
 
 # Location storage
@@ -15,40 +16,7 @@ locations: Dict[str, Dict] = {}
 def discover_locations(search_root: Path) -> None:
     """Discover location files from locations/ folder."""
     global locations
-
-    loc_paths = []
-
-    # Look in locations/ relative to search root
-    locs_dir = search_root / "locations"
-    if locs_dir.exists():
-        loc_paths.extend(locs_dir.glob("*.json"))
-
-    # Also check parent directories
-    if not loc_paths:
-        for parent in [search_root.parent, search_root.parent.parent]:
-            locs_dir = parent / "locations"
-            if locs_dir.exists():
-                loc_paths.extend(locs_dir.glob("*.json"))
-                break
-
-    # Load all discovered locations
-    for path in loc_paths:
-        try:
-            with open(path, encoding='utf-8') as f:
-                data = json.load(f)
-                # Handle both single location and array of locations
-                if isinstance(data, list):
-                    for loc in data:
-                        loc_id = loc.get("id", path.stem)
-                        locations[loc_id] = loc
-                else:
-                    loc_id = data.get("id", path.stem)
-                    locations[loc_id] = data
-        except Exception as e:
-            print(f"Warning: Could not load location {path}: {e}", file=sys.stderr)
-
-    if not locations:
-        print("Warning: No location files found in locations/", file=sys.stderr)
+    locations = discover_data("locations", search_root)
 
 
 def get_all_parents(loc: Dict) -> List[str]:
@@ -324,19 +292,7 @@ def cmd_get(
     section: Optional[str] = None
 ) -> None:
     """Get a location's profile."""
-    loc_lower = loc_name.lower()
-
-    loc = None
-    for l in locations.values():
-        if (l.get("id", "").lower() == loc_lower or
-            l.get("name", "").lower() == loc_lower):
-            loc = l
-            break
-
-    if not loc:
-        print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-        print(f"Available: {', '.join(locations.keys())}", file=sys.stderr)
-        sys.exit(1)
+    loc = find_item(locations, loc_name, "Location")
 
     if section:
         print(format_section(loc, section))
@@ -349,17 +305,8 @@ def cmd_get(
 def cmd_tree(loc_name: Optional[str] = None) -> None:
     """Show location hierarchy."""
     if loc_name:
-        loc_lower = loc_name.lower()
-        loc_id = None
-        for l in locations.values():
-            if (l.get("id", "").lower() == loc_lower or
-                l.get("name", "").lower() == loc_lower):
-                loc_id = l.get("id")
-                break
-        if not loc_id:
-            print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-            sys.exit(1)
-        lines = build_tree(loc_id)
+        loc = find_item(locations, loc_name, "Location")
+        lines = build_tree(loc.get("id"))
     else:
         lines = build_tree()
 
@@ -371,40 +318,15 @@ def cmd_tree(loc_name: Optional[str] = None) -> None:
 
 def cmd_path(loc_name: str) -> None:
     """Show path from root to location."""
-    loc_lower = loc_name.lower()
-
-    loc_id = None
-    for l in locations.values():
-        if (l.get("id", "").lower() == loc_lower or
-            l.get("name", "").lower() == loc_lower):
-            loc_id = l.get("id")
-            break
-
-    if not loc_id:
-        print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-        sys.exit(1)
-
-    path = get_path_to_root(loc_id)
+    loc = find_item(locations, loc_name, "Location")
+    path = get_path_to_root(loc.get("id"))
     print(" > ".join(path))
 
 
 def cmd_connections(loc_name: str) -> None:
     """Show all connections for a location."""
-    loc_lower = loc_name.lower()
-
-    loc = None
-    loc_id = None
-    for l in locations.values():
-        if (l.get("id", "").lower() == loc_lower or
-            l.get("name", "").lower() == loc_lower):
-            loc = l
-            loc_id = l.get("id")
-            break
-
-    if not loc:
-        print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    loc = find_item(locations, loc_name, "Location")
+    loc_id = loc.get("id")
     name = loc.get("name", loc_id)
     connections = get_connections(loc_id)
 
@@ -439,19 +361,7 @@ def cmd_connections(loc_name: str) -> None:
 
 def cmd_sections(loc_name: str) -> None:
     """List available sections for a location."""
-    loc_lower = loc_name.lower()
-
-    loc = None
-    for l in locations.values():
-        if (l.get("id", "").lower() == loc_lower or
-            l.get("name", "").lower() == loc_lower):
-            loc = l
-            break
-
-    if not loc:
-        print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    loc = find_item(locations, loc_name, "Location")
     name = loc.get("name", loc.get("id", "Unknown"))
     sections = loc.get("sections", {})
 
@@ -467,17 +377,7 @@ def cmd_sections(loc_name: str) -> None:
 def cmd_memories(loc_name: str) -> None:
     """Show all memories at this location."""
     # Find location to validate name exists
-    loc_lower = loc_name.lower()
-    loc = None
-    for l in locations.values():
-        if (l.get("id", "").lower() == loc_lower or
-            l.get("name", "").lower() == loc_lower):
-            loc = l
-            break
-
-    if not loc:
-        print(f"Error: Location '{loc_name}' not found", file=sys.stderr)
-        sys.exit(1)
+    find_item(locations, loc_name, "Location")
 
     # Call memories.py to show memories for this location
     script_dir = Path(__file__).parent

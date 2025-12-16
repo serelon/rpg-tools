@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+from lib import discover_data, find_item
+
 
 # Character storage
 characters: Dict[str, Dict] = {}
@@ -15,35 +17,7 @@ characters: Dict[str, Dict] = {}
 def discover_characters(search_root: Path) -> None:
     """Discover character files from characters/ folder."""
     global characters
-
-    char_paths = []
-
-    # Look in characters/ relative to search root
-    chars_dir = search_root / "characters"
-    if chars_dir.exists():
-        char_paths.extend(chars_dir.glob("*.json"))
-
-    # Also check if we're in a campaign folder with characters/
-    if not char_paths:
-        # Try parent directories
-        for parent in [search_root.parent, search_root.parent.parent]:
-            chars_dir = parent / "characters"
-            if chars_dir.exists():
-                char_paths.extend(chars_dir.glob("*.json"))
-                break
-
-    # Load all discovered characters
-    for path in char_paths:
-        try:
-            with open(path, encoding='utf-8') as f:
-                char = json.load(f)
-                char_id = char.get("id", path.stem)
-                characters[char_id] = char
-        except Exception as e:
-            print(f"Warning: Could not load character {path}: {e}", file=sys.stderr)
-
-    if not characters:
-        print("Warning: No character files found in characters/", file=sys.stderr)
+    characters = discover_data("characters", search_root)
 
 
 def filter_characters(
@@ -213,20 +187,7 @@ def cmd_get(
     section: Optional[str] = None
 ) -> None:
     """Get a character's profile at specified depth."""
-    char_lower = char_name.lower()
-
-    # Find character by id or name
-    char = None
-    for c in characters.values():
-        if (c.get("id", "").lower() == char_lower or
-            c.get("name", "").lower() == char_lower):
-            char = c
-            break
-
-    if not char:
-        print(f"Error: Character '{char_name}' not found", file=sys.stderr)
-        print(f"Available: {', '.join(characters.keys())}", file=sys.stderr)
-        sys.exit(1)
+    char = find_item(characters, char_name, "Character")
 
     if section:
         print(format_section(char, section))
@@ -238,19 +199,7 @@ def cmd_get(
 
 def cmd_sections(char_name: str) -> None:
     """List available sections for a character."""
-    char_lower = char_name.lower()
-
-    char = None
-    for c in characters.values():
-        if (c.get("id", "").lower() == char_lower or
-            c.get("name", "").lower() == char_lower):
-            char = c
-            break
-
-    if not char:
-        print(f"Error: Character '{char_name}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    char = find_item(characters, char_name, "Character")
     name = char.get("name", char.get("id", "Unknown"))
     sections = char.get("sections", {})
 
@@ -265,36 +214,14 @@ def cmd_sections(char_name: str) -> None:
 
 def cmd_show(char_name: str) -> None:
     """Show raw JSON for a character (debugging)."""
-    char_lower = char_name.lower()
-
-    char = None
-    for c in characters.values():
-        if (c.get("id", "").lower() == char_lower or
-            c.get("name", "").lower() == char_lower):
-            char = c
-            break
-
-    if not char:
-        print(f"Error: Character '{char_name}' not found", file=sys.stderr)
-        sys.exit(1)
-
+    char = find_item(characters, char_name, "Character")
     print(json.dumps(char, indent=2))
 
 
 def cmd_memories(char_name: str) -> None:
     """Show all memories involving this character."""
     # Find character to validate name exists
-    char_lower = char_name.lower()
-    char = None
-    for c in characters.values():
-        if (c.get("id", "").lower() == char_lower or
-            c.get("name", "").lower() == char_lower):
-            char = c
-            break
-
-    if not char:
-        print(f"Error: Character '{char_name}' not found", file=sys.stderr)
-        sys.exit(1)
+    find_item(characters, char_name, "Character")
 
     # Call memories.py to show memories for this character
     script_dir = Path(__file__).parent

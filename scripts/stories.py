@@ -1,87 +1,26 @@
 #!/usr/bin/env python3
 """Story collection tool for solo RPG games. Manages character story collections."""
 
-import json
 import random
-import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
+
+from lib import parse_era, discover_data
 
 
 # Story collections storage
 story_collections: Dict[str, Dict] = {}
 
 
-def parse_era(era_str: str) -> int:
-    """Parse era string to sortable integer (negative for BCE)."""
-    # Strip approximate markers
-    era = era_str.strip().lstrip('~').strip()
-
-    # Match patterns like "15000 BCE", "500 CE", "3000 BC"
-    match = re.match(r'(\d+)\s*(BCE|BC|CE|AD)?', era, re.IGNORECASE)
-    if not match:
-        return 0  # Unknown era sorts to middle
-
-    year = int(match.group(1))
-    suffix = (match.group(2) or 'CE').upper()
-
-    if suffix in ('BCE', 'BC'):
-        return -year
-    return year
-
-
 def discover_stories(repo_root: Path) -> None:
     """Discover story collections from campaign folders and user uploads."""
     global story_collections
-
-    story_paths = []
-
-    # Look in campaigns/*/stories/
-    campaigns_dir = repo_root / "campaigns"
-    if campaigns_dir.exists():
-        for campaign_dir in campaigns_dir.iterdir():
-            if campaign_dir.is_dir():
-                stories_dir = campaign_dir / "stories"
-                if stories_dir.exists():
-                    story_paths.extend(stories_dir.glob("*.json"))
-
-    # Look in root stories/ (for bundled usage)
-    root_stories = repo_root / "stories"
-    if root_stories.exists():
-        story_paths.extend(root_stories.glob("*.json"))
-
-    # Look in user uploads (Claude.ai environment)
-    uploads_stories = Path("/mnt/user-data/uploads/stories")
-    if uploads_stories.exists():
-        story_paths.extend(uploads_stories.glob("*.json"))
-
-    # Also check for loose JSON files in uploads root matching story patterns
-    uploads_root = Path("/mnt/user-data/uploads")
-    if uploads_root.exists():
-        story_paths.extend(uploads_root.glob("*-stories.json"))
-
-    # Look in /home/claude/*/stories/ (extracted bundles)
-    home_claude = Path("/home/claude")
-    if home_claude.exists():
-        for subdir in home_claude.iterdir():
-            if subdir.is_dir():
-                stories_dir = subdir / "stories"
-                if stories_dir.exists():
-                    story_paths.extend(stories_dir.glob("*.json"))
-
-    # Load all discovered collections
-    for path in story_paths:
-        try:
-            with open(path, encoding='utf-8') as f:
-                collection = json.load(f)
-                collection_id = collection.get("id", path.stem)
-                story_collections[collection_id] = collection
-        except Exception as e:
-            print(f"Warning: Could not load story collection {path}: {e}", file=sys.stderr)
-
-    if not story_collections:
-        print("Warning: No story collections found", file=sys.stderr)
+    story_collections = discover_data(
+        "stories",
+        repo_root,
+        loose_pattern="*-stories.json"
+    )
 
 
 def get_collection(campaign: str) -> Optional[Dict]:
