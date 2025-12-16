@@ -60,8 +60,8 @@ Optional behavior modifiers in `modifiers/` can be loaded during sessions:
 
 ## Git Branching
 
-- **main** - Stable branch. Skill packages are built from here.
-- **develop** - Integration branch. Features merge here first.
+- **develop** - Default branch. Active development happens here.
+- **stable** - Release branch. Skill packages are built from here.
 - **feature/*** - Short-lived feature branches off `develop`, merged back when complete.
 
-Flow: `feature/xyz` → `develop` → `main`
+Flow: `feature/xyz` → `develop` → `stable`
