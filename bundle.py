@@ -17,10 +17,11 @@ INCLUDE_FILES = [
     'scripts/oracle.py',
 ]
 
-# Directories to include (all .md files)
+# Directories to include
 INCLUDE_DIRS = [
     ('guides', '*.md'),
     ('modifiers', '*.md'),
+    ('scripts/lib', '*.py'),
 ]
 
 

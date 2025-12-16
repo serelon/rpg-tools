@@ -26,12 +26,20 @@ All tools are standalone Python scripts in `scripts/`. No dependencies beyond Py
 
 For Claude Desktop deployment:
 ```bash
-./build-skill.sh              # Creates rpg-tools.skill
+python bundle.py              # Creates rpg-tools.skill (cross-platform)
+./build-skill.sh              # Alternative (requires bash + zip)
 ```
 
 ## Architecture
 
-**Standalone scripts** - Each tool is self-contained with no shared code between scripts. Tools discover campaign data by looking for JSON files in directories relative to the current working directory or script parent:
+**Shared library** - Campaign tools share common code in `scripts/lib/`:
+- `discovery.py` - Multi-path data file discovery
+- `lookup.py` - Item search by ID/name with fuzzy matching
+- `parsers.py` - Era and session string parsing
+
+**Instant tools** (dice, tarot, oracle) remain fully standalone with no imports.
+
+**Data discovery** - Tools find JSON files in directories relative to the current working directory or script parent:
 - `characters/` - Character profile JSON files
 - `locations/` - Location profile JSON files
 - `memories/` - Memory record JSON files
