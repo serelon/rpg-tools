@@ -6,22 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Portable RPG tools for solo RPG sessions with Claude. Provides dice rolling, tarot draws, oracles, name generation, and campaign data management (characters, locations, memories, stories).
 
-## Running Tools
+## Tools
 
-All tools are standalone Python scripts in `scripts/`. Run directly:
+All tools are standalone Python scripts in `scripts/`. No dependencies beyond Python standard library. No build step, no tests, no linting.
 
-```bash
-python scripts/dice.py "2d6+5"
-python scripts/tarot.py 3
-python scripts/oracle.py axis
-python scripts/namegen.py list
-python scripts/characters.py list
-python scripts/locations.py tree
-python scripts/memories.py list --campaign NAME
-python scripts/stories.py meta --campaign NAME
-```
+**Instant Tools** (work immediately, no data files):
+- `dice.py` - Roll20-compatible dice notation
+- `tarot.py` - Tarot card draws
+- `oracle.py` - Multi-system oracle (axis, runes, I Ching, fate, prompts)
 
-No dependencies beyond Python standard library. No build step, no tests, no linting.
+**Campaign Tools** (require JSON data files):
+- `namegen.py` - Name generation (needs `namesets/`)
+- `characters.py` - Character profiles (needs `characters/`)
+- `locations.py` - Location profiles (needs `locations/`)
+- `stories.py` - Story collections (needs `stories/`)
+- `memories.py` - Memory tracking (needs `memories/`)
 
 ## Building the Skill Package
 
@@ -48,8 +47,10 @@ For Claude Desktop deployment:
 Campaign data is NOT included in this repo. Tools expect JSON files in the appropriate directories. See `guides/` for JSON schemas:
 - `guides/character-guide.md` - Character JSON structure
 - `guides/location-guide.md` - Location JSON with hierarchy/connections
+- `guides/memories-guide.md` - Memory JSON with cross-references
 - `guides/nameset-guide.md` - Nameset format with weighted categories
 - `guides/story-capture-guide.md` - Story collection structure
+- `guides/oracle-guide.md` - Oracle types and usage patterns
 
 ## Modifiers
 
