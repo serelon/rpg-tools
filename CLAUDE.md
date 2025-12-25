@@ -21,6 +21,8 @@ All tools are standalone Python scripts in `scripts/`. No dependencies beyond Py
 - `locations.py` - Location profiles (needs `locations/`)
 - `stories.py` - Story collections (needs `stories/`)
 - `memories.py` - Memory tracking (needs `memories/`)
+- `log.py` - Session logging with automatic changelog generation (needs `campaign/`)
+- `campaign.py` - Campaign state management and queries (needs `campaign/`)
 
 ## Building the Skill Package
 
@@ -36,6 +38,8 @@ python bundle.py              # Creates rpg-tools.skill (cross-platform)
 - `discovery.py` - Multi-path data file discovery
 - `lookup.py` - Item search by ID/name with fuzzy matching
 - `parsers.py` - Era and session string parsing
+- `changelog.py` - Automatic changelog generation from session logs
+- `calendars/` - Modular calendar system for date conversion
 
 **Instant tools** (dice, tarot, oracle) remain fully standalone with no imports.
 
@@ -45,6 +49,7 @@ python bundle.py              # Creates rpg-tools.skill (cross-platform)
 - `memories/` - Memory record JSON files
 - `stories/` - Story collection JSON files
 - `namesets/` - Name generation JSON files
+- `campaign/` - Campaign config, state, log, and changelog
 
 **Tiered data loading** - Character and location tools use progressive disclosure: minimal profiles load by default, with `--depth full` or `--section NAME` for additional detail. This minimizes context consumption during RPG sessions.
 
@@ -59,6 +64,7 @@ Campaign data is NOT included in this repo. Tools expect JSON files in the appro
 - `guides/nameset-guide.md` - Nameset format with weighted categories
 - `guides/story-capture-guide.md` - Story collection structure
 - `guides/oracle-guide.md` - Oracle types and usage patterns
+- `guides/campaign-state-guide.md` - Campaign state system and session logging
 
 ## Modifiers
 
