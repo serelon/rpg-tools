@@ -15,6 +15,8 @@ INCLUDE_FILES = [
     'scripts/locations.py',
     'scripts/memories.py',
     'scripts/oracle.py',
+    'scripts/log.py',
+    'scripts/campaign.py',
 ]
 
 # Directories to include
@@ -22,6 +24,7 @@ INCLUDE_DIRS = [
     ('guides', '*.md'),
     ('modifiers', '*.md'),
     ('scripts/lib', '*.py'),
+    ('scripts/lib/calendars', '*.py'),
 ]
 
 
