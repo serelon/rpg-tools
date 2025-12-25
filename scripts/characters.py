@@ -23,9 +23,11 @@ def discover_characters(search_root: Path) -> None:
 def filter_characters(
     faction: Optional[str] = None,
     subfaction: Optional[str] = None,
-    tag: Optional[str] = None
+    tag: Optional[str] = None,
+    location: Optional[str] = None,
+    branch: Optional[str] = None
 ) -> List[Dict]:
-    """Filter characters by faction, subfaction, or tag."""
+    """Filter characters by faction, subfaction, tag, location, or branch."""
     result = list(characters.values())
 
     if faction:
@@ -39,6 +41,35 @@ def filter_characters(
     if tag:
         tag_lower = tag.lower()
         result = [c for c in result if tag_lower in [t.lower() for t in c.get("tags", [])]]
+
+    if location:
+        # Check current location from campaign state
+        state_path = Path.cwd() / "campaign" / "state.json"
+        if state_path.exists():
+            try:
+                with open(state_path, encoding='utf-8') as f:
+                    state = json.load(f)
+                    char_states = state.get("characters", {})
+                    location_lower = location.lower()
+                    result = [c for c in result
+                             if char_states.get(c.get("id", ""), {}).get("location", "").lower() == location_lower]
+            except:
+                pass
+
+    if branch:
+        # Filter by branch protagonists from campaign config
+        config_path = Path.cwd() / "campaign" / "config.json"
+        if config_path.exists():
+            try:
+                with open(config_path, encoding='utf-8') as f:
+                    config = json.load(f)
+                    branches = config.get("branches", [])
+                    branch_data = next((b for b in branches if b["id"].lower() == branch.lower()), None)
+                    if branch_data:
+                        protagonists = [p.lower() for p in branch_data.get("protagonists", [])]
+                        result = [c for c in result if c.get("id", "").lower() in protagonists]
+            except:
+                pass
 
     return result
 
@@ -149,10 +180,12 @@ def cmd_list(
     faction: Optional[str] = None,
     subfaction: Optional[str] = None,
     tag: Optional[str] = None,
+    location: Optional[str] = None,
+    branch: Optional[str] = None,
     short: bool = False
 ) -> None:
     """List characters (names only by default, or short profiles with --short)."""
-    filtered = filter_characters(faction, subfaction, tag)
+    filtered = filter_characters(faction, subfaction, tag, location, branch)
 
     if not filtered:
         print("No characters found matching criteria")
@@ -337,6 +370,8 @@ def main():
         print("  --faction NAME                 Filter by faction")
         print("  --subfaction NAME              Filter by subfaction")
         print("  --tag NAME                     Filter by tag")
+        print("  --location NAME                Filter by current location (from campaign state)")
+        print("  --branch NAME                  Filter by branch protagonists (from campaign config)")
         print("\nUpdate options:")
         print("  --section FIELD                Field to update (dot notation supported)")
         print("  --value VALUE                  New value")
@@ -351,6 +386,8 @@ def main():
     faction = None
     subfaction = None
     tag = None
+    location = None
+    branch = None
     short = False
     depth = "minimal"
     section = None
@@ -371,6 +408,12 @@ def main():
             i += 2
         elif arg == "--tag" and i + 1 < len(sys.argv):
             tag = sys.argv[i + 1]
+            i += 2
+        elif arg == "--location" and i + 1 < len(sys.argv):
+            location = sys.argv[i + 1]
+            i += 2
+        elif arg == "--branch" and i + 1 < len(sys.argv):
+            branch = sys.argv[i + 1]
             i += 2
         elif arg == "--short":
             short = True
@@ -403,7 +446,7 @@ def main():
 
     # Execute command
     if command == "list":
-        cmd_list(faction, subfaction, tag, short)
+        cmd_list(faction, subfaction, tag, location, branch, short)
     elif command == "get":
         if not char_name:
             print("Error: character name is required for 'get' command", file=sys.stderr)
