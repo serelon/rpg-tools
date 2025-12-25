@@ -342,8 +342,17 @@ def main():
         print("  --json                         Output as JSON")
         sys.exit(1)
 
+    # Commands that use subcommands
+    SUBCOMMAND_CMDS = {'branch', 'state', 'changelog'}
+
     command = sys.argv[1]
-    subcommand = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else None
+    subcommand = None
+
+    if command in SUBCOMMAND_CMDS and len(sys.argv) > 2 and not sys.argv[2].startswith("--"):
+        subcommand = sys.argv[2]
+        i = 3
+    else:
+        i = 2
 
     # Parse options
     opts = {
@@ -363,7 +372,6 @@ def main():
     }
 
     positional = []
-    i = 2 if subcommand is None else 3
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg == "--json":
