@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-from lib import discover_data, find_item
+from lib import discover_data, find_item, load_changelog
 
 
 # Character storage
@@ -23,9 +23,11 @@ def discover_characters(search_root: Path) -> None:
 def filter_characters(
     faction: Optional[str] = None,
     subfaction: Optional[str] = None,
-    tag: Optional[str] = None
+    tag: Optional[str] = None,
+    location: Optional[str] = None,
+    branch: Optional[str] = None
 ) -> List[Dict]:
-    """Filter characters by faction, subfaction, or tag."""
+    """Filter characters by faction, subfaction, tag, location, or branch."""
     result = list(characters.values())
 
     if faction:
@@ -39,6 +41,35 @@ def filter_characters(
     if tag:
         tag_lower = tag.lower()
         result = [c for c in result if tag_lower in [t.lower() for t in c.get("tags", [])]]
+
+    if location:
+        # Check current location from campaign state
+        state_path = Path.cwd() / "campaign" / "state.json"
+        if state_path.exists():
+            try:
+                with open(state_path, encoding='utf-8') as f:
+                    state = json.load(f)
+                    char_states = state.get("characters", {})
+                    location_lower = location.lower()
+                    result = [c for c in result
+                             if char_states.get(c.get("id", ""), {}).get("location", "").lower() == location_lower]
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                pass
+
+    if branch:
+        # Filter by branch protagonists from campaign config
+        config_path = Path.cwd() / "campaign" / "config.json"
+        if config_path.exists():
+            try:
+                with open(config_path, encoding='utf-8') as f:
+                    config = json.load(f)
+                    branches = config.get("branches", [])
+                    branch_data = next((b for b in branches if b["id"].lower() == branch.lower()), None)
+                    if branch_data:
+                        protagonists = [p.lower() for p in branch_data.get("protagonists", [])]
+                        result = [c for c in result if c.get("id", "").lower() in protagonists]
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                pass
 
     return result
 
@@ -149,10 +180,12 @@ def cmd_list(
     faction: Optional[str] = None,
     subfaction: Optional[str] = None,
     tag: Optional[str] = None,
+    location: Optional[str] = None,
+    branch: Optional[str] = None,
     short: bool = False
 ) -> None:
     """List characters (names only by default, or short profiles with --short)."""
-    filtered = filter_characters(faction, subfaction, tag)
+    filtered = filter_characters(faction, subfaction, tag, location, branch)
 
     if not filtered:
         print("No characters found matching criteria")
@@ -238,6 +271,80 @@ def cmd_memories(char_name: str) -> None:
         sys.exit(1)
 
 
+def cmd_update(
+    char_name: str,
+    field: str,
+    value: str,
+    reason: str,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update a character's development-tier field."""
+    char = find_item(characters, char_name, "Character")
+    char_id = char.get("id", char_name)
+
+    # Navigate to the field and get old value
+    parts = field.split('.')
+    target = char
+    for part in parts[:-1]:
+        if part not in target:
+            target[part] = {}
+        target = target[part]
+
+    final_key = parts[-1]
+    old_value = target.get(final_key)
+
+    # Update the value
+    target[final_key] = value
+
+    # Find the character file and save
+    # Look in characters/ directory
+    search_root = Path.cwd()
+    char_file = search_root / "characters" / f"{char_id}.json"
+
+    if not char_file.exists():
+        # Try to find it
+        for path in (search_root / "characters").glob("*.json"):
+            try:
+                with open(path, encoding='utf-8') as f:
+                    data = json.load(f)
+                    if data.get("id") == char_id:
+                        char_file = path
+                        break
+            except (OSError, json.JSONDecodeError):
+                pass
+
+    if char_file.exists():
+        with open(char_file, 'w', encoding='utf-8') as f:
+            json.dump(char, f, indent=2)
+
+    # Record in changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=char_id,
+        tier="development",
+        field=field,
+        from_value=old_value,
+        to_value=value,
+        reason=reason
+    )
+
+    if output_json:
+        print(json.dumps({
+            "character": char_id,
+            "field": field,
+            "from": old_value,
+            "to": value,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        name = char.get("name", char_id)
+        print(f"Updated {name}.{field}")
+        print(f"  {old_value} -> {value}")
+        print(f"Change logged: {entry.id}")
+
+
 def main():
     # Find search root (current directory or script parent)
     search_root = Path.cwd()
@@ -257,10 +364,20 @@ def main():
         print("  sections <name>                List available sections")
         print("  memories <name>                Show memories involving character")
         print("  show <name>                    Show raw JSON")
+        print("  update <name> --section FIELD --value VAL --reason R")
+        print("                                 Update character field")
         print("\nFilters (for list):")
         print("  --faction NAME                 Filter by faction")
         print("  --subfaction NAME              Filter by subfaction")
         print("  --tag NAME                     Filter by tag")
+        print("  --location NAME                Filter by current location (from campaign state)")
+        print("  --branch NAME                  Filter by branch protagonists (from campaign config)")
+        print("\nUpdate options:")
+        print("  --section FIELD                Field to update (dot notation supported)")
+        print("  --value VALUE                  New value")
+        print("  --reason REASON                Reason for change")
+        print("  --session NAME                 Session identifier (optional)")
+        print("  --json                         Output as JSON")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -269,10 +386,16 @@ def main():
     faction = None
     subfaction = None
     tag = None
+    location = None
+    branch = None
     short = False
     depth = "minimal"
     section = None
     char_name = None
+    value = None
+    reason = None
+    session_name = None
+    output_json = False
 
     i = 2
     while i < len(sys.argv):
@@ -286,6 +409,12 @@ def main():
         elif arg == "--tag" and i + 1 < len(sys.argv):
             tag = sys.argv[i + 1]
             i += 2
+        elif arg == "--location" and i + 1 < len(sys.argv):
+            location = sys.argv[i + 1]
+            i += 2
+        elif arg == "--branch" and i + 1 < len(sys.argv):
+            branch = sys.argv[i + 1]
+            i += 2
         elif arg == "--short":
             short = True
             i += 1
@@ -295,6 +424,18 @@ def main():
         elif arg == "--section" and i + 1 < len(sys.argv):
             section = sys.argv[i + 1]
             i += 2
+        elif arg == "--value" and i + 1 < len(sys.argv):
+            value = sys.argv[i + 1]
+            i += 2
+        elif arg == "--reason" and i + 1 < len(sys.argv):
+            reason = sys.argv[i + 1]
+            i += 2
+        elif arg == "--session" and i + 1 < len(sys.argv):
+            session_name = sys.argv[i + 1]
+            i += 2
+        elif arg == "--json":
+            output_json = True
+            i += 1
         elif not arg.startswith("--"):
             # Positional argument (character name)
             char_name = arg
@@ -305,7 +446,7 @@ def main():
 
     # Execute command
     if command == "list":
-        cmd_list(faction, subfaction, tag, short)
+        cmd_list(faction, subfaction, tag, location, branch, short)
     elif command == "get":
         if not char_name:
             print("Error: character name is required for 'get' command", file=sys.stderr)
@@ -326,6 +467,20 @@ def main():
             print("Error: character name is required for 'memories' command", file=sys.stderr)
             sys.exit(1)
         cmd_memories(char_name)
+    elif command == "update":
+        if not char_name:
+            print("Error: character name required", file=sys.stderr)
+            sys.exit(1)
+        if not section:  # reuse --section as --field
+            print("Error: --section required", file=sys.stderr)
+            sys.exit(1)
+        if not value:
+            print("Error: --value required", file=sys.stderr)
+            sys.exit(1)
+        if not reason:
+            print("Error: --reason required", file=sys.stderr)
+            sys.exit(1)
+        cmd_update(char_name, section, value, reason, session_name, output_json)
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         sys.exit(1)
