@@ -20,6 +20,8 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 - `locations.py` - Location profiles (needs `locations/`)
 - `stories.py` - Story collections (needs `stories/`)
 - `memories.py` - Memory tracking (needs `memories/`)
+- `log.py` - Campaign event log (needs `campaign/log.json`)
+- `campaign.py` - Campaign management (needs `campaign/config.json`)
 
 ---
 
@@ -95,9 +97,10 @@ python scripts/characters.py get NAME                    # Get minimal profile
 python scripts/characters.py get NAME --depth full       # Get full profile
 python scripts/characters.py get NAME --section powers   # Get specific section
 python scripts/characters.py sections NAME               # List available sections
+python scripts/characters.py update NAME --section full.motivation --value "New goal" --reason "Story event"
 ```
 
-Filter options: `--faction`, `--subfaction`, `--tag`
+Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
 
 ### Locations
 
@@ -140,6 +143,46 @@ python scripts/memories.py location NAME                 # Memories at location
 
 Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
 
+### Campaign Log
+
+Requires `campaign/log.json`
+
+```bash
+python scripts/log.py add "Event summary" --date Y3.D45  # Add log entry
+python scripts/log.py add "Event" --date-loose "after the festival"
+python scripts/log.py add "Major event" --importance critical --branch main
+python scripts/log.py add "Event" --characters "juno:defining,tam:present"
+python scripts/log.py list                               # List all entries
+python scripts/log.py list --branch main                 # Filter by branch
+python scripts/log.py list --character juno              # Filter by character
+python scripts/log.py list --from Y3.D1 --to Y3.D100     # Date range
+python scripts/log.py show log-00001                     # Show specific entry
+python scripts/log.py delete log-00001                   # Delete entry
+```
+
+Key options: `--date`, `--date-loose`, `--branch`, `--characters`, `--locations`, `--importance`, `--tags`, `--session`, `--json`
+
+Filter options: `--branch`, `--character`, `--location`, `--importance`, `--tag`, `--from`, `--to`, `--limit`, `--verbose`
+
+### Campaign Management
+
+Requires `campaign/config.json`
+
+```bash
+python scripts/campaign.py init "Campaign Name"          # Initialize new campaign
+python scripts/campaign.py show                          # Show config
+python scripts/campaign.py branch list                   # List all branches
+python scripts/campaign.py branch switch main            # Switch active branch
+python scripts/campaign.py branch create arc-two "The Second Arc" --from main
+python scripts/campaign.py state show                    # Show campaign state
+python scripts/campaign.py state show --character juno   # Show character state
+python scripts/campaign.py state set juno location "The Spire" --reason "Traveled north"
+python scripts/campaign.py changelog show                # Show all changes
+python scripts/campaign.py changelog show --character juno --limit 5
+```
+
+Key options: `--json`, `--reason` (required for state changes)
+
 ---
 
 ## Session Workflow
@@ -165,3 +208,4 @@ Guides for creating your own JSON data files:
 - **[Creating Namesets](guides/nameset-guide.md)** - Name generation collections
 - **[Capturing Stories](guides/story-capture-guide.md)** - Story extraction workflow
 - **[Using the Oracle](guides/oracle-guide.md)** - Oracle types and when to use them
+- **[Managing Campaign State](guides/campaign-state-guide.md)** - Branches, log, state, and changelog
