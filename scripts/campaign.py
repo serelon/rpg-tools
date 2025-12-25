@@ -22,7 +22,7 @@ def load_config(search_root: Path) -> Dict[str, Any]:
         try:
             with open(config_path, encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load campaign config: {e}", file=sys.stderr)
 
     return {}
@@ -46,7 +46,7 @@ def load_state(search_root: Path) -> Dict[str, Any]:
         try:
             with open(state_path, encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load campaign state: {e}", file=sys.stderr)
 
     return {"active_branch": None, "characters": {}}
@@ -335,7 +335,7 @@ def main():
         print("  branch list                    List all branches")
         print("  branch switch <id>             Switch active branch")
         print("  branch create <id> <name>      Create new branch")
-        print("  state show [--character X]     Show campaign state")
+        print("  state show [--character X] [--branch Y]  Show campaign state")
         print("  state set <char> <field> <val> Set character state")
         print("  changelog show [filters...]    Show changelog entries")
         print("\nGlobal options:")
@@ -360,6 +360,7 @@ def main():
         "branch_id": None,
         "calendar_type": "offset",
         "from_branch": None,
+        "branch": None,
         "protagonists": None,
         "character": None,
         "field": None,
@@ -382,6 +383,9 @@ def main():
             i += 2
         elif arg == "--from" and i + 1 < len(sys.argv):
             opts["from_branch"] = sys.argv[i + 1]
+            i += 2
+        elif arg == "--branch" and i + 1 < len(sys.argv):
+            opts["branch"] = sys.argv[i + 1]
             i += 2
         elif arg == "--protagonists" and i + 1 < len(sys.argv):
             opts["protagonists"] = sys.argv[i + 1]
@@ -444,7 +448,7 @@ def main():
 
     elif command == "state":
         if subcommand == "show":
-            cmd_state_show(opts["character"], opts["from_branch"], opts["output_json"])
+            cmd_state_show(opts["character"], opts["branch"], opts["output_json"])
         elif subcommand == "set":
             if len(positional) < 3:
                 print("Error: character, field, and value required", file=sys.stderr)

@@ -61,7 +61,7 @@ class Changelog:
                 with open(self.path, encoding='utf-8') as f:
                     data = json.load(f)
                     self.entries = [ChangeEntry.from_dict(e) for e in data]
-            except Exception:
+            except (FileNotFoundError, json.JSONDecodeError):
                 self.entries = []
 
     def _save(self) -> None:

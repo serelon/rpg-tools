@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-from lib.calendars import create_calendar, is_loose_date, parse_loose_date
+from lib.calendars import create_calendar, is_loose_date
 
 
 # Log storage
@@ -230,9 +230,11 @@ def cmd_list(
         filtered = [e for e in filtered
                    if tag_lower in [t.lower() for t in e.get("tags", [])]]
 
+    # Create calendar for date operations
+    calendar = get_calendar()
+
     # Date range filtering
     if from_date or to_date:
-        calendar = get_calendar()
         from_parsed = calendar.parse(from_date) if from_date else None
         to_parsed = calendar.parse(to_date) if to_date else None
 
@@ -252,7 +254,6 @@ def cmd_list(
         filtered = [e for e in filtered if in_range(e)]
 
     # Sort by date
-    calendar = get_calendar()
     def sort_key(entry):
         date = entry.get("date")
         if date:

@@ -53,7 +53,7 @@ def filter_characters(
                     location_lower = location.lower()
                     result = [c for c in result
                              if char_states.get(c.get("id", ""), {}).get("location", "").lower() == location_lower]
-            except:
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
                 pass
 
     if branch:
@@ -68,7 +68,7 @@ def filter_characters(
                     if branch_data:
                         protagonists = [p.lower() for p in branch_data.get("protagonists", [])]
                         result = [c for c in result if c.get("id", "").lower() in protagonists]
-            except:
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
                 pass
 
     return result
@@ -311,7 +311,7 @@ def cmd_update(
                     if data.get("id") == char_id:
                         char_file = path
                         break
-            except:
+            except (OSError, json.JSONDecodeError):
                 pass
 
     if char_file.exists():
