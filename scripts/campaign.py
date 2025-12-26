@@ -251,8 +251,8 @@ def cmd_state_set(
     if "characters" not in campaign_state:
         campaign_state["characters"] = {}
 
-    # Split comma-separated characters
-    char_list = [c.strip() for c in characters.split(',')]
+    # Split comma-separated characters, filtering empty strings
+    char_list = [c.strip() for c in characters.split(',') if c.strip()]
     results = []
 
     changelog = load_changelog(Path.cwd())
@@ -283,14 +283,16 @@ def cmd_state_set(
             "change_id": entry.id
         })
 
-    save_state(Path.cwd(), campaign_state)
+    if results:
+        save_state(Path.cwd(), campaign_state)
 
     if output_json:
         print(json.dumps(results, indent=2))
     else:
         for r in results:
             print(f"Set {r['character']}.{r['field']} = {r['value']}")
-        print(f"Changes logged: {len(results)}")
+        if results:
+            print(f"Changes logged: {len(results)}")
 
 
 def cmd_state_delete(
@@ -307,8 +309,8 @@ def cmd_state_delete(
         print(f"Error: No state recorded for any character", file=sys.stderr)
         sys.exit(1)
 
-    # Split comma-separated characters
-    char_list = [c.strip() for c in characters.split(',')]
+    # Split comma-separated characters, filtering empty strings
+    char_list = [c.strip() for c in characters.split(',') if c.strip()]
     results = []
     errors = []
 
