@@ -34,6 +34,8 @@ python bundle.py              # Creates rpg-tools.skill (cross-platform)
 
 ## Architecture
 
+See `docs/architecture.md` for detailed documentation of the data tool patterns.
+
 **Shared library** - Campaign tools share common code in `scripts/lib/`:
 - `discovery.py` - Multi-path data file discovery
 - `lookup.py` - Item search by ID/name with fuzzy matching
@@ -43,13 +45,10 @@ python bundle.py              # Creates rpg-tools.skill (cross-platform)
 
 **Instant tools** (dice, tarot, oracle) remain fully standalone with no imports.
 
-**Data discovery** - Tools find JSON files in directories relative to the current working directory or script parent:
-- `characters/` - Character profile JSON files
-- `locations/` - Location profile JSON files
-- `memories/` - Memory record JSON files
-- `stories/` - Story collection JSON files
-- `namesets/` - Name generation JSON files
-- `campaign/` - Campaign config, state, log, and changelog
+**Data patterns** - Tools follow a read-anywhere, write-canonical pattern:
+- **Discovery**: Searches 7 locations, merges all found data (see `docs/architecture.md`)
+- **Write**: New items go to `{cwd}/{data_type}/{id}.json`
+- **Update**: Find original file, modify in place
 
 **Tiered data loading** - Character and location tools use progressive disclosure: minimal profiles load by default, with `--depth full` or `--section NAME` for additional detail. This minimizes context consumption during RPG sessions.
 
