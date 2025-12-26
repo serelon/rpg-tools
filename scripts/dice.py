@@ -26,6 +26,19 @@ class DiceRoll:
 
     def _parse_notation(self):
         """Parse the dice notation into components."""
+        # Validate notation doesn't contain invalid number formats
+        # Check for float notation before 'd' (e.g., 2.5d6)
+        if re.search(r'\d+\.\d+d', self.notation):
+            raise ValueError(f"Invalid dice notation '{self.original_notation}' - use whole numbers only")
+
+        # Check for hex notation (0x)
+        if '0x' in self.notation:
+            raise ValueError(f"Invalid dice notation '{self.original_notation}' - hex notation not supported")
+
+        # Check for scientific notation before 'd' (e.g., 1e2d6)
+        if re.search(r'\d+e\d+d', self.notation):
+            raise ValueError(f"Invalid dice notation '{self.original_notation}' - scientific notation not supported")
+
         # Match dice sets like 2d6, 4d8kh3, etc.
         # Parse dice FIRST to avoid extracting modifiers from notation like 2d6+5d4
         dice_pattern = r'(\d*)d(\d+|f)(?:(kh|kl|dh|dl|r|rr)(\d+)?)?(?:(!{1,2}p?)?)?(?:(>=|<=|>|<|=)(\d+)?)?'
@@ -43,6 +56,14 @@ class DiceRoll:
         if not dice_matches:
             raise ValueError(f"No valid dice notation found in '{self.original_notation}'")
 
+        # Check if there's non-dice garbage in the input
+        # Remove dice patterns, static modifiers, and whitespace - should be empty
+        cleaned = re.sub(dice_pattern, '', self.notation)
+        cleaned = re.sub(r'[+-]\d+', '', cleaned)  # Remove static modifiers
+        cleaned = cleaned.replace('+', '').replace('-', '')  # Remove standalone operators
+        if cleaned and not cleaned.replace(' ', '') == '':
+            raise ValueError(f"Invalid characters in dice notation: '{self.original_notation}'")
+
         for match in dice_matches:
             count = int(match[0]) if match[0] else 1  # Default to 1 if omitted (e.g., "d6")
 
@@ -51,10 +72,16 @@ class DiceRoll:
                 sides = 'f'  # Special marker for Fudge dice
             else:
                 sides = int(match[1])
+                if sides < 1:
+                    raise ValueError(f"Dice must have at least 1 side, got d{sides}")
 
             # Parse modifier type and value
             mod_type = match[2] if match[2] else None
             mod_value = int(match[3]) if match[3] else None
+
+            # Validate keep/drop modifier value
+            if mod_type in ('kh', 'kl', 'dh', 'dl') and mod_value is not None and mod_value < 1:
+                raise ValueError(f"Cannot keep/drop fewer than 1 die")
 
             # Parse exploding dice
             explode_type = match[4] if match[4] else None
@@ -172,24 +199,34 @@ class DiceRoll:
         if sides == 'f':
             return rolls
 
+        # d1 cannot explode (would be infinite loop - max value always rolled)
+        if sides == 1:
+            return rolls
+
         result = rolls.copy()
+
+        # Safety limit to prevent runaway explosions
+        MAX_EXPLOSIONS = 100
+        explosions = 0
 
         # Basic exploding (!): Add new dice for each max value
         if explode_type == '!':
             i = 0
-            while i < len(result):
+            while i < len(result) and explosions < MAX_EXPLOSIONS:
                 if result[i] == sides:  # Check for max value
                     new_roll = random.randint(1, sides)
                     result.append(new_roll)
+                    explosions += 1
                 i += 1
 
         # Compounding exploding (!!): Add to original dice
         elif explode_type == '!!':
             for i in range(len(rolls)):
                 value = rolls[i]
-                while value == sides:
+                while value == sides and explosions < MAX_EXPLOSIONS:
                     extra = random.randint(1, sides)
                     value += extra
+                    explosions += 1
                 result[i] = value
 
         # Penetrating exploding (!p): Like exploding but -1 from extra rolls
@@ -200,17 +237,21 @@ class DiceRoll:
                 if result[i] == sides:
                     # Explode: roll new die, check raw value, store penalized
                     raw_roll = random.randint(1, sides)
-                    while raw_roll == sides:
+                    while raw_roll == sides and explosions < MAX_EXPLOSIONS:
                         result.append(max(1, raw_roll - 1))  # Store with -1 penalty
                         raw_roll = random.randint(1, sides)  # Roll again
-                    result.append(max(1, raw_roll - 1))  # Final non-exploding roll
+                        explosions += 1
+                    if explosions < MAX_EXPLOSIONS:
+                        result.append(max(1, raw_roll - 1))  # Final non-exploding roll
+                        explosions += 1
 
         return result
 
     def _apply_keep_drop(self, rolls: List[int], dice_set: Dict[str, Any]) -> List[int]:
         """Apply keep/drop modifiers to dice rolls, preserving original order."""
         mod_type = dice_set['mod_type']
-        mod_value = dice_set['mod_value'] or 1  # Default to 1 if not specified
+        # Default to 1 if not specified (None), but don't treat 0 as falsy
+        mod_value = dice_set['mod_value'] if dice_set['mod_value'] is not None else 1
 
         # Ensure mod_value is not larger than the number of dice
         mod_value = min(mod_value, len(rolls))

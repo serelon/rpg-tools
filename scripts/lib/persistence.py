@@ -58,7 +58,7 @@ def find_source_file(
     if data_dir.exists():
         for path in data_dir.glob("*.json"):
             try:
-                with open(path, encoding='utf-8') as f:
+                with open(path, encoding='utf-8-sig') as f:
                     data = json.load(f)
                     # Handle single item
                     if isinstance(data, dict) and data.get("id") == item_id:

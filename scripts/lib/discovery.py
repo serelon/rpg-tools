@@ -91,19 +91,30 @@ def discover_data(
                 if type_dir.exists():
                     data_paths.extend(type_dir.glob(file_pattern))
 
+    # Track sources for duplicate detection
+    item_sources: Dict[str, Path] = {}
+
     # Load all discovered files
     for path in data_paths:
         try:
-            with open(path, encoding='utf-8') as f:
+            with open(path, encoding='utf-8-sig') as f:
                 data = json.load(f)
                 # Handle both single item and array of items
                 if isinstance(data, list):
                     for item in data:
                         item_id = item.get("id", f"{path.stem}-{len(items)}")
+                        if item_id in items:
+                            on_warning(f"Warning: Duplicate ID '{item_id}' found in {path.name} "
+                                      f"(already loaded from {item_sources[item_id].name})")
                         items[item_id] = item
+                        item_sources[item_id] = path
                 else:
                     item_id = data.get("id", path.stem)
+                    if item_id in items:
+                        on_warning(f"Warning: Duplicate ID '{item_id}' found in {path.name} "
+                                  f"(already loaded from {item_sources[item_id].name})")
                     items[item_id] = data
+                    item_sources[item_id] = path
         except Exception as e:
             on_warning(f"Warning: Could not load {data_type} file {path}: {e}")
 

@@ -56,7 +56,10 @@ def filter_locations(
     """Filter locations by tag, parent, or type."""
     result = list(locations.values())
 
-    if tag:
+    if tag is not None:
+        if not tag.strip():
+            print("Error: --tag cannot be empty", file=sys.stderr)
+            sys.exit(1)
         tag_lower = tag.lower()
         result = [loc for loc in result if tag_lower in [t.lower() for t in loc.get("tags", [])]]
 
@@ -184,7 +187,7 @@ def build_tree(loc_id: Optional[str] = None, indent: int = 0, visited: Optional[
     if loc_id is None:
         # Start from roots
         roots = get_root_locations()
-        roots.sort(key=lambda x: x.get("name", x.get("id", "")))
+        roots.sort(key=lambda x: (x.get("name") or x.get("id") or ""))
         for root in roots:
             lines.extend(build_tree(root.get("id"), indent, visited.copy()))
 
@@ -196,7 +199,7 @@ def build_tree(loc_id: Optional[str] = None, indent: int = 0, visited: Optional[
                 orphans.append(loc)
 
         if orphans:
-            orphans.sort(key=lambda x: x.get("name", x.get("id", "")))
+            orphans.sort(key=lambda x: (x.get("name") or x.get("id") or ""))
             for orphan in orphans:
                 name = orphan.get("name", orphan.get("id", "Unknown"))
                 loc_type = orphan.get("minimal", {}).get("type", "")
@@ -207,7 +210,11 @@ def build_tree(loc_id: Optional[str] = None, indent: int = 0, visited: Optional[
                 lines.extend(build_tree(orphan.get("id"), 1, visited.copy()))
     else:
         if loc_id in visited:
-            return lines  # Prevent cycles
+            # Circular reference detected
+            loc = locations.get(loc_id)
+            name = loc.get("name", loc_id) if loc else loc_id
+            print(f"Warning: Circular parent reference detected for '{name}'", file=sys.stderr)
+            return lines
         visited.add(loc_id)
 
         loc = locations.get(loc_id)
@@ -223,7 +230,7 @@ def build_tree(loc_id: Optional[str] = None, indent: int = 0, visited: Optional[
 
         # Get children (using primary parent only for tree view)
         children = [c for c in locations.values() if c.get("parent") == loc_id]
-        children.sort(key=lambda x: x.get("name", x.get("id", "")))
+        children.sort(key=lambda x: (x.get("name") or x.get("id") or ""))
 
         for child in children:
             lines.extend(build_tree(child.get("id"), indent + 1, visited.copy()))
@@ -286,7 +293,8 @@ def cmd_list(
         print("No locations found matching criteria")
         return
 
-    filtered.sort(key=lambda x: x.get("name", x.get("id", "")))
+    # Sort by name (null-safe: handles both missing keys and null values)
+    filtered.sort(key=lambda x: (x.get("name") or x.get("id") or ""))
 
     if short:
         for loc in filtered:

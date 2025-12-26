@@ -28,7 +28,7 @@ def load_campaign_config(search_root: Path) -> Dict[str, Any]:
     for path in config_paths:
         if path.exists():
             try:
-                with open(path, encoding='utf-8') as f:
+                with open(path, encoding='utf-8-sig') as f:
                     return json.load(f)
             except Exception as e:
                 print(f"Warning: Could not load campaign config: {e}", file=sys.stderr)
@@ -51,7 +51,7 @@ def load_log(search_root: Path) -> List[Dict[str, Any]]:
     for path in log_paths:
         if path.exists():
             try:
-                with open(path, encoding='utf-8') as f:
+                with open(path, encoding='utf-8-sig') as f:
                     return json.load(f)
             except Exception as e:
                 print(f"Warning: Could not load log: {e}", file=sys.stderr)
@@ -188,7 +188,7 @@ def cmd_add(
         state_path = Path.cwd() / "campaign" / "state.json"
         if state_path.exists():
             try:
-                with open(state_path, encoding='utf-8') as f:
+                with open(state_path, encoding='utf-8-sig') as f:
                     state = json.load(f)
                     if state.get("active_branch"):
                         entry["branch"] = state["active_branch"]
@@ -259,7 +259,10 @@ def cmd_list(
             filtered = [e for e in filtered
                        if e.get("importance", "normal").lower() == imp_lower]
 
-    if tag:
+    if tag is not None:
+        if not tag.strip():
+            print("Error: --tag cannot be empty", file=sys.stderr)
+            sys.exit(1)
         tag_lower = tag.lower()
         filtered = [e for e in filtered
                    if tag_lower in [t.lower() for t in e.get("tags", [])]]
