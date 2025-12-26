@@ -177,6 +177,17 @@ def cmd_add(
 
     if branch:
         entry["branch"] = branch
+    else:
+        # Auto-detect from campaign state
+        state_path = Path.cwd() / "campaign" / "state.json"
+        if state_path.exists():
+            try:
+                with open(state_path, encoding='utf-8') as f:
+                    state = json.load(f)
+                    if state.get("active_branch"):
+                        entry["branch"] = state["active_branch"]
+            except (OSError, json.JSONDecodeError):
+                pass
     if characters:
         entry["characters"] = parse_characters_arg(characters)
     if locations:
@@ -251,10 +262,11 @@ def cmd_list(
         def in_range(entry):
             entry_date = entry.get("date")
             if not entry_date:
-                return True  # Include entries without dates
+                # Exclude loose dates from range queries (can't compare)
+                return False
             parsed = calendar.parse(entry_date)
             if not parsed:
-                return True
+                return False  # Can't parse, exclude from range query
             if from_parsed and parsed < from_parsed:
                 return False
             if to_parsed and parsed > to_parsed:

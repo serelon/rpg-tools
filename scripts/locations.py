@@ -185,6 +185,24 @@ def build_tree(loc_id: Optional[str] = None, indent: int = 0, visited: Optional[
         roots.sort(key=lambda x: x.get("name", x.get("id", "")))
         for root in roots:
             lines.extend(build_tree(root.get("id"), indent, visited.copy()))
+
+        # Find orphaned locations (have parent, but parent doesn't exist)
+        orphans = []
+        for loc in locations.values():
+            parent_id = loc.get("parent")
+            if parent_id and parent_id not in locations:
+                orphans.append(loc)
+
+        if orphans:
+            orphans.sort(key=lambda x: x.get("name", x.get("id", "")))
+            for orphan in orphans:
+                name = orphan.get("name", orphan.get("id", "Unknown"))
+                loc_type = orphan.get("minimal", {}).get("type", "")
+                type_str = f" ({loc_type})" if loc_type else ""
+                parent_id = orphan.get("parent")
+                lines.append(f"{name}{type_str} [!parent '{parent_id}' not found]")
+                # Also show children of orphans
+                lines.extend(build_tree(orphan.get("id"), 1, visited.copy()))
     else:
         if loc_id in visited:
             return lines  # Prevent cycles

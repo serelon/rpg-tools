@@ -139,6 +139,37 @@ def format_full(char: Dict) -> str:
     return "\n".join(lines)
 
 
+def format_value(value: Any, indent: int = 0) -> List[str]:
+    """Recursively format a value, handling nested dicts and lists."""
+    prefix = "  " * indent
+    lines = []
+
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if isinstance(v, dict):
+                lines.append(f"{prefix}**{k}:**")
+                lines.extend(format_value(v, indent + 1))
+            elif isinstance(v, list):
+                lines.append(f"{prefix}**{k}:**")
+                for item in v:
+                    if isinstance(item, dict):
+                        lines.extend(format_value(item, indent + 1))
+                    else:
+                        lines.append(f"{prefix}  - {item}")
+            else:
+                lines.append(f"{prefix}**{k}:** {v}")
+    elif isinstance(value, list):
+        for item in value:
+            if isinstance(item, dict):
+                lines.extend(format_value(item, indent))
+            else:
+                lines.append(f"{prefix}- {item}")
+    else:
+        lines.append(f"{prefix}{value}")
+
+    return lines
+
+
 def format_section(char: Dict, section_name: str) -> str:
     """Format a specific section of a character."""
     name = char.get("name", char.get("id", "Unknown"))
@@ -156,9 +187,12 @@ def format_section(char: Dict, section_name: str) -> str:
                 lines.append(f"\n**{key}:**")
                 for item in value:
                     if isinstance(item, dict):
-                        lines.append(f"- {item}")
+                        lines.extend(format_value(item, 1))
                     else:
                         lines.append(f"- {item}")
+            elif isinstance(value, dict):
+                lines.append(f"\n**{key}:**")
+                lines.extend(format_value(value, 1))
             else:
                 lines.append(f"**{key}:** {value}")
     elif isinstance(section, list):
