@@ -633,7 +633,6 @@ def cmd_create(
     path = save_item("memories", memory, search_root)
 
     if output_json:
-        import json
         print(json.dumps(memory, indent=2))
     else:
         print(f"Created memory: {mem_id}")

@@ -318,6 +318,12 @@ def cmd_create(
     if not story_id:
         story_id = generate_story_id()
 
+    # Check if ID already exists
+    all_story_ids = {s.get("id") for c in story_collections.values() for s in c.get("stories", [])}
+    if story_id in all_story_ids:
+        print(f"Error: Story '{story_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
     # Build story dict
     story = {
         "id": story_id,
