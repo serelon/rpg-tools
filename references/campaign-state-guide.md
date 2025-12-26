@@ -253,6 +253,11 @@ campaign.py state set juno location "market-district" \
   --reason "Arrived seeking information" \
   --session s05
 
+# Multiple characters at once (comma-separated)
+campaign.py state set kira,dex,tam location "threshold-station" \
+  --reason "Crew docked together" \
+  --session s02
+
 # Inventory
 campaign.py state set juno inventory.credits "450" \
   --reason "Paid Marco for intel"
@@ -267,6 +272,18 @@ Every state change is automatically logged to the changelog with:
 - Branch context
 - Old and new values
 - Reason for change
+
+### Delete Character State
+
+```bash
+# Remove a state field
+campaign.py state delete juno condition.wounded --reason "Healed at station"
+
+# Remove field from multiple characters at once
+campaign.py state delete kira,dex condition.wounded --reason "Party healed"
+```
+
+When deleting from multiple characters, the command continues on error and reports which characters failed (e.g., if a character doesn't have the field).
 
 ### State and Branches
 
@@ -601,6 +618,7 @@ characters.py list --branch ossian-arc
 - Always provide meaningful reasons for changelog
 - Use session identifiers consistently
 - Review state at session start to maintain continuity
+- Use comma-separated characters for party movement (e.g., `kira,dex,tam`)
 
 ### Character Development
 - Update character profiles when permanent changes occur
