@@ -113,6 +113,7 @@ def filter_memories(
     character: Optional[str] = None,
     location: Optional[str] = None,
     mem_type: Optional[str] = None,
+    mem_format: Optional[str] = None,
     tag: Optional[str] = None,
     era: Optional[str] = None,
     session: Optional[str] = None,
@@ -142,6 +143,10 @@ def filter_memories(
     if mem_type:
         type_lower = mem_type.lower()
         result = [m for m in result if m.get("type", "").lower() == type_lower]
+
+    if mem_format:
+        format_lower = mem_format.lower()
+        result = [m for m in result if m.get("format", "").lower() == format_lower]
 
     if tag:
         tag_lower = tag.lower()
@@ -181,6 +186,8 @@ def format_memory(mem: Dict, show_text: bool = True) -> str:
     meta = []
     if mem.get("type"):
         meta.append(f"Type: {mem['type']}")
+    if mem.get("format"):
+        meta.append(f"Format: {mem['format']}")
     if mem.get("era"):
         meta.append(f"Era: {mem['era']}")
     if mem.get("session"):
@@ -196,6 +203,15 @@ def format_memory(mem: Dict, show_text: bool = True) -> str:
     # Tags
     if mem.get("tags"):
         lines.append(f"*Tags: {', '.join(mem['tags'])}*")
+
+    # Cross-references
+    refs = []
+    if mem.get("log_entry"):
+        refs.append(f"Log: {mem['log_entry']}")
+    if mem.get("story"):
+        refs.append(f"Story: {mem['story']}")
+    if refs:
+        lines.append(f"*Links: {' • '.join(refs)}*")
 
     # Connections
     connections = mem.get("connections", {})
@@ -225,6 +241,7 @@ def cmd_list(
     character: Optional[str] = None,
     location: Optional[str] = None,
     mem_type: Optional[str] = None,
+    mem_format: Optional[str] = None,
     tag: Optional[str] = None,
     era: Optional[str] = None,
     session: Optional[str] = None,
@@ -238,6 +255,7 @@ def cmd_list(
         character=character,
         location=location,
         mem_type=mem_type,
+        mem_format=mem_format,
         tag=tag,
         era=era,
         session=session,
@@ -284,6 +302,7 @@ def cmd_random(
     character: Optional[str] = None,
     location: Optional[str] = None,
     mem_type: Optional[str] = None,
+    mem_format: Optional[str] = None,
     tag: Optional[str] = None,
     era: Optional[str] = None,
     intensity: Optional[str] = None
@@ -294,6 +313,7 @@ def cmd_random(
         character=character,
         location=location,
         mem_type=mem_type,
+        mem_format=mem_format,
         tag=tag,
         era=era,
         intensity=intensity
@@ -577,6 +597,7 @@ def cmd_create(
     text: str,
     campaign: Optional[str] = None,
     mem_type: Optional[str] = None,
+    mem_format: Optional[str] = None,
     era: Optional[str] = None,
     session: Optional[str] = None,
     intensity: Optional[str] = None,
@@ -584,6 +605,8 @@ def cmd_create(
     characters: Optional[str] = None,
     locations: Optional[str] = None,
     tags: Optional[str] = None,
+    log_entry: Optional[str] = None,
+    story: Optional[str] = None,
     output_json: bool = False
 ) -> None:
     """Create a new memory."""
@@ -609,6 +632,8 @@ def cmd_create(
         memory["campaign"] = campaign
     if mem_type:
         memory["type"] = mem_type
+    if mem_format:
+        memory["format"] = mem_format
     if era:
         memory["era"] = era
     if session:
@@ -619,6 +644,10 @@ def cmd_create(
         memory["perspective"] = perspective
     if tags:
         memory["tags"] = [t.strip() for t in tags.split(',')]
+    if log_entry:
+        memory["log_entry"] = log_entry
+    if story:
+        memory["story"] = story
 
     # Build connections
     connections = {}
@@ -671,6 +700,7 @@ def main():
         print("  --text TEXT            Memory text (required)")
         print("  --campaign NAME        Campaign identifier")
         print("  --type TYPE            vivid-moment, quiet-moment, revelation, etc.")
+        print("  --format FORMAT        vivid, sequential, or summary")
         print("  --era ERA              Time period (e.g., Y3.D45)")
         print("  --session SESSION      Session identifier (e.g., s03)")
         print("  --intensity LEVEL      low, medium, high")
@@ -678,12 +708,15 @@ def main():
         print("  --characters CHARS     Comma-separated character IDs")
         print("  --locations LOCS       Comma-separated location IDs")
         print("  --tags TAGS            Comma-separated tags")
+        print("  --log-entry ID         Link to a log entry")
+        print("  --story ID             Link to a story")
         print("  --json                 Output created memory as JSON")
         print("\nFilters (for list/random):")
         print("  --campaign NAME        Filter by campaign")
         print("  --character NAME       Filter by character (single)")
         print("  --location NAME        Filter by location (single)")
         print("  --type TYPE            Filter by type")
+        print("  --format FORMAT        Filter by format (vivid/sequential/summary)")
         print("  --tag TAG              Filter by tag")
         print("  --era ERA              Filter by era")
         print("  --session SESSION      Filter by session")
@@ -698,6 +731,7 @@ def main():
     character = None
     location = None
     mem_type = None
+    mem_format = None
     tag = None
     era = None
     session = None
@@ -714,6 +748,8 @@ def main():
     characters_list = None
     locations_list = None
     tags_list = None
+    log_entry = None
+    story_link = None
     output_json = False
 
     i = 2
@@ -730,6 +766,9 @@ def main():
             i += 2
         elif arg == "--type" and i + 1 < len(sys.argv):
             mem_type = sys.argv[i + 1]
+            i += 2
+        elif arg == "--format" and i + 1 < len(sys.argv):
+            mem_format = sys.argv[i + 1]
             i += 2
         elif arg == "--tag" and i + 1 < len(sys.argv):
             tag = sys.argv[i + 1]
@@ -770,6 +809,12 @@ def main():
         elif arg == "--tags" and i + 1 < len(sys.argv):
             tags_list = sys.argv[i + 1]
             i += 2
+        elif arg == "--log-entry" and i + 1 < len(sys.argv):
+            log_entry = sys.argv[i + 1]
+            i += 2
+        elif arg == "--story" and i + 1 < len(sys.argv):
+            story_link = sys.argv[i + 1]
+            i += 2
         elif arg == "--json":
             output_json = True
             i += 1
@@ -798,6 +843,7 @@ def main():
             text=text,
             campaign=campaign,
             mem_type=mem_type,
+            mem_format=mem_format,
             era=era,
             session=session,
             intensity=intensity,
@@ -805,10 +851,12 @@ def main():
             characters=characters_list,
             locations=locations_list,
             tags=tags_list,
+            log_entry=log_entry,
+            story=story_link,
             output_json=output_json
         )
     elif command == "list":
-        cmd_list(campaign, character, location, mem_type, tag, era, session,
+        cmd_list(campaign, character, location, mem_type, mem_format, tag, era, session,
                  intensity, perspective, short)
     elif command == "get":
         if not mem_id:
@@ -816,7 +864,7 @@ def main():
             sys.exit(1)
         cmd_get(mem_id)
     elif command == "random":
-        cmd_random(campaign, character, location, mem_type, tag, era, intensity)
+        cmd_random(campaign, character, location, mem_type, mem_format, tag, era, intensity)
     elif command == "recent":
         cmd_recent(campaign, count, by_era)
     elif command == "search":

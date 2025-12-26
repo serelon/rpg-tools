@@ -250,6 +250,71 @@ For files containing arrays (memories, stories):
 
 ---
 
+## Cross-References
+
+Log entries, memories, and stories can link to each other via optional fields:
+
+### Memory Fields
+
+```json
+{
+  "id": "learning-the-truth",
+  "format": "vivid",          // Structural format: vivid, sequential, summary
+  "log_entry": "log-00007",   // Links to source log entry
+  "story": "tale-of-truth"    // Links to derived story
+}
+```
+
+### Log Entry Fields
+
+```json
+{
+  "id": "log-00007",
+  "memory": "learning-the-truth",  // Links to expanded memory
+  "story": "tale-of-truth"         // Links to derived story
+}
+```
+
+### Memory Format vs Type
+
+- **type**: What kind of event (vivid-moment, revelation, turning-point)
+- **format**: How it's written:
+  - `vivid` - Present-tense, sensory, reliving
+  - `sequential` - Past-tense blow-by-blow
+  - `summary` - Condensed overview
+
+---
+
+## Campaign Digest
+
+The `log.py digest` command provides tiered campaign overview:
+
+```
+=== PILLARS (critical, all time) ===
+Y-12000.D200: The Silence Falls [memory: asha-silence]
+
+=== RECENT ARC (major+, last 20 sessions) ===
+Y1.D100: Alliance formed with Haven Rock
+
+=== CURRENT (last 5 sessions) ===
+Y1.D148: Arrived at Freeport Nine
+```
+
+### Configuration
+
+Digest behavior can be configured via command line:
+- `--character NAME` - Filter by character involvement
+- `--arc-sessions N` - Sessions for recent arc (default: 20)
+- `--current-sessions N` - Sessions for current (default: 5)
+
+### Importance Hierarchy
+
+The `--importance` filter supports hierarchical matching:
+- `--importance major` - Exact match (only major)
+- `--importance major+` - Hierarchical (major OR critical)
+
+---
+
 ## Shared Library
 
 The `scripts/lib/` module provides reusable components:
