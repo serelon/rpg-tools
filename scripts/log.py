@@ -361,6 +361,29 @@ def get_digest_defaults() -> Dict[str, int]:
     }
 
 
+def load_memories_by_log_entry(search_root: Path) -> Dict[str, Dict]:
+    """Load memories indexed by their log_entry field."""
+    log_to_memory = {}
+    memories_dir = search_root / "memories"
+
+    if not memories_dir.exists():
+        return log_to_memory
+
+    for path in memories_dir.glob("*.json"):
+        try:
+            with open(path, encoding='utf-8-sig') as f:
+                data = json.load(f)
+                items = data if isinstance(data, list) else [data]
+                for item in items:
+                    log_entry = item.get("log_entry")
+                    if log_entry:
+                        log_to_memory[log_entry] = item
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load memory file {path}: {e}", file=sys.stderr)
+
+    return log_to_memory
+
+
 def cmd_digest(
     character: Optional[str] = None,
     pillar_limit: Optional[int] = None,
@@ -369,6 +392,8 @@ def cmd_digest(
     output_json: bool = False
 ) -> None:
     """Show tiered campaign digest."""
+    search_root = Path.cwd()
+
     # Get defaults from config, then apply CLI overrides
     defaults = get_digest_defaults()
     pillar_limit = pillar_limit if pillar_limit is not None else defaults["pillar_limit"]
@@ -376,6 +401,9 @@ def cmd_digest(
     current_sessions = current_sessions if current_sessions is not None else defaults["current_sessions"]
 
     calendar = get_calendar()
+
+    # Load memories that reference log entries
+    log_to_memory = load_memories_by_log_entry(search_root)
 
     # Get all entries sorted by date
     all_entries = log_entries.copy()
@@ -424,35 +452,42 @@ def cmd_digest(
         }, indent=2))
         return
 
+    def print_entry_with_memory(entry: Dict, log_to_memory: Dict):
+        """Print a log entry with optional associated memory."""
+        date = entry.get("date") or entry.get("date_loose") or "?"
+        summary = entry.get("summary", "")
+        memory_id = entry.get("memory")
+        memory_str = f" [memory: {memory_id}]" if memory_id else ""
+        print(f"{date}: {summary}{memory_str}")
+
+        # Check for memory that references this log entry
+        entry_id = entry.get("id")
+        if entry_id and entry_id in log_to_memory:
+            mem = log_to_memory[entry_id]
+            mem_title = mem.get("title", "")
+            mem_text = mem.get("text", "")
+            # Show title, or first 60 chars of text if no title
+            snippet = mem_title if mem_title else (mem_text[:60] + "..." if len(mem_text) > 60 else mem_text)
+            if snippet:
+                print(f"  └─ Memory: {snippet}")
+
     # Display
     if pillars:
         print("=== PILLARS (critical, all time) ===")
         for entry in pillars:
-            date = entry.get("date") or entry.get("date_loose") or "?"
-            summary = entry.get("summary", "")
-            memory = entry.get("memory")
-            memory_str = f" [memory: {memory}]" if memory else ""
-            print(f"{date}: {summary}{memory_str}")
+            print_entry_with_memory(entry, log_to_memory)
         print()
 
     if recent_arc:
         print(f"=== RECENT ARC (major+, last {arc_sessions} sessions) ===")
         for entry in recent_arc:
-            date = entry.get("date") or entry.get("date_loose") or "?"
-            summary = entry.get("summary", "")
-            memory = entry.get("memory")
-            memory_str = f" [memory: {memory}]" if memory else ""
-            print(f"{date}: {summary}{memory_str}")
+            print_entry_with_memory(entry, log_to_memory)
         print()
 
     if current:
         print(f"=== CURRENT (last {current_sessions} sessions) ===")
         for entry in current:
-            date = entry.get("date") or entry.get("date_loose") or "?"
-            summary = entry.get("summary", "")
-            memory = entry.get("memory")
-            memory_str = f" [memory: {memory}]" if memory else ""
-            print(f"{date}: {summary}{memory_str}")
+            print_entry_with_memory(entry, log_to_memory)
 
     if not pillars and not recent_arc and not current:
         print("No significant entries found for digest")

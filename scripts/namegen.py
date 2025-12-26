@@ -316,6 +316,8 @@ def build_name_from_format(format_str: str, categories: Dict[str, List[Dict]]) -
             if category in categories and categories[category]:
                 entry = select_weighted(categories[category])
                 result.append(entry["name"])
+            else:
+                print(f"Warning: Format references undefined or empty category '{category}'", file=sys.stderr)
         elif token["type"] == "optional":
             # For now, just parse the optional section like normal
             result.append(build_name_from_format(token["value"], categories))

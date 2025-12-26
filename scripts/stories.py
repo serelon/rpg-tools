@@ -26,7 +26,8 @@ def discover_stories(repo_root: Path) -> None:
 
 def get_collection(campaign: str) -> Optional[Dict]:
     """Get aggregated story collection for a campaign (merges all matching files)."""
-    matching_files = []
+    matching_collections = []
+    matching_stories = []
     campaign_lower = campaign.lower()
 
     for coll_id, coll in story_collections.items():
@@ -35,25 +36,33 @@ def get_collection(campaign: str) -> Optional[Dict]:
         if (coll_campaign == campaign_lower or
             campaign_lower in coll_campaign or
             campaign_lower in coll_id.lower()):
-            matching_files.append(coll)
+            # Check if this is a story (has title) vs collection (has stories array)
+            if "title" in coll and "stories" not in coll:
+                # This is a flat-array story, add directly
+                matching_stories.append(coll)
+            else:
+                # This is a collection wrapper
+                matching_collections.append(coll)
 
-    if not matching_files:
+    if not matching_collections and not matching_stories:
         return None
 
     # Aggregate: merge all stories from matching files
     aggregated = {
         "id": f"{campaign}-stories",
-        "character": matching_files[0].get("character"),
+        "character": matching_collections[0].get("character") if matching_collections else None,
         "campaign": campaign,
         "collections": {},
         "stories": []
     }
 
-    for coll in matching_files:
-        # Merge collection definitions
+    # Add stories from collection wrappers
+    for coll in matching_collections:
         aggregated["collections"].update(coll.get("collections", {}))
-        # Merge stories
         aggregated["stories"].extend(coll.get("stories", []))
+
+    # Add flat-array stories directly
+    aggregated["stories"].extend(matching_stories)
 
     return aggregated
 
