@@ -58,7 +58,7 @@ class Changelog:
         """Load changelog from disk."""
         if self.path.exists():
             try:
-                with open(self.path, encoding='utf-8') as f:
+                with open(self.path, encoding='utf-8-sig') as f:
                     data = json.load(f)
                     self.entries = [ChangeEntry.from_dict(e) for e in data]
             except (FileNotFoundError, json.JSONDecodeError):

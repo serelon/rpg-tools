@@ -22,7 +22,7 @@ def load_config(search_root: Path) -> Dict[str, Any]:
 
     if config_path.exists():
         try:
-            with open(config_path, encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8-sig') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load campaign config: {e}", file=sys.stderr)
@@ -46,7 +46,7 @@ def load_state(search_root: Path) -> Dict[str, Any]:
 
     if state_path.exists():
         try:
-            with open(state_path, encoding='utf-8') as f:
+            with open(state_path, encoding='utf-8-sig') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load campaign state: {e}", file=sys.stderr)
@@ -255,6 +255,14 @@ def cmd_state_set(
     char_list = [c.strip() for c in characters.split(',') if c.strip()]
     results = []
 
+    # Check if characters exist (warn if not, but proceed)
+    from lib import discover_data
+    existing_chars = discover_data("characters", Path.cwd(), on_warning=lambda x: None)
+    existing_char_keys_lower = {c.lower() for c in existing_chars.keys()}
+    for character in char_list:
+        if character.lower() not in existing_char_keys_lower:
+            print(f"Note: No character file found for '{character}'", file=sys.stderr)
+
     changelog = load_changelog(Path.cwd())
 
     for character in char_list:
@@ -438,6 +446,8 @@ def cmd_export(
         "counts": {}
     }
 
+    skipped_files = []
+
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for dir_name in EXPORT_DIRS:
             dir_path = search_root / dir_name
@@ -446,10 +456,19 @@ def cmd_export(
 
             count = 0
             for json_file in dir_path.glob("*.json"):
-                # Use forward slashes for zip paths (cross-platform)
-                arc_name = f"{dir_name}/{json_file.name}"
-                zf.write(json_file, arc_name)
-                count += 1
+                try:
+                    # Validate JSON is readable before adding to archive
+                    with open(json_file, encoding='utf-8-sig') as f:
+                        json.load(f)
+
+                    # Use forward slashes for zip paths (cross-platform)
+                    arc_name = f"{dir_name}/{json_file.name}"
+                    zf.write(json_file, arc_name)
+                    count += 1
+                except json.JSONDecodeError as e:
+                    skipped_files.append((json_file, f"Invalid JSON: {e}"))
+                except (IOError, OSError) as e:
+                    skipped_files.append((json_file, f"Read error: {e}"))
 
             if count > 0:
                 manifest["counts"][dir_name] = count
@@ -457,17 +476,31 @@ def cmd_export(
         # Write manifest
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
 
+    # Report skipped files
+    if skipped_files:
+        print(f"Warning: {len(skipped_files)} file(s) skipped due to errors:", file=sys.stderr)
+        for path, error in skipped_files:
+            print(f"  - {path.name}: {error}", file=sys.stderr)
+        print(file=sys.stderr)
+
     if output_json:
         result = {
             "output": str(zip_path),
-            "manifest": manifest
+            "manifest": manifest,
+            "skipped": [{"file": str(p), "error": e} for p, e in skipped_files] if skipped_files else []
         }
         print(json.dumps(result, indent=2))
     else:
         print(f"Exported to: {zip_path}")
         print(f"\nContents:")
+        from collections import Counter
+        skipped_counts_by_dir = Counter(p.parent.name for p, _ in skipped_files)
         for dir_name, count in manifest["counts"].items():
-            print(f"  {dir_name}: {count} files")
+            skipped_in_dir = skipped_counts_by_dir.get(dir_name, 0)
+            if skipped_in_dir > 0:
+                print(f"  {dir_name}: {count} files ({skipped_in_dir} skipped)")
+            else:
+                print(f"  {dir_name}: {count} files")
         total = sum(manifest["counts"].values())
         print(f"\nTotal: {total} files")
 

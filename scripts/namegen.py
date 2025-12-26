@@ -471,6 +471,11 @@ def main():
             print(f"Unknown option: {sys.argv[i]}", file=sys.stderr)
             sys.exit(1)
 
+    # Validate count
+    if count < 1:
+        print("Error: --count must be at least 1", file=sys.stderr)
+        sys.exit(1)
+
     # Execute command
     if command == "full":
         if not nameset:

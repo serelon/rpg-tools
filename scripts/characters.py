@@ -38,7 +38,10 @@ def filter_characters(
         subfaction_lower = subfaction.lower()
         result = [c for c in result if c.get("subfaction", "").lower() == subfaction_lower]
 
-    if tag:
+    if tag is not None:
+        if not tag.strip():
+            print("Error: --tag cannot be empty", file=sys.stderr)
+            sys.exit(1)
         tag_lower = tag.lower()
         result = [c for c in result if tag_lower in [t.lower() for t in c.get("tags", [])]]
 
@@ -47,7 +50,7 @@ def filter_characters(
         state_path = Path.cwd() / "campaign" / "state.json"
         if state_path.exists():
             try:
-                with open(state_path, encoding='utf-8') as f:
+                with open(state_path, encoding='utf-8-sig') as f:
                     state = json.load(f)
                     char_states = state.get("characters", {})
                     location_lower = location.lower()
@@ -61,7 +64,7 @@ def filter_characters(
         config_path = Path.cwd() / "campaign" / "config.json"
         if config_path.exists():
             try:
-                with open(config_path, encoding='utf-8') as f:
+                with open(config_path, encoding='utf-8-sig') as f:
                     config = json.load(f)
                     branches = config.get("branches", [])
                     branch_data = next((b for b in branches if b["id"].lower() == branch.lower()), None)
@@ -227,8 +230,8 @@ def cmd_list(
         print("No characters found matching criteria")
         return
 
-    # Sort by name
-    filtered.sort(key=lambda c: c.get("name", c.get("id", "")))
+    # Sort by name (null-safe: handles both missing keys and null values)
+    filtered.sort(key=lambda c: (c.get("name") or c.get("id") or ""))
 
     if short:
         # Show minimal profiles
@@ -350,7 +353,7 @@ def cmd_update(
         # Try to find it
         for path in (search_root / "characters").glob("*.json"):
             try:
-                with open(path, encoding='utf-8') as f:
+                with open(path, encoding='utf-8-sig') as f:
                     data = json.load(f)
                     if data.get("id") == char_id:
                         char_file = path

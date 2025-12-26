@@ -47,7 +47,7 @@ def validate_connections() -> None:
         if chars_dir.exists():
             for path in chars_dir.glob("*.json"):
                 try:
-                    with open(path, encoding='utf-8') as f:
+                    with open(path, encoding='utf-8-sig') as f:
                         char = json.load(f)
                         char_id = char.get("id", path.stem)
                         characters_available[char_id.lower()] = char_id
@@ -65,7 +65,7 @@ def validate_connections() -> None:
         if locs_dir.exists():
             for path in locs_dir.glob("*.json"):
                 try:
-                    with open(path, encoding='utf-8') as f:
+                    with open(path, encoding='utf-8-sig') as f:
                         data = json.load(f)
                         if isinstance(data, list):
                             for loc in data:
