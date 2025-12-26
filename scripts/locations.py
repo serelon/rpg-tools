@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from lib import discover_data, find_item
+import json
+
+from lib import discover_data, find_item, save_item, find_source_file, delete_item_file
 
 
 # Location storage
@@ -412,6 +414,113 @@ def cmd_memories(loc_name: str) -> None:
         sys.exit(1)
 
 
+def cmd_create(
+    loc_id: str,
+    name: str,
+    loc_type: str,
+    essence: str,
+    parent: Optional[str] = None,
+    tags: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Create a new location."""
+    search_root = Path.cwd()
+
+    # Check if ID already exists
+    if loc_id in locations:
+        print(f"Error: Location '{loc_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build location dict
+    location = {
+        "id": loc_id,
+        "name": name,
+        "minimal": {
+            "type": loc_type,
+            "essence": essence,
+        }
+    }
+
+    if parent:
+        location["parent"] = parent
+    if tags:
+        location["tags"] = [t.strip() for t in tags.split(',')]
+
+    # Save to file
+    path = save_item("locations", location, search_root)
+
+    if output_json:
+        print(json.dumps(location, indent=2))
+    else:
+        print(f"Created location: {loc_id}")
+        print(f"  Name: {name}")
+        print(f"  Type: {loc_type}")
+        if parent:
+            print(f"  Parent: {parent}")
+        print(f"  Saved to: {path}")
+
+
+def cmd_update(
+    loc_name: str,
+    field: str,
+    value: str,
+    output_json: bool = False
+) -> None:
+    """Update a location field."""
+    search_root = Path.cwd()
+
+    loc = find_item(locations, loc_name, "Location")
+    loc_id = loc.get("id", loc_name)
+
+    # Navigate to the field and get old value
+    parts = field.split('.')
+    target = loc
+    for part in parts[:-1]:
+        if part not in target:
+            target[part] = {}
+        target = target[part]
+
+    final_key = parts[-1]
+    old_value = target.get(final_key)
+
+    # Update the value
+    target[final_key] = value
+
+    # Find the location file and save
+    loc_file = find_source_file("locations", loc_id, search_root)
+    if loc_file:
+        with open(loc_file, 'w', encoding='utf-8') as f:
+            json.dump(loc, f, indent=2)
+
+    if output_json:
+        print(json.dumps({
+            "id": loc_id,
+            "field": field,
+            "old_value": old_value,
+            "new_value": value
+        }, indent=2))
+    else:
+        name = loc.get("name", loc_id)
+        print(f"Updated {name}.{field}")
+        print(f"  {old_value} -> {value}")
+
+
+def cmd_delete(loc_id: str) -> None:
+    """Delete a location."""
+    search_root = Path.cwd()
+
+    # Check location exists
+    loc = find_item(locations, loc_id, "Location")
+    actual_id = loc.get("id", loc_id)
+
+    # Delete the file
+    if delete_item_file("locations", actual_id, search_root):
+        print(f"Deleted location: {actual_id}")
+    else:
+        print(f"Error: Could not find file for location '{actual_id}'", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     search_root = Path.cwd()
     discover_locations(search_root)
@@ -419,6 +528,11 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python locations.py <command> [options]")
         print("\nCommands:")
+        print("  create <id> --name N --type T --essence E ...")
+        print("                                 Create a new location")
+        print("  update <id> --field F --value V")
+        print("                                 Update a location field")
+        print("  delete <id>                    Delete a location")
         print("  list [filters...]              List location names")
         print("  list --short [filters...]      List with minimal profiles")
         print("  get <name>                     Get minimal profile")
@@ -430,6 +544,17 @@ def main():
         print("  path <name>                    Show path from root")
         print("  connections <name>             Show all connections")
         print("  memories <name>                Show memories at location")
+        print("\nCreate options:")
+        print("  --name NAME                    Location display name (required)")
+        print("  --type TYPE                    Location type (required)")
+        print("  --essence TEXT                 Location essence (required)")
+        print("  --parent ID                    Parent location ID")
+        print("  --tags TAGS                    Comma-separated tags")
+        print("  --json                         Output as JSON")
+        print("\nUpdate options:")
+        print("  --field FIELD                  Field to update (dot notation)")
+        print("  --value VALUE                  New value")
+        print("  --json                         Output as JSON")
         print("\nFilters (for list):")
         print("  --tag NAME                     Filter by tag")
         print("  --parent NAME                  Filter by parent")
@@ -446,6 +571,13 @@ def main():
     depth = "minimal"
     section = None
     loc_name = None
+    # Create/update-specific options
+    name = None
+    essence = None
+    tags_list = None
+    field = None
+    value = None
+    output_json = False
 
     i = 2
     while i < len(sys.argv):
@@ -468,6 +600,24 @@ def main():
         elif arg == "--section" and i + 1 < len(sys.argv):
             section = sys.argv[i + 1]
             i += 2
+        elif arg == "--name" and i + 1 < len(sys.argv):
+            name = sys.argv[i + 1]
+            i += 2
+        elif arg == "--essence" and i + 1 < len(sys.argv):
+            essence = sys.argv[i + 1]
+            i += 2
+        elif arg == "--tags" and i + 1 < len(sys.argv):
+            tags_list = sys.argv[i + 1]
+            i += 2
+        elif arg == "--field" and i + 1 < len(sys.argv):
+            field = sys.argv[i + 1]
+            i += 2
+        elif arg == "--value" and i + 1 < len(sys.argv):
+            value = sys.argv[i + 1]
+            i += 2
+        elif arg == "--json":
+            output_json = True
+            i += 1
         elif not arg.startswith("--"):
             loc_name = arg
             i += 1
@@ -476,7 +626,45 @@ def main():
             sys.exit(1)
 
     # Execute command
-    if command == "list":
+    if command == "create":
+        if not loc_name:
+            print("Error: location id required for create", file=sys.stderr)
+            sys.exit(1)
+        if not name:
+            print("Error: --name required for create", file=sys.stderr)
+            sys.exit(1)
+        if not loc_type:
+            print("Error: --type required for create", file=sys.stderr)
+            sys.exit(1)
+        if not essence:
+            print("Error: --essence required for create", file=sys.stderr)
+            sys.exit(1)
+        cmd_create(
+            loc_id=loc_name,
+            name=name,
+            loc_type=loc_type,
+            essence=essence,
+            parent=parent,
+            tags=tags_list,
+            output_json=output_json
+        )
+    elif command == "update":
+        if not loc_name:
+            print("Error: location id required for update", file=sys.stderr)
+            sys.exit(1)
+        if not field:
+            print("Error: --field required for update", file=sys.stderr)
+            sys.exit(1)
+        if not value:
+            print("Error: --value required for update", file=sys.stderr)
+            sys.exit(1)
+        cmd_update(loc_name, field, value, output_json)
+    elif command == "delete":
+        if not loc_name:
+            print("Error: location id required for delete", file=sys.stderr)
+            sys.exit(1)
+        cmd_delete(loc_name)
+    elif command == "list":
         cmd_list(tag, parent, loc_type, short)
     elif command == "get":
         if not loc_name:

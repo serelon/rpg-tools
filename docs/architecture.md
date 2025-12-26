@@ -184,10 +184,10 @@ def generate_log_id(entries):
 
 | Tool | Create | Read | Update | Delete |
 |------|--------|------|--------|--------|
-| characters.py | - | ✓ | ✓ | - |
-| locations.py | - | ✓ | - | - |
-| memories.py | - | ✓ | - | - |
-| stories.py | - | ✓ | - | - |
+| characters.py | ✓ | ✓ | ✓ | ✓ |
+| locations.py | ✓ | ✓ | ✓ | ✓ |
+| memories.py | ✓ | ✓ | - | - |
+| stories.py | ✓ | ✓ | - | - |
 | log.py | ✓ (add) | ✓ | - | ✓ |
 | campaign.py | - | ✓ | ✓ (state) | - |
 
@@ -260,9 +260,10 @@ The `scripts/lib/` module provides reusable components:
 | `lookup.py` | Find items by ID/name, field queries |
 | `parsers.py` | Era and session string parsing |
 | `changelog.py` | Character development changelog |
+| `persistence.py` | Save/delete items to canonical locations |
 | `calendars/` | Modular calendar system |
 
 Import via:
 ```python
-from lib import discover_data, find_item, load_changelog
+from lib import discover_data, find_item, save_item, delete_item_file
 ```

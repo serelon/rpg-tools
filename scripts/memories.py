@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from lib import parse_era, parse_session, discover_data, find_item
+from lib import parse_era, parse_session, discover_data, find_item, save_item
 
 
 # Memory storage
@@ -558,6 +558,89 @@ def cmd_meta(campaign: Optional[str] = None) -> None:
     print(f"\n**Total: {len(filtered)} memories**")
 
 
+def generate_memory_id() -> str:
+    """Generate next memory ID."""
+    max_num = 0
+    for mem_id in memories.keys():
+        if mem_id.startswith("mem-"):
+            try:
+                num = int(mem_id[4:])
+                max_num = max(max_num, num)
+            except ValueError:
+                pass
+    return f"mem-{max_num + 1:05d}"
+
+
+def cmd_create(
+    mem_id: Optional[str],
+    title: str,
+    text: str,
+    campaign: Optional[str] = None,
+    mem_type: Optional[str] = None,
+    era: Optional[str] = None,
+    session: Optional[str] = None,
+    intensity: Optional[str] = None,
+    perspective: Optional[str] = None,
+    characters: Optional[str] = None,
+    locations: Optional[str] = None,
+    tags: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Create a new memory."""
+    search_root = Path.cwd()
+
+    # Generate ID if not provided
+    if not mem_id:
+        mem_id = generate_memory_id()
+
+    # Check if ID already exists
+    if mem_id in memories:
+        print(f"Error: Memory '{mem_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build memory dict
+    memory = {
+        "id": mem_id,
+        "title": title,
+        "text": text,
+    }
+
+    if campaign:
+        memory["campaign"] = campaign
+    if mem_type:
+        memory["type"] = mem_type
+    if era:
+        memory["era"] = era
+    if session:
+        memory["session"] = session
+    if intensity:
+        memory["intensity"] = intensity
+    if perspective:
+        memory["perspective"] = perspective
+    if tags:
+        memory["tags"] = [t.strip() for t in tags.split(',')]
+
+    # Build connections
+    connections = {}
+    if characters:
+        connections["characters"] = [c.strip() for c in characters.split(',')]
+    if locations:
+        connections["locations"] = [l.strip() for l in locations.split(',')]
+    if connections:
+        memory["connections"] = connections
+
+    # Save to file
+    path = save_item("memories", memory, search_root)
+
+    if output_json:
+        import json
+        print(json.dumps(memory, indent=2))
+    else:
+        print(f"Created memory: {mem_id}")
+        print(f"  Title: {title}")
+        print(f"  Saved to: {path}")
+
+
 def main():
     # Find search root
     search_root = Path.cwd()
@@ -571,6 +654,7 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python memories.py <command> [options]")
         print("\nCommands:")
+        print("  create [id] --title T --text T ...   Create a new memory")
         print("  list [filters...]                    List memories")
         print("  list --short [filters...]            List with details (no text)")
         print("  get <id>                             Get specific memory")
@@ -583,10 +667,23 @@ def main():
         print("  character <name>                     All memories involving character")
         print("  location <name>                      All memories at location")
         print("  meta [--campaign NAME]               Show metadata summary")
+        print("\nCreate options:")
+        print("  --title TITLE          Memory title (required)")
+        print("  --text TEXT            Memory text (required)")
+        print("  --campaign NAME        Campaign identifier")
+        print("  --type TYPE            vivid-moment, quiet-moment, revelation, etc.")
+        print("  --era ERA              Time period (e.g., Y3.D45)")
+        print("  --session SESSION      Session identifier (e.g., s03)")
+        print("  --intensity LEVEL      low, medium, high")
+        print("  --perspective POV      first-person, third-person, omniscient")
+        print("  --characters CHARS     Comma-separated character IDs")
+        print("  --locations LOCS       Comma-separated location IDs")
+        print("  --tags TAGS            Comma-separated tags")
+        print("  --json                 Output created memory as JSON")
         print("\nFilters (for list/random):")
         print("  --campaign NAME        Filter by campaign")
-        print("  --character NAME       Filter by character")
-        print("  --location NAME        Filter by location")
+        print("  --character NAME       Filter by character (single)")
+        print("  --location NAME        Filter by location (single)")
         print("  --type TYPE            Filter by type")
         print("  --tag TAG              Filter by tag")
         print("  --era ERA              Filter by era")
@@ -612,6 +709,13 @@ def main():
     by_era = False
     query = None
     mem_id = None
+    # Create-specific options
+    title = None
+    text = None
+    characters_list = None
+    locations_list = None
+    tags_list = None
+    output_json = False
 
     i = 2
     while i < len(sys.argv):
@@ -652,6 +756,24 @@ def main():
         elif arg == "--by-era":
             by_era = True
             i += 1
+        elif arg == "--title" and i + 1 < len(sys.argv):
+            title = sys.argv[i + 1]
+            i += 2
+        elif arg == "--text" and i + 1 < len(sys.argv):
+            text = sys.argv[i + 1]
+            i += 2
+        elif arg == "--characters" and i + 1 < len(sys.argv):
+            characters_list = sys.argv[i + 1]
+            i += 2
+        elif arg == "--locations" and i + 1 < len(sys.argv):
+            locations_list = sys.argv[i + 1]
+            i += 2
+        elif arg == "--tags" and i + 1 < len(sys.argv):
+            tags_list = sys.argv[i + 1]
+            i += 2
+        elif arg == "--json":
+            output_json = True
+            i += 1
         elif not arg.startswith("--"):
             # Positional argument (query or id)
             if command == "search":
@@ -664,7 +786,29 @@ def main():
             sys.exit(1)
 
     # Execute command
-    if command == "list":
+    if command == "create":
+        if not title:
+            print("Error: --title required for create", file=sys.stderr)
+            sys.exit(1)
+        if not text:
+            print("Error: --text required for create", file=sys.stderr)
+            sys.exit(1)
+        cmd_create(
+            mem_id=mem_id,
+            title=title,
+            text=text,
+            campaign=campaign,
+            mem_type=mem_type,
+            era=era,
+            session=session,
+            intensity=intensity,
+            perspective=perspective,
+            characters=characters_list,
+            locations=locations_list,
+            tags=tags_list,
+            output_json=output_json
+        )
+    elif command == "list":
         cmd_list(campaign, character, location, mem_type, tag, era, session,
                  intensity, perspective, short)
     elif command == "get":
