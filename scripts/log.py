@@ -367,7 +367,7 @@ def cmd_digest(
             parsed = calendar.parse(date)
             if parsed:
                 return parsed.sort_key
-        return (0, 0, 0)
+        return (float('inf'),)  # Entries without dates go at end
 
     all_entries.sort(key=sort_key)
 
@@ -570,10 +570,18 @@ def main():
             opts["output_json"] = True
             i += 1
         elif arg == "--arc-sessions" and i + 1 < len(sys.argv):
-            opts["arc_sessions"] = int(sys.argv[i + 1])
+            try:
+                opts["arc_sessions"] = int(sys.argv[i + 1])
+            except ValueError:
+                print("Error: --arc-sessions requires an integer value", file=sys.stderr)
+                sys.exit(1)
             i += 2
         elif arg == "--current-sessions" and i + 1 < len(sys.argv):
-            opts["current_sessions"] = int(sys.argv[i + 1])
+            try:
+                opts["current_sessions"] = int(sys.argv[i + 1])
+            except ValueError:
+                print("Error: --current-sessions requires an integer value", file=sys.stderr)
+                sys.exit(1)
             i += 2
         elif not arg.startswith("--") and not positional_set:
             if command == "add":

@@ -27,7 +27,7 @@ Create memory JSON files for campaign memory tracking. Files go in `memories/` f
     "locations": ["location-id"],
     "stories": ["story-id"],
     "related_memories": ["other-memory-id"],
-    "log_entries": ["log-00007"]
+    "log_entries": ["log-00008"]
   }
 }
 ```
@@ -94,7 +94,7 @@ Cross-references to other campaign data (in `connections` object):
 - **locations**: Array of location ids where this memory takes place
 - **stories**: Array of story ids this memory relates to
 - **related_memories**: Array of memory ids that form a narrative thread
-- **log_entries**: Array of log entry ids related to this memory
+- **log_entries**: Array of log entry ids related to this memory (schema-only, no CLI support yet)
 
 The tool validates connections and warns if referenced ids don't exist.
 
