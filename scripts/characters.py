@@ -153,7 +153,8 @@ def format_value(value: Any, indent: int = 0) -> List[str]:
                 lines.append(f"{prefix}**{k}:**")
                 for item in v:
                     if isinstance(item, dict):
-                        lines.extend(format_value(item, indent + 1))
+                        lines.append(f"{prefix}  -")
+                        lines.extend(format_value(item, indent + 2))
                     else:
                         lines.append(f"{prefix}  - {item}")
             else:
@@ -161,7 +162,8 @@ def format_value(value: Any, indent: int = 0) -> List[str]:
     elif isinstance(value, list):
         for item in value:
             if isinstance(item, dict):
-                lines.extend(format_value(item, indent))
+                lines.append(f"{prefix}-")
+                lines.extend(format_value(item, indent + 1))
             else:
                 lines.append(f"{prefix}- {item}")
     else:

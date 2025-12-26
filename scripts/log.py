@@ -186,8 +186,8 @@ def cmd_add(
                     state = json.load(f)
                     if state.get("active_branch"):
                         entry["branch"] = state["active_branch"]
-            except (OSError, json.JSONDecodeError):
-                pass
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"Warning: Could not auto-detect branch from state file: {e}", file=sys.stderr)
     if characters:
         entry["characters"] = parse_characters_arg(characters)
     if locations:
