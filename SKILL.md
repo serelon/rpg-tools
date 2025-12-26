@@ -97,7 +97,7 @@ python scripts/characters.py get NAME                    # Get minimal profile
 python scripts/characters.py get NAME --depth full       # Get full profile
 python scripts/characters.py get NAME --section powers   # Get specific section
 python scripts/characters.py sections NAME               # List available sections
-python scripts/characters.py update NAME --section full.motivation --value "New goal" --reason "Story event"
+python scripts/characters.py update NAME --field full.motivation --value "New goal" --reason "Story event"
 ```
 
 Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
