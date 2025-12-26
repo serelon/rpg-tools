@@ -258,8 +258,9 @@ def cmd_state_set(
     # Check if characters exist (warn if not, but proceed)
     from lib import discover_data
     existing_chars = discover_data("characters", Path.cwd(), on_warning=lambda x: None)
+    existing_char_keys_lower = {c.lower() for c in existing_chars.keys()}
     for character in char_list:
-        if character.lower() not in [c.lower() for c in existing_chars.keys()]:
+        if character.lower() not in existing_char_keys_lower:
             print(f"Note: No character file found for '{character}'", file=sys.stderr)
 
     changelog = load_changelog(Path.cwd())
@@ -492,8 +493,10 @@ def cmd_export(
     else:
         print(f"Exported to: {zip_path}")
         print(f"\nContents:")
+        from collections import Counter
+        skipped_counts_by_dir = Counter(p.parent.name for p, _ in skipped_files)
         for dir_name, count in manifest["counts"].items():
-            skipped_in_dir = sum(1 for p, _ in skipped_files if p.parent.name == dir_name)
+            skipped_in_dir = skipped_counts_by_dir.get(dir_name, 0)
             if skipped_in_dir > 0:
                 print(f"  {dir_name}: {count} files ({skipped_in_dir} skipped)")
             else:

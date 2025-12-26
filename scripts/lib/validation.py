@@ -110,12 +110,11 @@ def validate_dice_notation_chars(notation: str) -> str:
     return notation
 
 
-def validate_keep_drop_value(value: Optional[int], mod_type: str) -> int:
+def validate_keep_drop_value(value: Optional[int]) -> int:
     """Validate keep/drop modifier value.
 
     Args:
         value: The modifier value (None means default to 1)
-        mod_type: The modifier type (kh, kl, dh, dl)
 
     Returns:
         The validated value (defaults to 1 if None)

@@ -99,21 +99,14 @@ def discover_data(
         try:
             with open(path, encoding='utf-8-sig') as f:
                 data = json.load(f)
-                # Handle both single item and array of items
-                if isinstance(data, list):
-                    for item in data:
-                        item_id = item.get("id", f"{path.stem}-{len(items)}")
-                        if item_id in items:
-                            on_warning(f"Warning: Duplicate ID '{item_id}' found in {path.name} "
-                                      f"(already loaded from {item_sources[item_id].name})")
-                        items[item_id] = item
-                        item_sources[item_id] = path
-                else:
-                    item_id = data.get("id", path.stem)
+                # Normalize to list for uniform processing
+                items_to_process = data if isinstance(data, list) else [data]
+                for item in items_to_process:
+                    item_id = item.get("id", f"{path.stem}-{len(items)}")
                     if item_id in items:
                         on_warning(f"Warning: Duplicate ID '{item_id}' found in {path.name} "
                                   f"(already loaded from {item_sources[item_id].name})")
-                    items[item_id] = data
+                    items[item_id] = item
                     item_sources[item_id] = path
         except Exception as e:
             on_warning(f"Warning: Could not load {data_type} file {path}: {e}")

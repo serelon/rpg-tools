@@ -61,7 +61,7 @@ class DiceRoll:
         cleaned = re.sub(dice_pattern, '', self.notation)
         cleaned = re.sub(r'[+-]\d+', '', cleaned)  # Remove static modifiers
         cleaned = cleaned.replace('+', '').replace('-', '')  # Remove standalone operators
-        if cleaned and not cleaned.replace(' ', '') == '':
+        if cleaned.strip():
             raise ValueError(f"Invalid characters in dice notation: '{self.original_notation}'")
 
         for match in dice_matches:
