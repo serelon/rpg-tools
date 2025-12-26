@@ -14,6 +14,9 @@ from lib.calendars import create_calendar, is_loose_date
 log_entries: List[Dict[str, Any]] = []
 campaign_config: Dict[str, Any] = {}
 
+# Importance hierarchy for filtering (higher = more important)
+IMPORTANCE_LEVELS = {"minor": 0, "normal": 1, "major": 2, "critical": 3}
+
 
 def load_campaign_config(search_root: Path) -> Dict[str, Any]:
     """Load campaign configuration."""
@@ -198,6 +201,7 @@ def cmd_list(
     location: Optional[str] = None,
     importance: Optional[str] = None,
     tag: Optional[str] = None,
+    session: Optional[str] = None,
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
     limit: int = 0,
@@ -223,12 +227,18 @@ def cmd_list(
 
     if importance:
         imp_lower = importance.lower()
-        filtered = [e for e in filtered if e.get("importance", "").lower() == imp_lower]
+        min_level = IMPORTANCE_LEVELS.get(imp_lower, 1)
+        filtered = [e for e in filtered
+                   if IMPORTANCE_LEVELS.get(e.get("importance", "normal").lower(), 1) >= min_level]
 
     if tag:
         tag_lower = tag.lower()
         filtered = [e for e in filtered
                    if tag_lower in [t.lower() for t in e.get("tags", [])]]
+
+    if session:
+        session_lower = session.lower()
+        filtered = [e for e in filtered if e.get("session", "").lower() == session_lower]
 
     # Create calendar for date operations
     calendar = get_calendar()
@@ -457,6 +467,7 @@ def main():
             location=opts["location"],
             importance=opts["importance"],
             tag=opts["tag"],
+            session=opts["session"],
             from_date=opts["from_date"],
             to_date=opts["to_date"],
             limit=opts["limit"],

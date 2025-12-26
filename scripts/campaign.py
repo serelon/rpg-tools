@@ -280,6 +280,63 @@ def cmd_state_set(
         print(f"Change logged: {entry.id}")
 
 
+def cmd_state_delete(
+    character: str,
+    field: str,
+    reason: str,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Delete a character's session state field."""
+    global campaign_state
+
+    if "characters" not in campaign_state:
+        print(f"Error: No state recorded for any character", file=sys.stderr)
+        sys.exit(1)
+
+    char_state = campaign_state["characters"].get(character)
+    if char_state is None:
+        print(f"Error: No state recorded for '{character}'", file=sys.stderr)
+        sys.exit(1)
+
+    if field not in char_state:
+        print(f"Error: Field '{field}' not found for '{character}'", file=sys.stderr)
+        sys.exit(1)
+
+    old_value = char_state.pop(field)
+
+    # Clean up empty character dict
+    if not char_state:
+        del campaign_state["characters"][character]
+
+    save_state(Path.cwd(), campaign_state)
+
+    # Record deletion in changelog
+    changelog = load_changelog(Path.cwd())
+    entry = changelog.add(
+        session=session or "current",
+        character=character,
+        tier="state",
+        field=field,
+        from_value=old_value,
+        to_value=None,
+        reason=reason,
+        branch=campaign_state.get("active_branch")
+    )
+
+    if output_json:
+        print(json.dumps({
+            "character": character,
+            "field": field,
+            "deleted": True,
+            "old_value": old_value,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Deleted {character}.{field} (was: {old_value})")
+        print(f"Change logged: {entry.id}")
+
+
 def cmd_changelog_show(
     character: Optional[str] = None,
     session: Optional[str] = None,
@@ -337,6 +394,7 @@ def main():
         print("  branch create <id> <name>      Create new branch")
         print("  state show [--character X] [--branch Y]  Show campaign state")
         print("  state set <char> <field> <val> Set character state")
+        print("  state delete <char> <field>    Delete character state field")
         print("  changelog show [filters...]    Show changelog entries")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
@@ -458,6 +516,17 @@ def main():
                 sys.exit(1)
             cmd_state_set(
                 positional[0], positional[1], positional[2],
+                opts["reason"], opts["session"], opts["output_json"]
+            )
+        elif subcommand == "delete":
+            if len(positional) < 2:
+                print("Error: character and field required", file=sys.stderr)
+                sys.exit(1)
+            if not opts["reason"]:
+                print("Error: --reason is required for state changes", file=sys.stderr)
+                sys.exit(1)
+            cmd_state_delete(
+                positional[0], positional[1],
                 opts["reason"], opts["session"], opts["output_json"]
             )
         else:

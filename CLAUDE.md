@@ -79,3 +79,7 @@ Optional behavior modifiers in `modifiers/` can be loaded during sessions:
 - **feature/*** - Short-lived feature branches off `develop`, merged back when complete.
 
 Flow: `feature/xyz` → `develop` → `stable`
+
+## Workflow
+
+- Always create a feature branch before implementing changes from plan mode.
