@@ -3,6 +3,8 @@
 
 import json
 import sys
+import zipfile
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -379,6 +381,116 @@ def cmd_changelog_show(
             print()
 
 
+# Directories to include in export
+EXPORT_DIRS = ["campaign", "characters", "locations", "memories", "stories", "namesets"]
+
+
+def cmd_export(
+    output_path: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Export campaign to a zip archive."""
+    search_root = Path.cwd()
+
+    # Generate default filename from campaign name and date
+    campaign_name = campaign_config.get("campaign", "campaign")
+    # Sanitize name for filename
+    safe_name = "".join(c if c.isalnum() or c in "-_" else "-" for c in campaign_name.lower())
+    date_str = datetime.now().strftime("%Y%m%d")
+    default_filename = f"{safe_name}-{date_str}.zip"
+
+    zip_path = Path(output_path) if output_path else search_root / default_filename
+
+    # Count files for manifest
+    manifest = {
+        "campaign": campaign_name,
+        "exported": datetime.now().isoformat(),
+        "counts": {}
+    }
+
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for dir_name in EXPORT_DIRS:
+            dir_path = search_root / dir_name
+            if not dir_path.exists():
+                continue
+
+            count = 0
+            for json_file in dir_path.glob("*.json"):
+                # Use forward slashes for zip paths (cross-platform)
+                arc_name = f"{dir_name}/{json_file.name}"
+                zf.write(json_file, arc_name)
+                count += 1
+
+            if count > 0:
+                manifest["counts"][dir_name] = count
+
+        # Write manifest
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
+
+    if output_json:
+        result = {
+            "output": str(zip_path),
+            "manifest": manifest
+        }
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"Exported to: {zip_path}")
+        print(f"\nContents:")
+        for dir_name, count in manifest["counts"].items():
+            print(f"  {dir_name}: {count} files")
+        total = sum(manifest["counts"].values())
+        print(f"\nTotal: {total} files")
+
+
+def cmd_import(
+    zip_path: str,
+    into_path: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Import campaign from a zip archive."""
+    source = Path(zip_path)
+    if not source.exists():
+        print(f"Error: File not found: {zip_path}", file=sys.stderr)
+        sys.exit(1)
+
+    target = Path(into_path) if into_path else Path.cwd()
+
+    # Read manifest if present
+    manifest = None
+    try:
+        with zipfile.ZipFile(source, 'r') as zf:
+            if "manifest.json" in zf.namelist():
+                manifest = json.loads(zf.read("manifest.json").decode('utf-8'))
+
+            # Validate structure
+            has_config = any(name.startswith("campaign/") for name in zf.namelist())
+            if not has_config:
+                print("Warning: No campaign/ directory found in archive", file=sys.stderr)
+
+            # Extract all files
+            zf.extractall(target)
+    except zipfile.BadZipFile:
+        print(f"Error: Invalid zip file: {zip_path}", file=sys.stderr)
+        sys.exit(1)
+
+    if output_json:
+        result = {
+            "source": str(source),
+            "target": str(target),
+            "manifest": manifest
+        }
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"Imported from: {source}")
+        print(f"Into: {target}")
+        if manifest:
+            print(f"\nCampaign: {manifest.get('campaign', 'Unknown')}")
+            print(f"Originally exported: {manifest.get('exported', 'Unknown')}")
+            print(f"\nContents:")
+            for dir_name, count in manifest.get("counts", {}).items():
+                print(f"  {dir_name}: {count} files")
+
+
 def main():
     global campaign_config, campaign_state
 
@@ -391,6 +503,8 @@ def main():
         print("\nCommands:")
         print("  init <name>                    Initialize new campaign")
         print("  show                           Show campaign config")
+        print("  export [--output FILE.zip]     Export campaign to zip")
+        print("  import <file.zip> [--into DIR] Import campaign from zip")
         print("  branch list                    List all branches")
         print("  branch switch <id>             Switch active branch")
         print("  branch create <id> <name>      Create new branch")
@@ -429,6 +543,8 @@ def main():
         "session": None,
         "tier": None,
         "limit": 0,
+        "output": None,
+        "into": None,
         "output_json": False,
     }
 
@@ -468,6 +584,12 @@ def main():
         elif arg == "--limit" and i + 1 < len(sys.argv):
             opts["limit"] = int(sys.argv[i + 1])
             i += 2
+        elif arg == "--output" and i + 1 < len(sys.argv):
+            opts["output"] = sys.argv[i + 1]
+            i += 2
+        elif arg == "--into" and i + 1 < len(sys.argv):
+            opts["into"] = sys.argv[i + 1]
+            i += 2
         elif not arg.startswith("--"):
             positional.append(arg)
             i += 1
@@ -484,6 +606,15 @@ def main():
 
     elif command == "show":
         cmd_show(opts["output_json"])
+
+    elif command == "export":
+        cmd_export(opts["output"], opts["output_json"])
+
+    elif command == "import":
+        if not positional:
+            print("Error: zip file path required", file=sys.stderr)
+            sys.exit(1)
+        cmd_import(positional[0], opts["into"], opts["output_json"])
 
     elif command == "branch":
         if subcommand == "list":

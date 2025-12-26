@@ -348,14 +348,30 @@ def cmd_delete(entry_id: str) -> None:
     sys.exit(1)
 
 
+def get_digest_defaults() -> Dict[str, int]:
+    """Get digest defaults from config or hardcoded values."""
+    digest_config = campaign_config.get("digest", {})
+    return {
+        "pillar_limit": digest_config.get("pillar_limit", 10),
+        "arc_sessions": digest_config.get("arc_sessions", 20),
+        "current_sessions": digest_config.get("current_sessions", 5),
+    }
+
+
 def cmd_digest(
     character: Optional[str] = None,
-    pillar_limit: int = 10,
-    arc_sessions: int = 20,
-    current_sessions: int = 5,
+    pillar_limit: Optional[int] = None,
+    arc_sessions: Optional[int] = None,
+    current_sessions: Optional[int] = None,
     output_json: bool = False
 ) -> None:
     """Show tiered campaign digest."""
+    # Get defaults from config, then apply CLI overrides
+    defaults = get_digest_defaults()
+    pillar_limit = pillar_limit if pillar_limit is not None else defaults["pillar_limit"]
+    arc_sessions = arc_sessions if arc_sessions is not None else defaults["arc_sessions"]
+    current_sessions = current_sessions if current_sessions is not None else defaults["current_sessions"]
+
     calendar = get_calendar()
 
     # Get all entries sorted by date
@@ -477,8 +493,10 @@ def main():
         print("  --verbose                      Show full details")
         print("\nDigest options:")
         print("  --character NAME               Filter by character")
+        print("  --pillar-limit N               Max pillars to show (default: 10)")
         print("  --arc-sessions N               Sessions for 'recent arc' (default: 20)")
         print("  --current-sessions N           Sessions for 'current' (default: 5)")
+        print("\n  Defaults can be configured in campaign/config.json under 'digest' key:")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
@@ -507,8 +525,9 @@ def main():
         "limit": 0,
         "verbose": False,
         "output_json": False,
-        "arc_sessions": 20,
-        "current_sessions": 5,
+        "pillar_limit": None,
+        "arc_sessions": None,
+        "current_sessions": None,
     }
 
     i = 2
@@ -569,6 +588,13 @@ def main():
         elif arg == "--json":
             opts["output_json"] = True
             i += 1
+        elif arg == "--pillar-limit" and i + 1 < len(sys.argv):
+            try:
+                opts["pillar_limit"] = int(sys.argv[i + 1])
+            except ValueError:
+                print("Error: --pillar-limit requires an integer value", file=sys.stderr)
+                sys.exit(1)
+            i += 2
         elif arg == "--arc-sessions" and i + 1 < len(sys.argv):
             try:
                 opts["arc_sessions"] = int(sys.argv[i + 1])
@@ -640,6 +666,7 @@ def main():
     elif command == "digest":
         cmd_digest(
             character=opts["character"],
+            pillar_limit=opts["pillar_limit"],
             arc_sessions=opts["arc_sessions"],
             current_sessions=opts["current_sessions"],
             output_json=opts["output_json"]

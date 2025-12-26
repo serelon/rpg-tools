@@ -56,14 +56,14 @@ See `docs/architecture.md` for detailed documentation of the data tool patterns.
 
 ## Data Directories
 
-Campaign data is NOT included in this repo. Tools expect JSON files in the appropriate directories. See `guides/` for JSON schemas:
-- `guides/character-guide.md` - Character JSON structure
-- `guides/location-guide.md` - Location JSON with hierarchy/connections
-- `guides/memories-guide.md` - Memory JSON with cross-references
-- `guides/nameset-guide.md` - Nameset format with weighted categories
-- `guides/story-capture-guide.md` - Story collection structure
-- `guides/oracle-guide.md` - Oracle types and usage patterns
-- `guides/campaign-state-guide.md` - Campaign state system and session logging
+Campaign data is NOT included in this repo. Tools expect JSON files in the appropriate directories. See `references/` for JSON schemas:
+- `references/character-guide.md` - Character JSON structure
+- `references/location-guide.md` - Location JSON with hierarchy/connections
+- `references/memories-guide.md` - Memory JSON with cross-references
+- `references/nameset-guide.md` - Nameset format with weighted categories
+- `references/story-capture-guide.md` - Story collection structure
+- `references/oracle-guide.md` - Oracle types and usage patterns
+- `references/campaign-state-guide.md` - Campaign state system and session logging
 
 ## Modifiers
 

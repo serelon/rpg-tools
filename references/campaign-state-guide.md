@@ -12,6 +12,7 @@ The campaign state system provides:
 - **Character Development** - Update development-tier fields with automatic changelog
 - **Audit Trail** - Complete history of all state changes and character updates
 - **Calendar System** - Flexible date handling (structured dates or narrative descriptions)
+- **Export/Import** - Back up and restore campaigns to zip archives
 
 ## Campaign Initialization
 
@@ -45,6 +46,44 @@ Output shows:
 - Campaign name
 - Calendar type and configuration
 - All branches with protagonists and status
+
+## Export and Import
+
+Back up campaigns or move them between systems.
+
+### Export Campaign
+
+```bash
+# Export with automatic filename (campaign-name-YYYYMMDD.zip)
+campaign.py export
+
+# Export with custom filename
+campaign.py export --output backup.zip
+
+# JSON output (returns manifest)
+campaign.py export --json
+```
+
+Exports all JSON files from:
+- `campaign/` - Config, state, log, changelog
+- `characters/`, `locations/`, `memories/`, `stories/`, `namesets/`
+
+Creates a manifest with counts for each directory.
+
+### Import Campaign
+
+```bash
+# Import to current directory
+campaign.py import backup.zip
+
+# Import to specific folder
+campaign.py import backup.zip --into ./restored-campaign
+
+# JSON output
+campaign.py import backup.zip --json
+```
+
+Validates archive structure and reports contents.
 
 ## Branch Management
 
@@ -392,6 +431,48 @@ Loose dates:
 ### Calendar Extensibility
 
 The calendar system is modular. Future calendar types can be added to `scripts/lib/calendars/` without changing log or campaign tools.
+
+## Campaign Digest
+
+The digest command provides a tiered overview of campaign events, useful for context recall.
+
+### Usage
+
+```bash
+# Basic digest
+log.py digest
+
+# Filter by character involvement
+log.py digest --character juno
+
+# Override tier limits
+log.py digest --pillar-limit 5 --arc-sessions 10 --current-sessions 3
+
+# JSON output
+log.py digest --json
+```
+
+### Digest Tiers
+
+1. **PILLARS** - Critical events from all time (limited by pillar_limit)
+2. **RECENT ARC** - Major+ events from last N sessions (arc_sessions)
+3. **CURRENT** - All events from last N sessions (current_sessions)
+
+### Configuration
+
+Configure digest defaults in `campaign/config.json`:
+
+```json
+{
+  "digest": {
+    "pillar_limit": 10,
+    "arc_sessions": 20,
+    "current_sessions": 5
+  }
+}
+```
+
+CLI arguments override config values. Config values override hardcoded defaults.
 
 ## Integration Patterns
 

@@ -21,7 +21,7 @@ INCLUDE_FILES = [
 
 # Directories to include
 INCLUDE_DIRS = [
-    ('guides', '*.md'),
+    ('references', '*.md'),
     ('modifiers', '*.md'),
     ('scripts/lib', '*.py'),
     ('scripts/lib/calendars', '*.py'),

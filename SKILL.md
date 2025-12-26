@@ -68,7 +68,7 @@ python scripts/oracle.py fate [likelihood] # Yes/no oracle (impossible/unlikely/
 python scripts/oracle.py prompt            # Action + Theme word pair
 ```
 
-See **[Using the Oracle](guides/oracle-guide.md)** for guidance on when to use each oracle type.
+See **[Using the Oracle](references/oracle-guide.md)** for guidance on when to use each oracle type.
 
 ---
 
@@ -189,8 +189,8 @@ Key options: `--json`, `--reason` (required for state changes)
 
 Guides for before and after play:
 
-- **[Session Setup](guides/session-setup-guide.md)** - Calibrate tone, direction, and pacing
-- **[Session Debrief](guides/session-debrief-guide.md)** - Post-session reflection and character growth
+- **[Session Setup](references/session-setup-guide.md)** - Calibrate tone, direction, and pacing
+- **[Session Debrief](references/session-debrief-guide.md)** - Post-session reflection and character growth
 
 **Optional modifiers:**
 - [Mature Content](modifiers/mature-content.md) - For authentic dark themes
@@ -202,10 +202,10 @@ Guides for before and after play:
 
 Guides for creating your own JSON data files:
 
-- **[Creating Characters](guides/character-guide.md)** - Character JSON schema and workflow
-- **[Creating Locations](guides/location-guide.md)** - Location hierarchy and connections
-- **[Creating Memories](guides/memories-guide.md)** - Memory tracking with cross-references
-- **[Creating Namesets](guides/nameset-guide.md)** - Name generation collections
-- **[Capturing Stories](guides/story-capture-guide.md)** - Story extraction workflow
-- **[Using the Oracle](guides/oracle-guide.md)** - Oracle types and when to use them
-- **[Managing Campaign State](guides/campaign-state-guide.md)** - Branches, log, state, and changelog
+- **[Creating Characters](references/character-guide.md)** - Character JSON schema and workflow
+- **[Creating Locations](references/location-guide.md)** - Location hierarchy and connections
+- **[Creating Memories](references/memories-guide.md)** - Memory tracking with cross-references
+- **[Creating Namesets](references/nameset-guide.md)** - Name generation collections
+- **[Capturing Stories](references/story-capture-guide.md)** - Story extraction workflow
+- **[Using the Oracle](references/oracle-guide.md)** - Oracle types and when to use them
+- **[Managing Campaign State](references/campaign-state-guide.md)** - Branches, log, state, and changelog
