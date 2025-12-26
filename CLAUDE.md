@@ -82,3 +82,5 @@ Flow: `feature/xyz` → `develop` → `stable`
 ## Workflow
 
 - Always create a feature branch before implementing changes from plan mode.
+- When creating PRs that fix issues, include "Closes #N" in the PR body to auto-close on merge.
+- After merging, verify related issues are closed. If not auto-closed, close them manually with a comment referencing the PR.
