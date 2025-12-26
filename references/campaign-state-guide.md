@@ -177,8 +177,12 @@ log.py list --character juno
 # Filter by location
 log.py list --location market-district
 
-# Filter by importance
+# Filter by importance (exact match)
 log.py list --importance major
+
+# Filter by importance (hierarchical with + suffix)
+log.py list --importance major+    # Returns major AND critical entries
+log.py list --importance normal+   # Returns normal, major, and critical
 
 # Filter by tag
 log.py list --tag combat
@@ -339,6 +343,8 @@ Character data is divided into tiers:
 - relationships, powers, combat, timeline, secrets, custom sections
 
 Updates to minimal/full fields use `characters.py update`. Updates to state-level attributes use `campaign.py state set`.
+
+**Note:** The `minimal` tier refers to a *compact display profile* (development-tier data), not volatile state. Despite the name, these are stable character traits. Use `campaign.py state set` for session-level volatile data like current location, active conditions, and temporary resources.
 
 ## Changelog Queries
 
@@ -575,6 +581,14 @@ characters/
 locations/         # Location data (reference only)
   ...
 ```
+
+### File Discovery Behavior
+
+When loading JSON data files, the tools follow these conventions:
+
+- **Symlinks are followed**: Symlinked JSON files are loaded normally. The `id` field inside the file is authoritative, not the filename.
+- **Hidden files are included**: Files starting with `.` (e.g., `.backup.json`) are loaded. To exclude a file from discovery, move it outside the data directory.
+- **ID is authoritative**: When retrieving items, the `id` field in the JSON takes precedence over the filename.
 
 ## Example Workflow: Multi-Branch Campaign
 

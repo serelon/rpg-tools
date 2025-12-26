@@ -491,8 +491,16 @@ def cmd_update(
     final_key = parts[-1]
     old_value = target.get(final_key)
 
+    # Try to parse value as JSON (for arrays/objects)
+    parsed_value = value
+    if value.startswith('{') or value.startswith('['):
+        try:
+            parsed_value = json.loads(value)
+        except json.JSONDecodeError:
+            print(f"Warning: Value for --field {field} could not be parsed as JSON. Treating as string.", file=sys.stderr)
+
     # Update the value
-    target[final_key] = value
+    target[final_key] = parsed_value
 
     # Find the location file and save
     loc_file = find_source_file("locations", loc_id, search_root)
@@ -505,12 +513,12 @@ def cmd_update(
             "id": loc_id,
             "field": field,
             "old_value": old_value,
-            "new_value": value
+            "new_value": parsed_value
         }, indent=2))
     else:
         name = loc.get("name", loc_id)
         print(f"Updated {name}.{field}")
-        print(f"  {old_value} -> {value}")
+        print(f"  {old_value} -> {parsed_value}")
 
 
 def cmd_delete(loc_id: str) -> None:

@@ -442,13 +442,63 @@ def cmd_create(
         print(f"  Saved to: {path}")
 
 
-def cmd_delete(char_id: str) -> None:
+def find_character_references(char_id: str, search_root: Path) -> Dict[str, int]:
+    """Find references to a character in logs and memories."""
+    from typing import Callable, Iterable
+
+    char_lower = char_id.lower()
+
+    def _count_refs(dir_path: Path, extractor: Callable[[Dict], Iterable[str]]) -> int:
+        """Helper to find references in a directory of JSON files."""
+        count = 0
+        if not dir_path.exists():
+            return 0
+
+        for path in dir_path.glob("*.json"):
+            try:
+                with open(path, encoding='utf-8-sig') as f:
+                    data = json.load(f)
+                    items = data if isinstance(data, list) else [data]
+                    for item in items:
+                        if any(c.lower() == char_lower for c in extractor(item)):
+                            count += 1
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"Warning: Could not parse {path} for character references: {e}", file=sys.stderr)
+        return count
+
+    log_refs = _count_refs(
+        search_root / "campaign" / "logs",
+        lambda item: item.get("characters", {}).keys()
+    )
+
+    mem_refs = _count_refs(
+        search_root / "memories",
+        lambda item: item.get("connections", {}).get("characters", [])
+    )
+
+    return {"logs": log_refs, "memories": mem_refs}
+
+
+def cmd_delete(char_id: str, force: bool = False) -> None:
     """Delete a character."""
     search_root = Path.cwd()
 
     # Check character exists
     char = find_item(characters, char_id, "Character")
     actual_id = char.get("id", char_id)
+
+    # Check for references unless --force is used
+    if not force:
+        refs = find_character_references(actual_id, search_root)
+        total_refs = refs["logs"] + refs["memories"]
+        if total_refs > 0:
+            print(f"Warning: Character '{actual_id}' is referenced in:", file=sys.stderr)
+            if refs["logs"] > 0:
+                print(f"  - {refs['logs']} log entries", file=sys.stderr)
+            if refs["memories"] > 0:
+                print(f"  - {refs['memories']} memories", file=sys.stderr)
+            print(f"\nUse --force to delete anyway.", file=sys.stderr)
+            sys.exit(1)
 
     # Delete the file
     if delete_item_file("characters", actual_id, search_root):
@@ -471,7 +521,7 @@ def main():
         print("\nCommands:")
         print("  create <id> --name N --role R --essence E ...")
         print("                                 Create a new character")
-        print("  delete <id>                    Delete a character")
+        print("  delete <id> [--force]          Delete a character")
         print("  list [filters...]              List character names")
         print("  list --short [filters...]      List with minimal profiles")
         print("  get <name>                     Get minimal profile")
@@ -526,6 +576,7 @@ def main():
     reason = None
     session_name = None
     output_json = False
+    force = False
     # Create-specific options
     name = None
     role = None
@@ -574,6 +625,9 @@ def main():
             i += 2
         elif arg == "--json":
             output_json = True
+            i += 1
+        elif arg == "--force":
+            force = True
             i += 1
         elif arg == "--name" and i + 1 < len(sys.argv):
             name = sys.argv[i + 1]
@@ -627,7 +681,7 @@ def main():
         if not char_name:
             print("Error: character id required for delete", file=sys.stderr)
             sys.exit(1)
-        cmd_delete(char_name)
+        cmd_delete(char_name, force)
     elif command == "list":
         cmd_list(faction, subfaction, tag, location, branch, short)
     elif command == "get":
