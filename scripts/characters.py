@@ -330,8 +330,16 @@ def cmd_update(
     final_key = parts[-1]
     old_value = target.get(final_key)
 
+    # Try to parse value as JSON (for arrays/objects)
+    parsed_value = value
+    if value.startswith('{') or value.startswith('['):
+        try:
+            parsed_value = json.loads(value)
+        except json.JSONDecodeError:
+            pass  # Keep as string
+
     # Update the value
-    target[final_key] = value
+    target[final_key] = parsed_value
 
     # Find the character file and save
     # Look in characters/ directory
@@ -362,7 +370,7 @@ def cmd_update(
         tier="development",
         field=field,
         from_value=old_value,
-        to_value=value,
+        to_value=parsed_value,
         reason=reason
     )
 
@@ -371,13 +379,13 @@ def cmd_update(
             "character": char_id,
             "field": field,
             "from": old_value,
-            "to": value,
+            "to": parsed_value,
             "change_id": entry.id
         }, indent=2))
     else:
         name = char.get("name", char_id)
         print(f"Updated {name}.{field}")
-        print(f"  {old_value} -> {value}")
+        print(f"  {old_value} -> {parsed_value}")
         print(f"Change logged: {entry.id}")
 
 
@@ -488,10 +496,14 @@ def main():
         print("  --branch NAME                  Filter by branch protagonists (from campaign config)")
         print("\nUpdate options:")
         print("  --field FIELD                  Field to update (dot notation, e.g., full.motivation)")
-        print("  --value VALUE                  New value")
+        print("  --value VALUE                  New value (JSON arrays/objects auto-parsed)")
         print("  --reason REASON                Reason for change")
         print("  --session NAME                 Session identifier (optional)")
         print("  --json                         Output as JSON")
+        print("\n  Examples:")
+        print("    --value 'Simple string'")
+        print("    --value '[\"item1\", \"item2\"]'   # Parsed as JSON array")
+        print("    --value '{\"key\": \"val\"}'       # Parsed as JSON object")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
