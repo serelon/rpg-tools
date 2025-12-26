@@ -60,6 +60,12 @@ def draw_spread(num_cards):
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h'):
+        print("Usage: python tarot.py [num_cards]")
+        print("  No arguments: draw single card")
+        print("  num_cards: draw a spread of N cards (1-10)")
+        sys.exit(0)
+
     if len(sys.argv) == 1:
         # No arguments: draw single card
         print(draw_card())

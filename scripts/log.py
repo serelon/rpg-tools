@@ -316,7 +316,7 @@ def main():
     campaign_config = load_campaign_config(search_root)
     log_entries = load_log(search_root)
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python log.py <command> [options]")
         print("\nCommands:")
         print("  add <summary> [options]        Add a log entry")
@@ -344,7 +344,7 @@ def main():
         print("  --verbose                      Show full details")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 

@@ -290,7 +290,7 @@ def main():
     discover_stories(repo_root)
 
     # Parse command line
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python stories.py <command> [options]")
         print("\nCommands:")
         print("  meta --campaign NAME                     Show available tags/metadata with counts")
@@ -303,7 +303,7 @@ def main():
         print("  --theme TAG          Filter by theme")
         print("  --mood MOOD          Filter by mood")
         print("  --era ERA            Filter by era (partial match)")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 

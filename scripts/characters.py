@@ -353,7 +353,7 @@ def main():
     discover_characters(search_root)
 
     # Parse command line
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python characters.py <command> [options]")
         print("\nCommands:")
         print("  list [filters...]              List character names")
@@ -364,8 +364,8 @@ def main():
         print("  sections <name>                List available sections")
         print("  memories <name>                Show memories involving character")
         print("  show <name>                    Show raw JSON")
-        print("  update <name> --section FIELD --value VAL --reason R")
-        print("                                 Update character field")
+        print("  update <name> --field FIELD --value VAL --reason R")
+        print("                                 Update character field (dot notation)")
         print("\nFilters (for list):")
         print("  --faction NAME                 Filter by faction")
         print("  --subfaction NAME              Filter by subfaction")
@@ -373,12 +373,12 @@ def main():
         print("  --location NAME                Filter by current location (from campaign state)")
         print("  --branch NAME                  Filter by branch protagonists (from campaign config)")
         print("\nUpdate options:")
-        print("  --section FIELD                Field to update (dot notation supported)")
+        print("  --field FIELD                  Field to update (dot notation, e.g., full.motivation)")
         print("  --value VALUE                  New value")
         print("  --reason REASON                Reason for change")
         print("  --session NAME                 Session identifier (optional)")
         print("  --json                         Output as JSON")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 
@@ -391,6 +391,7 @@ def main():
     short = False
     depth = "minimal"
     section = None
+    field = None
     char_name = None
     value = None
     reason = None
@@ -423,6 +424,9 @@ def main():
             i += 2
         elif arg == "--section" and i + 1 < len(sys.argv):
             section = sys.argv[i + 1]
+            i += 2
+        elif arg == "--field" and i + 1 < len(sys.argv):
+            field = sys.argv[i + 1]
             i += 2
         elif arg == "--value" and i + 1 < len(sys.argv):
             value = sys.argv[i + 1]
@@ -471,8 +475,8 @@ def main():
         if not char_name:
             print("Error: character name required", file=sys.stderr)
             sys.exit(1)
-        if not section:  # reuse --section as --field
-            print("Error: --section required", file=sys.stderr)
+        if not field:
+            print("Error: --field required", file=sys.stderr)
             sys.exit(1)
         if not value:
             print("Error: --value required", file=sys.stderr)
@@ -480,7 +484,7 @@ def main():
         if not reason:
             print("Error: --reason required", file=sys.stderr)
             sys.exit(1)
-        cmd_update(char_name, section, value, reason, session_name, output_json)
+        cmd_update(char_name, field, value, reason, session_name, output_json)
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         sys.exit(1)

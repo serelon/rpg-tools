@@ -321,7 +321,7 @@ class DiceRoll:
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python dice.py <notation>")
         print("\nExamples:")
         print("  python dice.py 2d6           # Basic roll")
@@ -330,7 +330,7 @@ def main():
         print("  python dice.py 3d6!          # Exploding dice")
         print("  python dice.py 5d10>7        # Count successes")
         print("  python dice.py 4dF           # Fudge/Fate dice")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     notation = sys.argv[1]
     dice_roll = DiceRoll(notation)
