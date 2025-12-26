@@ -33,7 +33,8 @@ All data tools use `scripts/lib/discovery.py` to find JSON data files. Discovery
 
 Each item gets an ID from (in priority order):
 1. The `id` field in the JSON
-2. The filename (without `.json` extension)
+2. For single-item files: the filename (without `.json` extension)
+3. For items in an array: a generated ID if `id` is missing (e.g., `filename-0`)
 
 ### Merge Behavior
 
@@ -45,7 +46,7 @@ Each item gets an ID from (in priority order):
 
 Discovery handles two JSON structures:
 
-```json
+```jsonc
 // Single item (one per file)
 {
   "id": "kira-voss",
@@ -162,7 +163,10 @@ Some tools generate sequential IDs:
 ```python
 # Log entries: log-00001, log-00002, ...
 def generate_log_id(entries):
-    max_num = max(int(e["id"][4:]) for e in entries if e["id"].startswith("log-"))
+    max_num = max(
+        (int(e["id"][4:]) for e in entries if e.get("id", "").startswith("log-")),
+        default=0
+    )
     return f"log-{max_num + 1:05d}"
 ```
 
