@@ -353,7 +353,7 @@ def main():
     discover_characters(search_root)
 
     # Parse command line
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python characters.py <command> [options]")
         print("\nCommands:")
         print("  list [filters...]              List character names")
@@ -378,7 +378,7 @@ def main():
         print("  --reason REASON                Reason for change")
         print("  --session NAME                 Session identifier (optional)")
         print("  --json                         Output as JSON")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 

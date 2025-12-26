@@ -568,7 +568,7 @@ def main():
     # Validate connections (warnings only, doesn't exit)
     validate_connections()
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python memories.py <command> [options]")
         print("\nCommands:")
         print("  list [filters...]                    List memories")
@@ -593,7 +593,7 @@ def main():
         print("  --session SESSION      Filter by session")
         print("  --intensity LEVEL      Filter by intensity")
         print("  --perspective VIEW     Filter by perspective")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 

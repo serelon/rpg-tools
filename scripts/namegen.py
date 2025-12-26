@@ -425,7 +425,7 @@ def main():
     discover_namesets(repo_root)
 
     # Parse command line
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python namegen.py <command> [options]")
         print("\nCommands:")
         print("  full --nameset NAME [--count N] [--group G] [--gender G]")
@@ -434,7 +434,7 @@ def main():
         print("       List groups in a nameset")
         print("  list")
         print("       List available namesets")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 

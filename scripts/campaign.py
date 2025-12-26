@@ -327,7 +327,7 @@ def main():
     campaign_config = load_config(search_root)
     campaign_state = load_state(search_root)
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python campaign.py <command> [options]")
         print("\nCommands:")
         print("  init <name>                    Initialize new campaign")
@@ -340,7 +340,7 @@ def main():
         print("  changelog show [filters...]    Show changelog entries")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     # Commands that use subcommands
     SUBCOMMAND_CMDS = {'branch', 'state', 'changelog'}

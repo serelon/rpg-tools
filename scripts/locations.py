@@ -398,7 +398,7 @@ def main():
     search_root = Path.cwd()
     discover_locations(search_root)
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python locations.py <command> [options]")
         print("\nCommands:")
         print("  list [filters...]              List location names")
@@ -416,7 +416,7 @@ def main():
         print("  --tag NAME                     Filter by tag")
         print("  --parent NAME                  Filter by parent")
         print("  --type NAME                    Filter by type")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
 
