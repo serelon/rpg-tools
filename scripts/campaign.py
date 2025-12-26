@@ -455,6 +455,10 @@ def cmd_import(
 
     target = Path(into_path) if into_path else Path.cwd()
 
+    # Warn if target is not empty
+    if target.exists() and any(f for f in target.iterdir() if f.resolve() != source.resolve()):
+        print(f"Warning: Target directory '{target}' is not empty. Files may be overwritten.", file=sys.stderr)
+
     # Read manifest if present
     manifest = None
     try:
@@ -467,8 +471,12 @@ def cmd_import(
             if not has_config:
                 print("Warning: No campaign/ directory found in archive", file=sys.stderr)
 
-            # Extract all files
-            zf.extractall(target)
+            # Extract files safely, preventing path traversal (Zip Slip)
+            for member in zf.infolist():
+                if member.filename.startswith('/') or '..' in member.filename:
+                    print(f"Warning: Skipping unsafe path: {member.filename}", file=sys.stderr)
+                    continue
+                zf.extract(member, target)
     except zipfile.BadZipFile:
         print(f"Error: Invalid zip file: {zip_path}", file=sys.stderr)
         sys.exit(1)
