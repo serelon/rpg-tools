@@ -238,107 +238,135 @@ def cmd_state_show(
 
 
 def cmd_state_set(
-    character: str,
+    characters: str,
     field: str,
     value: str,
     reason: str,
     session: Optional[str] = None,
     output_json: bool = False
 ) -> None:
-    """Set a character's session state."""
+    """Set state for one or more characters (comma-separated)."""
     global campaign_state
 
     if "characters" not in campaign_state:
         campaign_state["characters"] = {}
 
-    if character not in campaign_state["characters"]:
-        campaign_state["characters"][character] = {}
+    # Split comma-separated characters
+    char_list = [c.strip() for c in characters.split(',')]
+    results = []
 
-    old_value = campaign_state["characters"][character].get(field)
-    campaign_state["characters"][character][field] = value
-
-    save_state(Path.cwd(), campaign_state)
-
-    # Also record in changelog
     changelog = load_changelog(Path.cwd())
-    entry = changelog.add(
-        session=session or "current",
-        character=character,
-        tier="state",
-        field=field,
-        from_value=old_value,
-        to_value=value,
-        reason=reason,
-        branch=campaign_state.get("active_branch")
-    )
 
-    if output_json:
-        print(json.dumps({
+    for character in char_list:
+        if character not in campaign_state["characters"]:
+            campaign_state["characters"][character] = {}
+
+        old_value = campaign_state["characters"][character].get(field)
+        campaign_state["characters"][character][field] = value
+
+        # Record in changelog
+        entry = changelog.add(
+            session=session or "current",
+            character=character,
+            tier="state",
+            field=field,
+            from_value=old_value,
+            to_value=value,
+            reason=reason,
+            branch=campaign_state.get("active_branch")
+        )
+
+        results.append({
             "character": character,
             "field": field,
             "value": value,
             "change_id": entry.id
-        }, indent=2))
+        })
+
+    save_state(Path.cwd(), campaign_state)
+
+    if output_json:
+        print(json.dumps(results, indent=2))
     else:
-        print(f"Set {character}.{field} = {value}")
-        print(f"Change logged: {entry.id}")
+        for r in results:
+            print(f"Set {r['character']}.{r['field']} = {r['value']}")
+        print(f"Changes logged: {len(results)}")
 
 
 def cmd_state_delete(
-    character: str,
+    characters: str,
     field: str,
     reason: str,
     session: Optional[str] = None,
     output_json: bool = False
 ) -> None:
-    """Delete a character's session state field."""
+    """Delete state field for one or more characters (comma-separated)."""
     global campaign_state
 
     if "characters" not in campaign_state:
         print(f"Error: No state recorded for any character", file=sys.stderr)
         sys.exit(1)
 
-    char_state = campaign_state["characters"].get(character)
-    if char_state is None:
-        print(f"Error: No state recorded for '{character}'", file=sys.stderr)
-        sys.exit(1)
+    # Split comma-separated characters
+    char_list = [c.strip() for c in characters.split(',')]
+    results = []
+    errors = []
 
-    if field not in char_state:
-        print(f"Error: Field '{field}' not found for '{character}'", file=sys.stderr)
-        sys.exit(1)
-
-    old_value = char_state.pop(field)
-
-    # Clean up empty character dict
-    if not char_state:
-        del campaign_state["characters"][character]
-
-    save_state(Path.cwd(), campaign_state)
-
-    # Record deletion in changelog
     changelog = load_changelog(Path.cwd())
-    entry = changelog.add(
-        session=session or "current",
-        character=character,
-        tier="state",
-        field=field,
-        from_value=old_value,
-        to_value=None,
-        reason=reason,
-        branch=campaign_state.get("active_branch")
-    )
 
-    if output_json:
-        print(json.dumps({
+    for character in char_list:
+        char_state = campaign_state["characters"].get(character)
+        if char_state is None:
+            errors.append(f"No state recorded for '{character}'")
+            continue
+
+        if field not in char_state:
+            errors.append(f"Field '{field}' not found for '{character}'")
+            continue
+
+        old_value = char_state.pop(field)
+
+        # Clean up empty character dict
+        if not char_state:
+            del campaign_state["characters"][character]
+
+        # Record deletion in changelog
+        entry = changelog.add(
+            session=session or "current",
+            character=character,
+            tier="state",
+            field=field,
+            from_value=old_value,
+            to_value=None,
+            reason=reason,
+            branch=campaign_state.get("active_branch")
+        )
+
+        results.append({
             "character": character,
             "field": field,
             "deleted": True,
             "old_value": old_value,
             "change_id": entry.id
-        }, indent=2))
+        })
+
+    # Save state if any changes were made
+    if results:
+        save_state(Path.cwd(), campaign_state)
+
+    if output_json:
+        print(json.dumps({"results": results, "errors": errors}, indent=2))
     else:
-        print(f"Deleted {character}.{field} (was: {old_value})")
-        print(f"Change logged: {entry.id}")
+        for r in results:
+            print(f"Deleted {r['character']}.{r['field']} (was: {r['old_value']})")
+        if results:
+            print(f"Changes logged: {len(results)}")
+        for err in errors:
+            print(f"Warning: {err}", file=sys.stderr)
+
+    # Exit with error if all characters failed
+    if not results and errors:
+        sys.exit(1)
 
 
 def cmd_changelog_show(
@@ -517,9 +545,12 @@ def main():
         print("  branch switch <id>             Switch active branch")
         print("  branch create <id> <name>      Create new branch")
         print("  state show [--character X] [--branch Y]  Show campaign state")
-        print("  state set <char> <field> <val> Set character state")
-        print("  state delete <char> <field>    Delete character state field")
+        print("  state set <chars> <field> <val>   Set character state")
+        print("  state delete <chars> <field>      Delete character state field")
         print("  changelog show [filters...]    Show changelog entries")
+        print("\nState commands accept comma-separated characters:")
+        print("  state set kira,dex,tam location \"station\" --reason \"Docked\"")
+        print("  state delete kira,dex condition.wounded --reason \"Healed\"")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
