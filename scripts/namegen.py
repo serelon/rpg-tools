@@ -105,8 +105,8 @@ def select_gender(gender_weights: Dict[str, int]) -> str:
 
 
 def filter_by_gender(entries: List[Dict], gender: str) -> List[Dict]:
-    """Filter name entries by gender."""
-    filtered = [e for e in entries if e.get("gender") == gender or e.get("gender") is None]
+    """Filter name entries by gender. Includes unisex and unspecified names."""
+    filtered = [e for e in entries if e.get("gender") in {gender, None, "unisex"}]
     return filtered if filtered else entries
 
 
@@ -261,7 +261,7 @@ def generate_from_nameset_with_groups(
     return results
 
 
-def generate_from_nameset(nameset_id: str, count: int = 1) -> List[str]:
+def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None) -> List[str]:
     """Generate names from a custom nameset."""
     if nameset_id not in custom_namesets:
         print(f"Error: Nameset '{nameset_id}' not found", file=sys.stderr)
@@ -278,6 +278,11 @@ def generate_from_nameset(nameset_id: str, count: int = 1) -> List[str]:
             "firstName": nameset["firstNames"],
             "lastName": nameset.get("lastNames", [])
         }
+
+    # Filter first names by gender if specified
+    if gender and "firstName" in categories:
+        categories = categories.copy()
+        categories["firstName"] = filter_by_gender(categories["firstName"], gender)
 
     names = []
     used = set()
@@ -495,7 +500,7 @@ def main():
                     print(name)
         else:
             # Simple nameset
-            names = generate_from_nameset(nameset, count)
+            names = generate_from_nameset(nameset, count, gender)
             for name in names:
                 print(name)
 
