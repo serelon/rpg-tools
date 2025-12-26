@@ -28,7 +28,7 @@ class DiceRoll:
         """Parse the dice notation into components."""
         # Match dice sets like 2d6, 4d8kh3, etc.
         # Parse dice FIRST to avoid extracting modifiers from notation like 2d6+5d4
-        dice_pattern = r'(\d+)d(\d+|f)(?:(kh|kl|dh|dl|r|rr)(\d+)?)?(?:(!{1,2}p?)?)?(?:(>=|<=|>|<|=)(\d+)?)?'
+        dice_pattern = r'(\d*)d(\d+|f)(?:(kh|kl|dh|dl|r|rr)(\d+)?)?(?:(!{1,2}p?)?)?(?:(>=|<=|>|<|=)(\d+)?)?'
         dice_matches = re.findall(dice_pattern, self.notation)
 
         # Remove dice patterns from notation to find remaining static modifiers
@@ -44,7 +44,7 @@ class DiceRoll:
             raise ValueError(f"No valid dice notation found in '{self.original_notation}'")
 
         for match in dice_matches:
-            count = int(match[0])
+            count = int(match[0]) if match[0] else 1  # Default to 1 if omitted (e.g., "d6")
 
             # Handle Fudge/Fate dice specially
             if match[1].lower() == 'f':
@@ -334,6 +334,9 @@ def main():
 
     notation = sys.argv[1]
     dice_roll = DiceRoll(notation)
+    if dice_roll.error:
+        print(dice_roll.error)
+        sys.exit(1)
     dice_roll.roll()
     print(dice_roll.format_result())
 

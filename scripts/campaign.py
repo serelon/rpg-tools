@@ -230,7 +230,9 @@ def cmd_state_show(
             if chars:
                 print(f"\nCharacter states ({len(chars)}):")
                 for char_id, char_state in chars.items():
-                    print(f"  {char_id}: {len(char_state)} fields")
+                    count = len(char_state)
+                    word = "field" if count == 1 else "fields"
+                    print(f"  {char_id}: {count} {word}")
 
 
 def cmd_state_set(
