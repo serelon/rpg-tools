@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Story collection tool for solo RPG games. Manages character story collections."""
 
+import json
 import random
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from lib import parse_era, discover_data, find_item
+from lib import parse_era, discover_data, find_item, save_item
 
 
 # Story collections storage
@@ -281,6 +282,85 @@ def cmd_show(campaign: str, story_id: str) -> None:
     print(story.get("text", ""))
 
 
+def generate_story_id() -> str:
+    """Generate next story ID."""
+    max_num = 0
+    for coll in story_collections.values():
+        for story in coll.get("stories", []):
+            story_id = story.get("id", "")
+            if story_id.startswith("story-"):
+                try:
+                    num = int(story_id[6:])
+                    max_num = max(max_num, num)
+                except ValueError:
+                    pass
+    return f"story-{max_num + 1:05d}"
+
+
+def cmd_create(
+    story_id: Optional[str],
+    title: str,
+    text: str,
+    campaign: str,
+    collection_type: Optional[str] = None,
+    teller: Optional[str] = None,
+    themes: Optional[str] = None,
+    characters: Optional[str] = None,
+    locations: Optional[str] = None,
+    era: Optional[str] = None,
+    mood: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Create a new story."""
+    search_root = Path.cwd()
+
+    # Generate ID if not provided
+    if not story_id:
+        story_id = generate_story_id()
+
+    # Check if ID already exists
+    all_story_ids = {s.get("id") for c in story_collections.values() for s in c.get("stories", [])}
+    if story_id in all_story_ids:
+        print(f"Error: Story '{story_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build story dict
+    story = {
+        "id": story_id,
+        "title": title,
+        "text": text,
+        "campaign": campaign,
+    }
+
+    if collection_type:
+        story["collection"] = collection_type
+    if teller:
+        story["teller"] = teller
+    if era:
+        story["era"] = era
+    if mood:
+        story["mood"] = mood
+    if themes:
+        story["themes"] = [t.strip() for t in themes.split(',')]
+    if characters:
+        story["characters"] = [c.strip() for c in characters.split(',')]
+    if locations:
+        story["locations"] = [l.strip() for l in locations.split(',')]
+
+    # Save as individual story file
+    path = save_item("stories", story, search_root)
+
+    if output_json:
+        print(json.dumps(story, indent=2))
+    else:
+        print(f"Created story: {story_id}")
+        print(f"  Title: {title}")
+        print(f"  Campaign: {campaign}")
+        if collection_type:
+            print(f"  Collection: {collection_type}")
+        print(f"  Saved to: {path}")
+
+
 def main():
     # Find repo root
     script_dir = Path(__file__).parent
@@ -293,11 +373,25 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python stories.py <command> [options]")
         print("\nCommands:")
+        print("  create [id] --title T --text T --campaign C ...")
+        print("                                           Create a new story")
         print("  meta --campaign NAME                     Show available tags/metadata with counts")
         print("  list --campaign NAME [filters...]        List stories")
         print("  random --campaign NAME [filters...]      Get random story")
         print("  get --campaign NAME --story ID           Get specific story text")
         print("  show --campaign NAME --story ID          Show story with metadata")
+        print("\nCreate options:")
+        print("  --title TITLE        Story title (required)")
+        print("  --text TEXT          Story text (required)")
+        print("  --campaign NAME      Campaign identifier (required)")
+        print("  --collection COLL    Collection type (told, untold, historical, etc.)")
+        print("  --teller ID          Character ID of storyteller")
+        print("  --themes THEMES      Comma-separated themes")
+        print("  --characters CHARS   Comma-separated character IDs")
+        print("  --locations LOCS     Comma-separated location IDs")
+        print("  --era ERA            Time period")
+        print("  --mood MOOD          Story mood")
+        print("  --json               Output as JSON")
         print("\nFilters (for list/random):")
         print("  --collection COLL    Filter by collection (told/private)")
         print("  --theme TAG          Filter by theme")
@@ -314,8 +408,19 @@ def main():
     mood = None
     era = None
     story_id = None
+    title = None
+    text = None
+    teller = None
+    themes_list = None
+    characters_list = None
+    locations_list = None
+    output_json = False
 
     i = 2
+    # Handle positional id for create command
+    if command == "create" and i < len(sys.argv) and not sys.argv[i].startswith("--"):
+        story_id = sys.argv[i]
+        i += 1
     while i < len(sys.argv):
         if sys.argv[i] == "--campaign" and i + 1 < len(sys.argv):
             campaign = sys.argv[i + 1]
@@ -335,6 +440,27 @@ def main():
         elif sys.argv[i] == "--story" and i + 1 < len(sys.argv):
             story_id = sys.argv[i + 1]
             i += 2
+        elif sys.argv[i] == "--title" and i + 1 < len(sys.argv):
+            title = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--text" and i + 1 < len(sys.argv):
+            text = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--teller" and i + 1 < len(sys.argv):
+            teller = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--themes" and i + 1 < len(sys.argv):
+            themes_list = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--characters" and i + 1 < len(sys.argv):
+            characters_list = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--locations" and i + 1 < len(sys.argv):
+            locations_list = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--json":
+            output_json = True
+            i += 1
         else:
             print(f"Unknown option: {sys.argv[i]}", file=sys.stderr)
             sys.exit(1)
@@ -361,6 +487,24 @@ def main():
             print("Error: --story is required for 'show' command", file=sys.stderr)
             sys.exit(1)
         cmd_show(campaign, story_id)
+    elif command == "create":
+        if not title:
+            print("Error: --title is required for 'create' command", file=sys.stderr)
+            sys.exit(1)
+        if not text:
+            print("Error: --text is required for 'create' command", file=sys.stderr)
+            sys.exit(1)
+        cmd_create(
+            story_id, title, text, campaign,
+            collection_type=collection,
+            teller=teller,
+            themes=themes_list,
+            characters=characters_list,
+            locations=locations_list,
+            era=era,
+            mood=mood,
+            output_json=output_json
+        )
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         sys.exit(1)

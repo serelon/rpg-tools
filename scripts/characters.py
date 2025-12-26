@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-from lib import discover_data, find_item, load_changelog
+from lib import discover_data, find_item, load_changelog, save_item, delete_item_file
 
 
 # Character storage
@@ -381,6 +381,72 @@ def cmd_update(
         print(f"Change logged: {entry.id}")
 
 
+def cmd_create(
+    char_id: str,
+    name: str,
+    role: str,
+    essence: str,
+    faction: Optional[str] = None,
+    subfaction: Optional[str] = None,
+    tags: Optional[str] = None,
+    voice: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Create a new character with minimal profile."""
+    search_root = Path.cwd()
+
+    # Check if ID already exists
+    if char_id in characters:
+        print(f"Error: Character '{char_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build character dict
+    character = {
+        "id": char_id,
+        "name": name,
+        "minimal": {
+            "role": role,
+            "essence": essence,
+        }
+    }
+
+    if faction:
+        character["faction"] = faction
+    if subfaction:
+        character["subfaction"] = subfaction
+    if tags:
+        character["tags"] = [t.strip() for t in tags.split(',')]
+    if voice:
+        character["minimal"]["voice"] = voice
+
+    # Save to file
+    path = save_item("characters", character, search_root)
+
+    if output_json:
+        print(json.dumps(character, indent=2))
+    else:
+        print(f"Created character: {char_id}")
+        print(f"  Name: {name}")
+        print(f"  Role: {role}")
+        print(f"  Saved to: {path}")
+
+
+def cmd_delete(char_id: str) -> None:
+    """Delete a character."""
+    search_root = Path.cwd()
+
+    # Check character exists
+    char = find_item(characters, char_id, "Character")
+    actual_id = char.get("id", char_id)
+
+    # Delete the file
+    if delete_item_file("characters", actual_id, search_root):
+        print(f"Deleted character: {actual_id}")
+    else:
+        print(f"Error: Could not find file for character '{actual_id}'", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     # Find search root (current directory or script parent)
     search_root = Path.cwd()
@@ -392,6 +458,9 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python characters.py <command> [options]")
         print("\nCommands:")
+        print("  create <id> --name N --role R --essence E ...")
+        print("                                 Create a new character")
+        print("  delete <id>                    Delete a character")
         print("  list [filters...]              List character names")
         print("  list --short [filters...]      List with minimal profiles")
         print("  get <name>                     Get minimal profile")
@@ -402,6 +471,15 @@ def main():
         print("  show <name>                    Show raw JSON")
         print("  update <name> --field FIELD --value VAL --reason R")
         print("                                 Update character field (dot notation)")
+        print("\nCreate options:")
+        print("  --name NAME                    Character display name (required)")
+        print("  --role ROLE                    Character role (required)")
+        print("  --essence TEXT                 Core essence, 35 words max (required)")
+        print("  --faction NAME                 Faction/group")
+        print("  --subfaction NAME              Sub-faction")
+        print("  --tags TAGS                    Comma-separated tags")
+        print("  --voice QUOTE                  Voice sample quote")
+        print("  --json                         Output as JSON")
         print("\nFilters (for list):")
         print("  --faction NAME                 Filter by faction")
         print("  --subfaction NAME              Filter by subfaction")
@@ -433,6 +511,12 @@ def main():
     reason = None
     session_name = None
     output_json = False
+    # Create-specific options
+    name = None
+    role = None
+    essence = None
+    voice = None
+    tags_list = None
 
     i = 2
     while i < len(sys.argv):
@@ -476,8 +560,23 @@ def main():
         elif arg == "--json":
             output_json = True
             i += 1
+        elif arg == "--name" and i + 1 < len(sys.argv):
+            name = sys.argv[i + 1]
+            i += 2
+        elif arg == "--role" and i + 1 < len(sys.argv):
+            role = sys.argv[i + 1]
+            i += 2
+        elif arg == "--essence" and i + 1 < len(sys.argv):
+            essence = sys.argv[i + 1]
+            i += 2
+        elif arg == "--voice" and i + 1 < len(sys.argv):
+            voice = sys.argv[i + 1]
+            i += 2
+        elif arg == "--tags" and i + 1 < len(sys.argv):
+            tags_list = sys.argv[i + 1]
+            i += 2
         elif not arg.startswith("--"):
-            # Positional argument (character name)
+            # Positional argument (character name/id)
             char_name = arg
             i += 1
         else:
@@ -485,7 +584,36 @@ def main():
             sys.exit(1)
 
     # Execute command
-    if command == "list":
+    if command == "create":
+        if not char_name:
+            print("Error: character id required for create", file=sys.stderr)
+            sys.exit(1)
+        if not name:
+            print("Error: --name required for create", file=sys.stderr)
+            sys.exit(1)
+        if not role:
+            print("Error: --role required for create", file=sys.stderr)
+            sys.exit(1)
+        if not essence:
+            print("Error: --essence required for create", file=sys.stderr)
+            sys.exit(1)
+        cmd_create(
+            char_id=char_name,
+            name=name,
+            role=role,
+            essence=essence,
+            faction=faction,
+            subfaction=subfaction,
+            tags=tags_list,
+            voice=voice,
+            output_json=output_json
+        )
+    elif command == "delete":
+        if not char_name:
+            print("Error: character id required for delete", file=sys.stderr)
+            sys.exit(1)
+        cmd_delete(char_name)
+    elif command == "list":
         cmd_list(faction, subfaction, tag, location, branch, short)
     elif command == "get":
         if not char_name:
