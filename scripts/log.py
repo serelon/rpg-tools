@@ -138,6 +138,10 @@ def format_entry(entry: Dict[str, Any], verbose: bool = False) -> str:
             lines.append(f"  Locations: {', '.join(entry['locations'])}")
         if entry.get("tags"):
             lines.append(f"  Tags: {', '.join(entry['tags'])}")
+        if entry.get("memory"):
+            lines.append(f"  Memory: {entry['memory']}")
+        if entry.get("story"):
+            lines.append(f"  Story: {entry['story']}")
     else:
         lines.append(f"{date}: {summary}")
 
@@ -154,6 +158,8 @@ def cmd_add(
     locations: Optional[str] = None,
     tags: Optional[str] = None,
     session: Optional[str] = None,
+    memory: Optional[str] = None,
+    story: Optional[str] = None,
     output_json: bool = False
 ) -> None:
     """Add a new log entry."""
@@ -196,6 +202,10 @@ def cmd_add(
         entry["tags"] = [tag.strip() for tag in tags.split(',')]
     if session:
         entry["session"] = session
+    if memory:
+        entry["memory"] = memory
+    if story:
+        entry["story"] = story
 
     log_entries.append(entry)
     save_log(Path.cwd(), log_entries)
@@ -238,9 +248,16 @@ def cmd_list(
 
     if importance:
         imp_lower = importance.lower()
-        min_level = IMPORTANCE_LEVELS.get(imp_lower, 1)
-        filtered = [e for e in filtered
-                   if IMPORTANCE_LEVELS.get(e.get("importance", "normal").lower(), 1) >= min_level]
+        # Support "major+" syntax for hierarchical filtering
+        if imp_lower.endswith('+'):
+            base_level = imp_lower[:-1]
+            min_level = IMPORTANCE_LEVELS.get(base_level, 1)
+            filtered = [e for e in filtered
+                       if IMPORTANCE_LEVELS.get(e.get("importance", "normal").lower(), 1) >= min_level]
+        else:
+            # Exact match
+            filtered = [e for e in filtered
+                       if e.get("importance", "normal").lower() == imp_lower]
 
     if tag:
         tag_lower = tag.lower()
@@ -331,6 +348,97 @@ def cmd_delete(entry_id: str) -> None:
     sys.exit(1)
 
 
+def cmd_digest(
+    character: Optional[str] = None,
+    pillar_limit: int = 10,
+    arc_sessions: int = 20,
+    current_sessions: int = 5,
+    output_json: bool = False
+) -> None:
+    """Show tiered campaign digest."""
+    calendar = get_calendar()
+
+    # Get all entries sorted by date
+    all_entries = log_entries.copy()
+
+    def sort_key(entry):
+        date = entry.get("date")
+        if date:
+            parsed = calendar.parse(date)
+            if parsed:
+                return parsed.sort_key
+        return (0, 0, 0)
+
+    all_entries.sort(key=sort_key)
+
+    # Filter by character if specified
+    if character:
+        char_lower = character.lower()
+        all_entries = [e for e in all_entries
+                      if char_lower in [c.lower() for c in e.get("characters", {}).keys()]]
+
+    if not all_entries:
+        print("No log entries found")
+        return
+
+    # Get unique sessions for recency calculation
+    sessions = sorted(set(e.get("session", "") for e in all_entries if e.get("session")))
+    recent_arc_sessions = set(sessions[-arc_sessions:]) if len(sessions) > arc_sessions else set(sessions)
+    current_session_set = set(sessions[-current_sessions:]) if len(sessions) > current_sessions else set(sessions)
+
+    # Categorize entries
+    pillars = [e for e in all_entries
+               if e.get("importance", "").lower() == "critical"][:pillar_limit]
+
+    recent_arc = [e for e in all_entries
+                  if e.get("session") in recent_arc_sessions
+                  and IMPORTANCE_LEVELS.get(e.get("importance", "normal").lower(), 1) >= IMPORTANCE_LEVELS["major"]]
+
+    current = [e for e in all_entries
+               if e.get("session") in current_session_set]
+
+    if output_json:
+        print(json.dumps({
+            "pillars": pillars,
+            "recent_arc": recent_arc,
+            "current": current
+        }, indent=2))
+        return
+
+    # Display
+    if pillars:
+        print("=== PILLARS (critical, all time) ===")
+        for entry in pillars:
+            date = entry.get("date") or entry.get("date_loose") or "?"
+            summary = entry.get("summary", "")
+            memory = entry.get("memory")
+            memory_str = f" [memory: {memory}]" if memory else ""
+            print(f"{date}: {summary}{memory_str}")
+        print()
+
+    if recent_arc:
+        print(f"=== RECENT ARC (major+, last {arc_sessions} sessions) ===")
+        for entry in recent_arc:
+            date = entry.get("date") or entry.get("date_loose") or "?"
+            summary = entry.get("summary", "")
+            memory = entry.get("memory")
+            memory_str = f" [memory: {memory}]" if memory else ""
+            print(f"{date}: {summary}{memory_str}")
+        print()
+
+    if current:
+        print(f"=== CURRENT (last {current_sessions} sessions) ===")
+        for entry in current:
+            date = entry.get("date") or entry.get("date_loose") or "?"
+            summary = entry.get("summary", "")
+            memory = entry.get("memory")
+            memory_str = f" [memory: {memory}]" if memory else ""
+            print(f"{date}: {summary}{memory_str}")
+
+    if not pillars and not recent_arc and not current:
+        print("No significant entries found for digest")
+
+
 def main():
     global log_entries, campaign_config
 
@@ -345,6 +453,7 @@ def main():
         print("  list [filters...]              List log entries")
         print("  show <id>                      Show specific entry")
         print("  delete <id>                    Delete an entry")
+        print("  digest [options]               Show tiered campaign digest")
         print("\nAdd options:")
         print("  --date DATE                    In-world date (e.g., Y3.D45)")
         print("  --date-loose TEXT              Loose date (e.g., 'after the festival')")
@@ -354,16 +463,22 @@ def main():
         print("  --locations LOCS               Comma-separated location IDs")
         print("  --tags TAGS                    Comma-separated tags")
         print("  --session NAME                 Session identifier")
+        print("  --memory ID                    Link to a memory")
+        print("  --story ID                     Link to a story")
         print("\nList filters:")
         print("  --branch NAME                  Filter by branch")
         print("  --character NAME               Filter by character involvement")
         print("  --location NAME                Filter by location")
-        print("  --importance LEVEL             Filter by importance")
+        print("  --importance LEVEL             Filter by importance (use major+ for hierarchy)")
         print("  --tag NAME                     Filter by tag")
         print("  --from DATE                    Filter from date")
         print("  --to DATE                      Filter to date")
         print("  --limit N                      Limit results")
         print("  --verbose                      Show full details")
+        print("\nDigest options:")
+        print("  --character NAME               Filter by character")
+        print("  --arc-sessions N               Sessions for 'recent arc' (default: 20)")
+        print("  --current-sessions N           Sessions for 'current' (default: 5)")
         print("\nGlobal options:")
         print("  --json                         Output as JSON")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
@@ -382,6 +497,8 @@ def main():
         "locations": None,
         "tags": None,
         "session": None,
+        "memory": None,
+        "story": None,
         "character": None,
         "location": None,
         "tag": None,
@@ -390,6 +507,8 @@ def main():
         "limit": 0,
         "verbose": False,
         "output_json": False,
+        "arc_sessions": 20,
+        "current_sessions": 5,
     }
 
     i = 2
@@ -420,6 +539,12 @@ def main():
         elif arg == "--session" and i + 1 < len(sys.argv):
             opts["session"] = sys.argv[i + 1]
             i += 2
+        elif arg == "--memory" and i + 1 < len(sys.argv):
+            opts["memory"] = sys.argv[i + 1]
+            i += 2
+        elif arg == "--story" and i + 1 < len(sys.argv):
+            opts["story"] = sys.argv[i + 1]
+            i += 2
         elif arg == "--character" and i + 1 < len(sys.argv):
             opts["character"] = sys.argv[i + 1]
             i += 2
@@ -444,6 +569,12 @@ def main():
         elif arg == "--json":
             opts["output_json"] = True
             i += 1
+        elif arg == "--arc-sessions" and i + 1 < len(sys.argv):
+            opts["arc_sessions"] = int(sys.argv[i + 1])
+            i += 2
+        elif arg == "--current-sessions" and i + 1 < len(sys.argv):
+            opts["current_sessions"] = int(sys.argv[i + 1])
+            i += 2
         elif not arg.startswith("--") and not positional_set:
             if command == "add":
                 opts["summary"] = arg
@@ -470,6 +601,8 @@ def main():
             locations=opts["locations"],
             tags=opts["tags"],
             session=opts["session"],
+            memory=opts["memory"],
+            story=opts["story"],
             output_json=opts["output_json"]
         )
     elif command == "list":
@@ -496,6 +629,13 @@ def main():
             print("Error: entry ID is required for 'delete' command", file=sys.stderr)
             sys.exit(1)
         cmd_delete(opts["entry_id"])
+    elif command == "digest":
+        cmd_digest(
+            character=opts["character"],
+            arc_sessions=opts["arc_sessions"],
+            current_sessions=opts["current_sessions"],
+            output_json=opts["output_json"]
+        )
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         sys.exit(1)

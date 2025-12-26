@@ -12,17 +12,22 @@ Create memory JSON files for campaign memory tracking. Files go in `memories/` f
   "text": "The memory text. Can be multiple paragraphs.",
 
   "type": "vivid-moment",
+  "format": "vivid",
   "era": "~15000 BCE",
   "session": "s03",
   "intensity": "high",
   "perspective": "first-person",
   "tags": ["loss", "revelation", "turning-point"],
 
+  "log_entry": "log-00007",
+  "story": "tale-of-the-truth",
+
   "connections": {
     "characters": ["character-id-1", "character-id-2"],
     "locations": ["location-id"],
     "stories": ["story-id"],
-    "related_memories": ["other-memory-id"]
+    "related_memories": ["other-memory-id"],
+    "log_entries": ["log-00007"]
   }
 }
 ```
@@ -41,13 +46,18 @@ Create memory JSON files for campaign memory tracking. Files go in `memories/` f
 
 ### Optional Metadata
 
-- **type**: Category of memory. Common types:
+- **type**: Category of memory (what kind of event). Common types:
   - `vivid-moment` - Intense, emotionally charged scene
   - `quiet-moment` - Subtle character beat
   - `revelation` - Discovery or realization
   - `turning-point` - Story pivot
   - `world-building` - Setting/lore detail
   - `relationship` - Character interaction
+
+- **format**: Structural format (how it's written). Distinct from type:
+  - `vivid` - Present-tense, sensory, reliving the moment ("I am there again")
+  - `sequential` - Past-tense blow-by-blow account ("First X, then Y, then Z")
+  - `summary` - Condensed overview, key points only
 
 - **era**: Time period. Supports chronological sorting.
   - Examples: `"~15000 BCE"`, `"Session 3"`, `"Early childhood"`, `"2847 CE"`
@@ -69,14 +79,22 @@ Create memory JSON files for campaign memory tracking. Files go in `memories/` f
 
 - **tags**: Array of freeform labels for filtering
 
+### Cross-References
+
+Link memories to related log entries and stories:
+
+- **log_entry**: Single log entry id this memory expands upon
+- **story**: Single story id derived from this memory
+
 ### Connections
 
-Cross-references to other campaign data:
+Cross-references to other campaign data (in `connections` object):
 
 - **characters**: Array of character ids who appear in this memory
 - **locations**: Array of location ids where this memory takes place
 - **stories**: Array of story ids this memory relates to
 - **related_memories**: Array of memory ids that form a narrative thread
+- **log_entries**: Array of log entry ids related to this memory
 
 The tool validates connections and warns if referenced ids don't exist.
 
@@ -88,6 +106,7 @@ memories.py list --campaign NAME
 memories.py list --character NAME          # Filter by character
 memories.py list --location NAME           # Filter by location
 memories.py list --type vivid-moment       # Filter by type
+memories.py list --format vivid            # Filter by format
 memories.py list --intensity high          # Filter by intensity
 memories.py list --tag loss                # Filter by tag
 memories.py list --short                   # Show details without text
