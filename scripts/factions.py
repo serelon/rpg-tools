@@ -473,6 +473,33 @@ def find_faction_references(faction_id: str, search_root: Path) -> Dict[str, int
     return {"logs": log_refs, "memories": mem_refs}
 
 
+def find_incoming_relationships(faction_id: str) -> List[Dict]:
+    """Find relationships from other factions that target this faction.
+
+    Returns a list of dicts with 'source_id', 'source_name', 'type', and 'relationship'.
+    """
+    faction_lower = faction_id.lower()
+    incoming = []
+
+    for f in factions.values():
+        f_id = f.get("id", "")
+        if f_id.lower() == faction_lower:
+            continue  # Skip self
+
+        relationships = f.get("relationships", [])
+        for rel in relationships:
+            target = rel.get("target", "").lower()
+            if target == faction_lower:
+                incoming.append({
+                    "source_id": f_id,
+                    "source_name": f.get("name", f_id),
+                    "type": rel.get("type", "unknown"),
+                    "relationship": rel
+                })
+
+    return incoming
+
+
 def cmd_delete(faction_id: str, force: bool = False) -> None:
     """Delete a faction."""
     search_root = Path.cwd()
@@ -508,6 +535,16 @@ def cmd_delete(faction_id: str, force: bool = False) -> None:
                 print(f"  - {refs['logs']} log entries", file=sys.stderr)
             if refs["memories"] > 0:
                 print(f"  - {refs['memories']} memories", file=sys.stderr)
+            has_warnings = True
+
+        # Check for incoming relationships from other factions
+        incoming = find_incoming_relationships(actual_id)
+        if incoming:
+            if has_warnings:
+                print(file=sys.stderr)
+            print(f"Warning: Other factions have relationships targeting '{faction_name}':", file=sys.stderr)
+            for inc in incoming:
+                print(f"  - {inc['source_name']}: {inc['type']} relationship", file=sys.stderr)
             has_warnings = True
 
         if has_warnings:
@@ -814,9 +851,567 @@ def cmd_tree(faction_name: str, max_depth: Optional[int] = None) -> None:
     print("\n".join(lines))
 
 
-def cmd_relationships(faction_name: str) -> None:
+# Relationship type schemas - expected fields per type (allows freeform extension)
+RELATIONSHIP_SCHEMAS = {
+    "debtor": {"expected": ["principal", "rate", "accruing"], "description": "owes money/favors"},
+    "creditor": {"expected": ["principal", "rate", "accruing"], "description": "is owed money/favors"},
+    "ally": {"expected": ["trust", "terms"], "description": "mutual support"},
+    "enemy": {"expected": ["threat", "conflict"], "description": "active opposition"},
+    "rival": {"expected": ["tension", "domain"], "description": "competition"},
+    "vassal": {"expected": ["obligations", "tribute"], "description": "subordinate"},
+    "patron": {"expected": ["protection", "expectations"], "description": "protector"},
+    "reports_to": {"expected": ["via", "bypasses"], "description": "authority chain"},
+    "neutral": {"expected": ["last_contact"], "description": "no active relationship"},
+}
+
+
+def format_number(n: Any) -> str:
+    """Format a number with commas for readability."""
+    if isinstance(n, (int, float)):
+        if isinstance(n, float) and n == int(n):
+            n = int(n)
+        return f"{n:,}"
+    return str(n)
+
+
+def format_relationship_state(rel_type: str, state: Dict) -> str:
+    """Format relationship state based on type."""
+    if not state:
+        return ""
+
+    parts = []
+
+    if rel_type in ("debtor", "creditor"):
+        principal = state.get("principal")
+        rate = state.get("rate")
+        accruing = state.get("accruing")
+
+        if principal is not None:
+            parts.append(f"{format_number(principal)} credits")
+        if rate is not None:
+            if isinstance(rate, float) and rate < 1:
+                parts.append(f"at {int(rate * 100)}%")
+            else:
+                parts.append(f"at {rate}%")
+        if accruing is not None:
+            if isinstance(accruing, bool):
+                if accruing:
+                    parts.append("accruing")
+            else:
+                parts.append(f"({format_number(accruing)}/month accruing)")
+
+        # Add any extra fields
+        for k, v in state.items():
+            if k not in ("principal", "rate", "accruing"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "ally":
+        trust = state.get("trust")
+        terms = state.get("terms")
+
+        if trust is not None:
+            parts.append(f"trust={trust}")
+        # Terms shown separately
+        for k, v in state.items():
+            if k not in ("trust", "terms"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "enemy":
+        threat = state.get("threat")
+        conflict = state.get("conflict")
+
+        if threat is not None:
+            parts.append(f"threat={threat}")
+        if conflict is not None:
+            parts.append(f"conflict={conflict}")
+        for k, v in state.items():
+            if k not in ("threat", "conflict"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "rival":
+        tension = state.get("tension")
+        domain = state.get("domain")
+
+        if tension is not None:
+            parts.append(f"tension={tension}")
+        if domain is not None:
+            parts.append(f"domain={domain}")
+        for k, v in state.items():
+            if k not in ("tension", "domain"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "vassal":
+        obligations = state.get("obligations")
+        tribute = state.get("tribute")
+
+        if obligations is not None:
+            parts.append(f"obligations={obligations}")
+        if tribute is not None:
+            parts.append(f"tribute={tribute}")
+        for k, v in state.items():
+            if k not in ("obligations", "tribute"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "patron":
+        protection = state.get("protection")
+        expectations = state.get("expectations")
+
+        if protection is not None:
+            parts.append(f"protection={protection}")
+        if expectations is not None:
+            parts.append(f"expectations={expectations}")
+        for k, v in state.items():
+            if k not in ("protection", "expectations"):
+                parts.append(f"{k}={v}")
+
+    elif rel_type == "reports_to":
+        via = state.get("via")
+        bypasses = state.get("bypasses")
+
+        if via is not None:
+            parts.append(f"via={via}")
+        if bypasses is not None:
+            if isinstance(bypasses, list):
+                parts.append(f"bypasses=[{', '.join(bypasses)}]")
+            else:
+                parts.append(f"bypasses={bypasses}")
+        for k, v in state.items():
+            if k not in ("via", "bypasses"):
+                parts.append(f"{k}={v}")
+
+    else:
+        # Generic handling for unknown types
+        for k, v in state.items():
+            parts.append(f"{k}={v}")
+
+    return ", ".join(parts)
+
+
+def get_target_name(target_id: str) -> str:
+    """Get display name for a relationship target (faction or character)."""
+    # Check factions first
+    if target_id in factions:
+        faction = factions[target_id]
+        return faction.get("name", target_id)
+
+    # Check characters
+    if target_id in characters:
+        char = characters[target_id]
+        return char.get("name", target_id)
+
+    # Fuzzy search in factions
+    target_lower = target_id.lower()
+    for f in factions.values():
+        if f.get("id", "").lower() == target_lower:
+            return f.get("name", target_id)
+        if f.get("name", "").lower() == target_lower:
+            return f.get("name", target_id)
+
+    # Fuzzy search in characters
+    for c in characters.values():
+        if c.get("id", "").lower() == target_lower:
+            return c.get("name", target_id)
+        if c.get("name", "").lower() == target_lower:
+            return c.get("name", target_id)
+
+    return target_id
+
+
+def is_sibling_faction(faction: Dict, target_id: str) -> bool:
+    """Check if target is a sibling faction (shares same parent)."""
+    faction_parent = faction.get("parent")
+    if not faction_parent:
+        return False
+
+    target_lower = target_id.lower()
+    for f in factions.values():
+        f_id = f.get("id", "").lower()
+        f_name = f.get("name", "").lower()
+        if f_id == target_lower or f_name == target_lower:
+            target_parent = f.get("parent")
+            return target_parent and target_parent.lower() == faction_parent.lower()
+
+    return False
+
+
+def cmd_relationships(
+    faction_name: str,
+    rel_type: Optional[str] = None,
+    output_json: bool = False
+) -> None:
     """Show faction relationships."""
-    print("Not implemented yet")
+    search_root = Path.cwd()
+
+    # Load characters for target name resolution
+    if not characters:
+        discover_characters(search_root)
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    name = faction.get("name", faction_id)
+
+    relationships = faction.get("relationships", [])
+
+    # Filter by type if specified
+    if rel_type:
+        rel_type_lower = rel_type.lower()
+        relationships = [r for r in relationships if r.get("type", "").lower() == rel_type_lower]
+
+    if output_json:
+        result = {
+            "faction": faction_id,
+            "relationships": relationships
+        }
+        print(json.dumps(result, indent=2))
+        return
+
+    if not relationships:
+        if rel_type:
+            print(f"{name} has no {rel_type} relationships")
+        else:
+            print(f"{name} has no relationships defined")
+        return
+
+    # Group relationships by type
+    by_type: Dict[str, List[Dict]] = {}
+    for rel in relationships:
+        rtype = rel.get("type", "unknown")
+        if rtype not in by_type:
+            by_type[rtype] = []
+        by_type[rtype].append(rel)
+
+    lines = [f"# {name} Relationships"]
+
+    # Sort types for consistent output
+    for rtype in sorted(by_type.keys()):
+        rels = by_type[rtype]
+        lines.append(f"\n## {rtype.title()}")
+
+        for rel in rels:
+            target_id = rel.get("target", "unknown")
+            target_name = get_target_name(target_id)
+            state = rel.get("state", {})
+            notes = rel.get("notes")
+
+            # Check if sibling
+            sibling_marker = " (sibling)" if is_sibling_faction(faction, target_id) else ""
+
+            # Format state
+            state_str = format_relationship_state(rtype, state)
+
+            # Build line
+            if state_str:
+                lines.append(f"- {target_name}{sibling_marker}: {state_str}")
+            else:
+                lines.append(f"- {target_name}{sibling_marker}")
+
+            # Add terms/notes on separate lines if present
+            if rtype == "ally" and state.get("terms"):
+                lines.append(f"  Terms: {state['terms']}")
+
+            if notes:
+                lines.append(f"  Notes: {notes}")
+
+    print("\n".join(lines))
+
+
+def validate_target_exists(target_id: str) -> tuple[bool, str]:
+    """Check if a target exists in factions or characters.
+
+    Returns (exists, entity_type) where entity_type is 'faction', 'character', or 'unknown'.
+    """
+    target_lower = target_id.lower()
+
+    # Check factions
+    for f in factions.values():
+        if f.get("id", "").lower() == target_lower or f.get("name", "").lower() == target_lower:
+            return True, "faction"
+
+    # Check characters
+    for c in characters.values():
+        if c.get("id", "").lower() == target_lower or c.get("name", "").lower() == target_lower:
+            return True, "character"
+
+    return False, "unknown"
+
+
+def find_relationship(faction: Dict, target_id: str) -> Optional[Dict]:
+    """Find a relationship by target ID."""
+    relationships = faction.get("relationships", [])
+    target_lower = target_id.lower()
+
+    for rel in relationships:
+        if rel.get("target", "").lower() == target_lower:
+            return rel
+
+    return None
+
+
+def cmd_add_relationship(
+    faction_name: str,
+    rel_type: str,
+    target: str,
+    state: Optional[str] = None,
+    notes: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Add a relationship to a faction."""
+    search_root = Path.cwd()
+
+    # Load characters for target validation
+    if not characters:
+        discover_characters(search_root)
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Validate target exists (warn if not, but allow)
+    target_exists, target_type = validate_target_exists(target)
+    if not target_exists:
+        print(f"Warning: Target '{target}' not found in factions or characters", file=sys.stderr)
+        print("  (Proceeding anyway - target may be external)", file=sys.stderr)
+
+    # Check for existing relationship with same target
+    existing = find_relationship(faction, target)
+    if existing:
+        print(f"Error: Relationship with target '{target}' already exists", file=sys.stderr)
+        print(f"  Use update-relationship to modify it, or remove-relationship first", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse state JSON if provided
+    state_dict = {}
+    if state:
+        try:
+            state_dict = json.loads(state)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON in --state: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Build relationship
+    relationship = {
+        "type": rel_type,
+        "target": target,
+        "state": state_dict
+    }
+
+    if notes:
+        relationship["notes"] = notes
+
+    # Add to faction's relationships
+    if "relationships" not in faction:
+        faction["relationships"] = []
+
+    faction["relationships"].append(relationship)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="development",
+        field="relationships",
+        from_value=None,
+        to_value=relationship,
+        reason=reason or f"Added {rel_type} relationship with {target}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "add-relationship",
+            "faction": faction_id,
+            "relationship": relationship,
+            "target_found": target_exists,
+            "target_type": target_type,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        target_name = get_target_name(target)
+        print(f"Added {rel_type} relationship to {faction_display}")
+        print(f"  Target: {target_name}")
+        if state_dict:
+            print(f"  State: {state_dict}")
+        if notes:
+            print(f"  Notes: {notes}")
+        if not target_exists:
+            print(f"  Warning: Target not found (may be external)")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_update_relationship(
+    faction_name: str,
+    target: str,
+    field: str,
+    value: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update a specific field in a relationship."""
+    search_root = Path.cwd()
+
+    # Load characters for target resolution
+    if not characters:
+        discover_characters(search_root)
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the relationship
+    relationship = find_relationship(faction, target)
+    if not relationship:
+        print(f"Error: No relationship found with target '{target}'", file=sys.stderr)
+        sys.exit(1)
+
+    # Navigate to the field (supports dot notation like state.trust)
+    parts = field.split('.')
+    obj = relationship
+    for part in parts[:-1]:
+        if part not in obj:
+            obj[part] = {}
+        obj = obj[part]
+
+    final_key = parts[-1]
+    old_value = obj.get(final_key)
+
+    # Try to parse value as JSON
+    parsed_value = value
+    if value.startswith('{') or value.startswith('['):
+        try:
+            parsed_value = json.loads(value)
+        except json.JSONDecodeError:
+            pass  # Keep as string
+    elif value.lower() == 'true':
+        parsed_value = True
+    elif value.lower() == 'false':
+        parsed_value = False
+    elif value.lower() == 'null':
+        parsed_value = None
+    else:
+        # Try to parse as number
+        try:
+            if '.' in value:
+                parsed_value = float(value)
+            else:
+                parsed_value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+    # Update the value
+    obj[final_key] = parsed_value
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="development",
+        field=f"relationships[{target}].{field}",
+        from_value=old_value,
+        to_value=parsed_value,
+        reason=reason or f"Updated relationship with {target}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-relationship",
+            "faction": faction_id,
+            "target": target,
+            "field": field,
+            "from": old_value,
+            "to": parsed_value,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        target_name = get_target_name(target)
+        print(f"Updated {faction_display} relationship with {target_name}")
+        print(f"  {field}: {old_value} -> {parsed_value}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_remove_relationship(
+    faction_name: str,
+    target: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove a relationship from a faction."""
+    search_root = Path.cwd()
+
+    # Load characters for target resolution
+    if not characters:
+        discover_characters(search_root)
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the relationship
+    relationships = faction.get("relationships", [])
+    target_lower = target.lower()
+
+    removed = None
+    idx = -1
+    for i, rel in enumerate(relationships):
+        if rel.get("target", "").lower() == target_lower:
+            removed = rel
+            idx = i
+            break
+
+    if removed is None:
+        print(f"Error: No relationship found with target '{target}'", file=sys.stderr)
+        sys.exit(1)
+
+    # Remove the relationship
+    del relationships[idx]
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="development",
+        field="relationships",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed {removed.get('type', 'unknown')} relationship with {target}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-relationship",
+            "faction": faction_id,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        target_name = get_target_name(target)
+        rel_type = removed.get("type", "unknown")
+        print(f"Removed {rel_type} relationship from {faction_display}")
+        print(f"  Target: {target_name}")
+        print(f"Change logged: {entry.id}")
 
 
 def cmd_add_member(
@@ -1065,9 +1660,18 @@ def main():
         print("  add-member <faction> <char> [--subfaction SUB]")
         print("                                 Add character to faction")
         print("  remove-member <faction> <char> Remove character from faction")
+        print("\nRelationship management:")
+        print("  relationships <name> [--type TYPE] [--json]")
+        print("                                 Show faction relationships")
+        print("  add-relationship <faction> --type TYPE --target TARGET")
+        print("                   [--state '{...}'] [--notes '...'] [--reason '...']")
+        print("                                 Add a relationship edge")
+        print("  update-relationship <faction> --target TARGET --field FIELD --value VAL")
+        print("                   [--reason '...']  Update relationship field")
+        print("  remove-relationship <faction> --target TARGET [--reason '...']")
+        print("                                 Remove a relationship edge")
         print("\nStub commands (not yet implemented):")
         print("  economy <name>                 Show faction economy")
-        print("  relationships <name>           Show faction relationships")
         print("\nCreate options:")
         print("  --name NAME                    Faction display name (required)")
         print("  --type TYPE                    Faction type: fleet|house|organization|military|other (required)")
@@ -1084,6 +1688,22 @@ def main():
         print("  --subfaction NAME              Filter by or set subfaction")
         print("  --unit NAME                    Filter by unit")
         print("  --session NAME                 Session identifier for changelog")
+        print("\nRelationship options:")
+        print("  --type TYPE                    Relationship type: ally|enemy|rival|debtor|creditor|")
+        print("                                   vassal|patron|reports_to|neutral (or custom)")
+        print("  --target TARGET                Target faction or character ID")
+        print("  --state '{...}'                JSON object with state fields")
+        print("  --notes '...'                  Freeform notes about the relationship")
+        print("  --reason '...'                 Reason for the change (changelog)")
+        print("\nRelationship type schemas (expected state fields):")
+        print("  debtor/creditor: principal, rate, accruing")
+        print("  ally: trust, terms")
+        print("  enemy: threat, conflict")
+        print("  rival: tension, domain")
+        print("  vassal: obligations, tribute")
+        print("  patron: protection, expectations")
+        print("  reports_to: via, bypasses")
+        print("  (all types allow additional freeform fields)")
         print("\nUpdate options:")
         print("  --field FIELD                  Field to update (dot notation, e.g., full.goals)")
         print("  --value VALUE                  New value (JSON arrays/objects auto-parsed)")
@@ -1123,6 +1743,10 @@ def main():
     # Member command options
     subfaction_filter = None
     unit_filter = None
+    # Relationship command options
+    target = None
+    state_json = None
+    notes = None
 
     i = 2
     positional_count = 0
@@ -1183,6 +1807,15 @@ def main():
             i += 2
         elif arg == "--unit" and i + 1 < len(sys.argv):
             unit_filter = sys.argv[i + 1]
+            i += 2
+        elif arg == "--target" and i + 1 < len(sys.argv):
+            target = sys.argv[i + 1]
+            i += 2
+        elif arg == "--state" and i + 1 < len(sys.argv):
+            state_json = sys.argv[i + 1]
+            i += 2
+        elif arg == "--notes" and i + 1 < len(sys.argv):
+            notes = sys.argv[i + 1]
             i += 2
         elif not arg.startswith("--"):
             # Positional argument
@@ -1274,7 +1907,45 @@ def main():
         if not faction_name:
             print("Error: faction name required", file=sys.stderr)
             sys.exit(1)
-        cmd_relationships(faction_name)
+        cmd_relationships(faction_name, faction_type, output_json)
+    elif command == "add-relationship":
+        if not faction_name:
+            print("Error: faction name required", file=sys.stderr)
+            sys.exit(1)
+        if not faction_type:
+            print("Error: --type required for add-relationship", file=sys.stderr)
+            sys.exit(1)
+        if not target:
+            print("Error: --target required for add-relationship", file=sys.stderr)
+            sys.exit(1)
+        cmd_add_relationship(
+            faction_name, faction_type, target, state_json, notes,
+            reason, session_name, output_json
+        )
+    elif command == "update-relationship":
+        if not faction_name:
+            print("Error: faction name required", file=sys.stderr)
+            sys.exit(1)
+        if not target:
+            print("Error: --target required for update-relationship", file=sys.stderr)
+            sys.exit(1)
+        if not field:
+            print("Error: --field required for update-relationship", file=sys.stderr)
+            sys.exit(1)
+        if not value:
+            print("Error: --value required for update-relationship", file=sys.stderr)
+            sys.exit(1)
+        cmd_update_relationship(
+            faction_name, target, field, value, reason, session_name, output_json
+        )
+    elif command == "remove-relationship":
+        if not faction_name:
+            print("Error: faction name required", file=sys.stderr)
+            sys.exit(1)
+        if not target:
+            print("Error: --target required for remove-relationship", file=sys.stderr)
+            sys.exit(1)
+        cmd_remove_relationship(faction_name, target, reason, session_name, output_json)
     elif command == "add-member":
         if not faction_name:
             print("Error: faction name required", file=sys.stderr)
