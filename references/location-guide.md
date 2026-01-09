@@ -174,6 +174,23 @@ Common tags to consider:
 - **Status**: abandoned, ruined, sacred, cursed, hidden
 - **Access**: public, restricted, secret, dangerous
 
+## Faction Control
+
+Locations can be controlled or influenced by factions. Track this relationship in the location's sections:
+
+```json
+"sections": {
+  "factions": {
+    "house-verdania": "controls",
+    "guild-of-merchants": "operates here"
+  }
+}
+```
+
+For military installations, ships, or faction headquarters, the faction relationship is often implicit in the location's identity - an Imperial Navy ship like INS Leviathan is inherently tied to its faction.
+
+See [Creating Factions](faction-guide.md) for faction schema and territory tracking.
+
 ## Anti-Patterns - AVOID
 
 - Exhaustive history for minor locations - evocative > exhaustive

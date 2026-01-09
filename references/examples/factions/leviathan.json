@@ -1,0 +1,316 @@
+{
+  "id": "ins-leviathan",
+  "name": "INS Leviathan",
+  "type": "military",
+  "parent": "house-celestine",
+  "tags": ["warship", "carrier", "imperial", "ship-scale"],
+
+  "minimal": {
+    "essence": "Venator-class carrier, pride of the 7th Fleet. 1,200 souls serve under Captain Vance. Crew loyal to ship more than Empire. Old vessel, old traditions, new tensions.",
+    "symbol": "Imperial Navy crest with Leviathan designation: serpent coiled around sword",
+    "motto": "Through fire, we endure",
+    "current_status": "Extended patrol duty, sector seven. Crew stretched thin. Morale concerns in lower decks."
+  },
+
+  "full": {
+    "history": "Commissioned forty years ago during the Expansion Wars. Saw action at Korrath, Siege of Pale Station, countless smaller engagements. Three captains, current one is Vance. Scheduled for refit next year - if she makes it.",
+    "values": "Duty, tradition, shipboard brotherhood. Officers quote regulations. Crew knows what actually works.",
+    "operations": "Carrier operations: fighter squadrons, marine deployments, long-range patrol. Can project force across systems.",
+    "structure": "Standard Imperial Navy hierarchy. Captain, XO, department heads. Marine detachment under separate command chain.",
+    "territories": "Assigned to Sector Seven patrol route. Forward operating authority.",
+    "arc": {
+      "trajectory": "Aging ship, shrinking budgets, growing threats. Something will break.",
+      "themes": ["duty", "decay", "loyalty", "institutional-tension"]
+    }
+  },
+
+  "hierarchy": {
+    "subfactions": [
+      {
+        "id": "leviathan-bridge",
+        "name": "Bridge Command",
+        "autonomy": false,
+        "role": "Command, navigation, tactical operations"
+      },
+      {
+        "id": "leviathan-operations",
+        "name": "Operations Division",
+        "autonomy": false,
+        "role": "Communications, sensors, tactical coordination"
+      },
+      {
+        "id": "leviathan-engineering",
+        "name": "Engineering Division",
+        "autonomy": false,
+        "role": "Propulsion, power, maintenance, damage control"
+      },
+      {
+        "id": "leviathan-medical",
+        "name": "Medical Division",
+        "autonomy": false,
+        "role": "Crew health, trauma response, psychological services"
+      },
+      {
+        "id": "leviathan-security",
+        "name": "Security Division",
+        "autonomy": false,
+        "role": "Internal security, brig, armory"
+      },
+      {
+        "id": "leviathan-ground-forces",
+        "name": "Ground Forces Detachment",
+        "autonomy": true,
+        "role": "Marines, TacOps, Cataphracts - boarding and planetary operations"
+      },
+      {
+        "id": "leviathan-flight",
+        "name": "Flight Operations",
+        "autonomy": true,
+        "role": "Fighter squadrons, shuttle operations"
+      }
+    ]
+  },
+
+  "members": {
+    "named": [
+      "captain-vance",
+      "commander-reis",
+      "lt-commander-yuki",
+      "chief-engineer-mora",
+      "cmo-thessa",
+      "lt-navarro",
+      "ensign-kim",
+      "ensign-chen",
+      "lt-commander-kozlov",
+      "warrant-officer-singh",
+      "chief-petty-officer-okonkwo",
+      "master-sergeant-cole",
+      "gunnery-sergeant-reyes",
+      "corporal-vasquez",
+      "lt-harrow",
+      "sergeant-major-iron-hand",
+      "flight-leader-storm",
+      "pilot-nova",
+      "pilot-ghost",
+      "chaplain-mendez"
+    ],
+    "units": [
+      {
+        "name": "Marine Platoon Alpha",
+        "count": 40,
+        "morale": "high",
+        "role": "Primary boarding and security force",
+        "location": "marine-barracks-deck-3",
+        "linked_members": ["master-sergeant-cole"]
+      },
+      {
+        "name": "Marine Platoon Bravo",
+        "count": 40,
+        "morale": "stable",
+        "role": "Secondary assault and garrison duty",
+        "location": "marine-barracks-deck-3",
+        "linked_members": ["gunnery-sergeant-reyes"]
+      },
+      {
+        "name": "Marine Reserve",
+        "count": 40,
+        "morale": "stable",
+        "role": "Reserve and shipboard defense",
+        "location": "marine-barracks-deck-4"
+      },
+      {
+        "name": "TacOps Team",
+        "count": 8,
+        "morale": "high",
+        "role": "Special operations, high-value targets",
+        "location": "tacops-bay",
+        "linked_members": ["lt-harrow"]
+      },
+      {
+        "name": "Cataphract Squad",
+        "count": 8,
+        "morale": "high",
+        "role": "Heavy assault, powered armor operations",
+        "location": "armory-deck-2",
+        "linked_members": ["sergeant-major-iron-hand"]
+      },
+      {
+        "name": "Viper Squadron",
+        "count": 12,
+        "morale": "high",
+        "role": "Space superiority fighters",
+        "location": "flight-deck-alpha",
+        "linked_members": ["flight-leader-storm"]
+      },
+      {
+        "name": "Dagger Squadron",
+        "count": 12,
+        "morale": "stable",
+        "role": "Strike and intercept fighters",
+        "location": "flight-deck-beta",
+        "linked_members": ["pilot-nova"]
+      }
+    ],
+    "pools": [
+      {
+        "label": "~1,200 general crew",
+        "state": "stable"
+      },
+      {
+        "label": "~50 officers",
+        "state": "stable"
+      },
+      {
+        "label": "~200 specialists and NCOs",
+        "state": "stable"
+      }
+    ]
+  },
+
+  "relationships": [
+    {
+      "type": "reports_to",
+      "target": "house-celestine",
+      "state": {
+        "via": "seventh-fleet-command",
+        "bypasses": []
+      },
+      "notes": "Standard chain of command. Fleet Admiral has direct line to House."
+    },
+    {
+      "type": "reports_to",
+      "target": "seventh-fleet-command",
+      "state": {
+        "via": "direct",
+        "bypasses": ["sector-governor"]
+      },
+      "notes": "Military chain bypasses civilian administration"
+    },
+    {
+      "type": "ally",
+      "target": "ins-vigilance",
+      "state": {
+        "trust": "high",
+        "terms": "sister ship, shared patrol"
+      },
+      "notes": "Worked together for years. Crews know each other."
+    },
+    {
+      "type": "rival",
+      "target": "ins-thunderchild",
+      "state": {
+        "tension": "moderate",
+        "domain": "fleet standings, promotion"
+      },
+      "notes": "Newer ship, better equipped. Their success reflects poorly on Leviathan."
+    },
+    {
+      "type": "enemy",
+      "target": "corsair-clans",
+      "state": {
+        "threat": "moderate",
+        "conflict": "ongoing patrol operations"
+      },
+      "notes": "Primary patrol target. Multiple engagements over past year."
+    }
+  ],
+
+  "economy": {
+    "accounts": [
+      {
+        "category": "operations-budget",
+        "balance": 2000000,
+        "notes": "Quarterly allocation from Fleet Command"
+      },
+      {
+        "category": "discretionary",
+        "balance": 150000,
+        "notes": "Captain's discretionary fund"
+      }
+    ],
+    "running_costs": [
+      {
+        "line": "Crew payroll (handled by Fleet)",
+        "amount": 0,
+        "period": "month",
+        "notes": "Paid centrally by Imperial Navy"
+      },
+      {
+        "line": "Consumables and supplies",
+        "amount": 400000,
+        "period": "month"
+      },
+      {
+        "line": "Fuel and reaction mass",
+        "amount": 250000,
+        "period": "month"
+      },
+      {
+        "line": "Maintenance and repairs",
+        "amount": 300000,
+        "period": "month",
+        "notes": "Increasing as systems age"
+      },
+      {
+        "line": "Ammunition resupply",
+        "amount": 150000,
+        "period": "month",
+        "notes": "Varies by patrol activity"
+      }
+    ],
+    "assets": [
+      {
+        "name": "INS Leviathan",
+        "type": "ship",
+        "value": 500000000,
+        "notes": "Venator-class carrier, 40 years service"
+      },
+      {
+        "name": "Fighter complement",
+        "type": "spacecraft",
+        "value": 50000000,
+        "notes": "24 fighters across two squadrons"
+      },
+      {
+        "name": "Shuttle complement",
+        "type": "spacecraft",
+        "value": 10000000,
+        "notes": "Various utility and assault shuttles"
+      },
+      {
+        "name": "Ground vehicle bay",
+        "type": "vehicles",
+        "value": 5000000,
+        "notes": "APCs, scout vehicles, Cataphract suits"
+      }
+    ]
+  },
+
+  "resources": {
+    "supply": 65,
+    "ammunition": 70,
+    "fuel": 80,
+    "jump_capacity": 3,
+    "environmental": 75,
+    "fighter_readiness": 85,
+    "marine_readiness": 90,
+    "hull_integrity": 70,
+    "crew_morale": "stable"
+  },
+
+  "sections": {
+    "ship_systems": {
+      "propulsion": "Dual fusion reactors, ion drives. One reactor showing age.",
+      "weapons": "Main batteries, point defense grid, missile batteries. Adequate but not cutting edge.",
+      "defenses": "Ablative armor, shield generators. Shields at 80% efficiency.",
+      "sensors": "Military-grade sensor suite. Recently upgraded.",
+      "hangar": "Two flight decks, 24 fighter capacity, shuttle bays."
+    },
+    "current_orders": {
+      "mission": "Extended patrol of Sector Seven",
+      "duration": "6 months, 3 months remaining",
+      "priority_targets": "Corsair activity, smuggling interdiction",
+      "restrictions": "Avoid engagement with peer adversaries without Fleet authorization"
+    }
+  }
+}

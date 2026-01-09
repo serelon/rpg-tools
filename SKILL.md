@@ -1,6 +1,6 @@
 ---
 name: rpg-tools
-description: Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory management, and story retrieval. Use when the user asks to roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories, or pull from story collections during RPG sessions.
+description: Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory/faction management, and story retrieval. Use when the user asks to roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories or factions, or pull from story collections during RPG sessions.
 ---
 
 # RPG Tools
@@ -20,6 +20,7 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 - `locations.py` - Location profiles (needs `locations/`)
 - `stories.py` - Story collections (needs `stories/`)
 - `memories.py` - Memory tracking (needs `memories/`)
+- `factions.py` - Faction tracking (needs `factions/`)
 - `log.py` - Campaign event log (needs `campaign/log.json`)
 - `campaign.py` - Campaign management (needs `campaign/config.json`)
 
@@ -143,6 +144,33 @@ python scripts/memories.py location NAME                 # Memories at location
 
 Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
 
+### Factions
+
+Requires `factions/*.json`
+
+```bash
+python scripts/factions.py list                          # List all factions
+python scripts/factions.py list --type fleet             # Filter by type
+python scripts/factions.py list --tag military           # Filter by tag
+python scripts/factions.py list --short                  # Show minimal profiles
+python scripts/factions.py get NAME                      # Get minimal profile
+python scripts/factions.py get NAME --depth full         # Get full profile
+python scripts/factions.py get NAME --section economy    # Get specific section
+python scripts/factions.py tree                          # Show faction hierarchy
+python scripts/factions.py tree NAME                     # Show hierarchy from faction
+python scripts/factions.py members NAME                  # List faction members
+python scripts/factions.py relationships NAME            # Show faction relationships
+python scripts/factions.py economy NAME                  # Show faction economy
+python scripts/factions.py resources NAME                # Show faction resources
+python scripts/factions.py create ID --name "Name" --type fleet --essence "Description"
+python scripts/factions.py update NAME --field minimal.current_status --value "New status" --reason "Event"
+python scripts/factions.py delete NAME                   # Delete faction (with confirmation)
+```
+
+Filter options: `--type`, `--tag`
+
+See **[Creating Factions](references/faction-guide.md)** for schema and workflow.
+
 ### Campaign Log
 
 Requires `campaign/log.json`
@@ -204,6 +232,7 @@ Guides for creating your own JSON data files:
 
 - **[Creating Characters](references/character-guide.md)** - Character JSON schema and workflow
 - **[Creating Locations](references/location-guide.md)** - Location hierarchy and connections
+- **[Creating Factions](references/faction-guide.md)** - Faction hierarchy, members, economy, relationships
 - **[Creating Memories](references/memories-guide.md)** - Memory tracking with cross-references
 - **[Creating Namesets](references/nameset-guide.md)** - Name generation collections
 - **[Capturing Stories](references/story-capture-guide.md)** - Story extraction workflow

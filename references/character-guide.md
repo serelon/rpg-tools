@@ -54,7 +54,7 @@ Collect:
 Create the minimal profile first:
 - **id**: lowercase, hyphenated (e.g., "juno", "captain-mitchell")
 - **name**: Display name
-- **faction/subfaction**: Group they belong to
+- **faction/subfaction**: Group they belong to (links to faction tracker - see [Creating Factions](faction-guide.md))
 - **tags**: Relevant labels (protagonist, antagonist, psychic, military, etc.)
 - **role**: Their position or function (max 10 words)
 - **essence**: 35 words MAX. Distill to core personality + key background + distinguishing trait
@@ -148,6 +148,19 @@ Save to `characters/{id}.json`
   }
 }
 ```
+
+## Faction Integration
+
+Characters can be linked to factions for organizational tracking:
+
+- **faction**: The faction ID this character belongs to
+- **subfaction**: Optional subfaction within the parent faction
+
+When a character belongs to a faction, ensure bidirectional sync:
+1. Set the `faction` field in the character JSON
+2. Add the character ID to the faction's `members.named` array
+
+See [Creating Factions](faction-guide.md) for faction schema and the bidirectional sync pattern.
 
 ## Example: Full Character
 

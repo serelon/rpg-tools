@@ -1,0 +1,256 @@
+{
+  "id": "house-verdania",
+  "name": "House Verdania",
+  "type": "house",
+  "tags": ["noble", "merchant", "political", "vast-scale"],
+
+  "minimal": {
+    "essence": "Ancient trading house spanning twelve systems. Wealth built on commerce, maintained by marriage and murder. Three heirs, two factions, one throne. The serpent eats its tail.",
+    "symbol": "Green serpent coiled around golden scales",
+    "motto": "Fair dealing, final payment",
+    "current_status": "Succession crisis brewing. Lord Verdania's health failing. Factions maneuvering."
+  },
+
+  "full": {
+    "history": "Founded during the Expansion Era, House Verdania rose on trade routes others thought unprofitable. Survived three empires, two purges, and countless rivals. The current generation may tear apart what centuries built.",
+    "values": "Profit above all, but never at the cost of the House's name. Contracts are sacred. Debts are always collected. Family secrets stay family secrets.",
+    "operations": "Trade fleets, banking interests, commodity exchanges. Fingers in shipping, insurance, and information. Nothing illegal - just gray.",
+    "structure": "Feudal with corporate overlay. Main branch rules, lesser branches administer regions. Merchant Arm operates semi-independently for deniability.",
+    "territories": "Core holdings in Verdania system. Trade posts across sector. Banking presence in most major ports.",
+    "arc": {
+      "trajectory": "The succession will be decided within the year. Blood is likely.",
+      "themes": ["succession", "loyalty", "corruption", "legacy"]
+    }
+  },
+
+  "hierarchy": {
+    "subfactions": [
+      {
+        "id": "verdania-firstborn",
+        "name": "Firstborn Faction",
+        "autonomy": true,
+        "role": "Traditional succession supporters - Lord Marcus and allies"
+      },
+      {
+        "id": "verdania-reformists",
+        "name": "Reformist Faction",
+        "autonomy": true,
+        "role": "Younger generation seeking change - Lady Serena's coalition"
+      },
+      {
+        "id": "verdania-neutrals",
+        "name": "Neutral Houses",
+        "autonomy": true,
+        "role": "Minor branches refusing to commit - watching and waiting"
+      },
+      {
+        "id": "verdania-merchants",
+        "name": "Merchant Arm",
+        "autonomy": true,
+        "role": "Trade operations - deliberately insulated from succession"
+      },
+      {
+        "id": "verdania-intelligence",
+        "name": "The Whispers",
+        "autonomy": true,
+        "role": "Information network - officially doesn't exist"
+      }
+    ]
+  },
+
+  "members": {
+    "named": [
+      "lord-verdania",
+      "heir-marcus",
+      "lady-serena",
+      "prince-consul-orlen",
+      "spymaster-whisper",
+      "admiral-vex",
+      "seneschal-graves"
+    ],
+    "units": [],
+    "pools": [
+      {
+        "label": "~500 household staff",
+        "state": "loyal"
+      },
+      {
+        "label": "~2,000 trade employees",
+        "state": "stable"
+      },
+      {
+        "label": "~300 house guards",
+        "state": "divided"
+      },
+      {
+        "label": "~50 personal retainers",
+        "state": "varies by faction"
+      }
+    ]
+  },
+
+  "relationships": [
+    {
+      "type": "rival",
+      "target": "house-corvain",
+      "state": {
+        "tension": "high",
+        "domain": "shipping routes, banking"
+      },
+      "notes": "Three generations of competition. Blood feuds in the past, cold war now."
+    },
+    {
+      "type": "ally",
+      "target": "house-maren",
+      "state": {
+        "trust": "moderate",
+        "terms": "Marriage alliance, trade agreements"
+      },
+      "notes": "Bound by Lady Serena's mother's lineage. Alliance may not survive succession."
+    },
+    {
+      "type": "patron",
+      "target": "guild-of-factors",
+      "state": {
+        "protection": "financial backing",
+        "expectations": "favorable rates, information"
+      },
+      "notes": "Long-standing sponsorship. Guild depends on Verdania patronage."
+    },
+    {
+      "type": "vassal",
+      "target": "house-vassal-minor",
+      "state": {
+        "obligations": "Military support, trade access",
+        "tribute": "15% of regional profits"
+      },
+      "notes": "Three minor houses sworn to Verdania. Loyalty may waver in succession."
+    },
+    {
+      "type": "neutral",
+      "target": "imperial-throne",
+      "state": {
+        "last_contact": "Formal audience Y2.D300"
+      },
+      "notes": "Careful political neutrality. Support whoever sits the throne. Currently watching."
+    },
+    {
+      "type": "enemy",
+      "target": "free-traders-consortium",
+      "state": {
+        "threat": "moderate",
+        "conflict": "economic competition"
+      },
+      "notes": "Consortium cutting into Verdania margins. No violence yet."
+    }
+  ],
+
+  "economy": {
+    "accounts": [
+      {
+        "category": "liquid",
+        "balance": 50000000,
+        "notes": "House treasury - accessible funds"
+      },
+      {
+        "category": "invested",
+        "balance": 300000000,
+        "notes": "Trade ventures, shipping contracts, banking"
+      },
+      {
+        "category": "receivables",
+        "balance": 25000000,
+        "notes": "Outstanding debts from various parties"
+      },
+      {
+        "category": "reserves",
+        "balance": 75000000,
+        "notes": "Emergency funds - accessed only by Lord's authority"
+      }
+    ],
+    "running_costs": [
+      {
+        "line": "Household operations",
+        "amount": 500000,
+        "period": "month"
+      },
+      {
+        "line": "Trade fleet operations",
+        "amount": 2000000,
+        "period": "month"
+      },
+      {
+        "line": "Intelligence network",
+        "amount": 200000,
+        "period": "month"
+      },
+      {
+        "line": "Political expenses",
+        "amount": 300000,
+        "period": "month",
+        "notes": "Bribes, gifts, sponsorships"
+      },
+      {
+        "line": "Guard and security",
+        "amount": 400000,
+        "period": "month"
+      }
+    ],
+    "assets": [
+      {
+        "name": "Verdania Tower",
+        "type": "property",
+        "value": 100000000,
+        "notes": "Ancestral seat, Verdania Prime"
+      },
+      {
+        "name": "Trade Fleet",
+        "type": "ships",
+        "value": 200000000,
+        "notes": "47 vessels of various classes"
+      },
+      {
+        "name": "Regional Estates",
+        "type": "property",
+        "value": 150000000,
+        "notes": "Properties across 12 systems"
+      },
+      {
+        "name": "Banking Interests",
+        "type": "financial",
+        "value": 100000000,
+        "notes": "Shares in major banking houses"
+      },
+      {
+        "name": "The Whisper Network",
+        "type": "intangible",
+        "value": "incalculable",
+        "notes": "Information assets, contacts, leverage"
+      }
+    ]
+  },
+
+  "resources": {
+    "wealth": "vast",
+    "influence": "significant",
+    "military_strength": "moderate",
+    "intelligence_capability": "extensive",
+    "political_capital": "strained",
+    "internal_cohesion": "fractured"
+  },
+
+  "sections": {
+    "succession_status": {
+      "current_lord": "Lord Aldric Verdania - failing health, months to live",
+      "heir_apparent": "Lord Marcus Verdania - traditional choice, firstborn",
+      "challenger": "Lady Serena Verdania - reformist, popular with younger generation",
+      "dark_horse": "Prince-Consul Orlen - from cadet branch, officially neutral",
+      "complications": "No clear testament. Lord may die before naming successor. Legal challenges likely."
+    },
+    "faction_breakdown": {
+      "firstborn_supporters": "40% of house resources, military advantage",
+      "reformist_supporters": "35% of house resources, trade fleet advantage",
+      "neutral_parties": "25% of house resources, watching to back winner"
+    }
+  }
+}

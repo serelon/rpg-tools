@@ -155,6 +155,34 @@ def format_full(faction: Dict) -> str:
         if key not in known_fields:
             lines.append(f"\n## {key.replace('_', ' ').title()}\n{value}")
 
+    # Include structured resources if present
+    resources = faction.get("resources", {})
+    if resources:
+        lines.append("\n## Resources (Tracked)")
+        for res_name, res_data in resources.items():
+            # Handle both structured and simple format
+            if isinstance(res_data, (int, float)):
+                lines.append(f"- {res_name.replace('_', ' ').title()}: {res_data:,}")
+            elif isinstance(res_data, str):
+                lines.append(f"- {res_name.replace('_', ' ').title()}: {res_data}")
+            elif isinstance(res_data, dict):
+                current = res_data.get("current", 0)
+                capacity = res_data.get("capacity")
+                unit = res_data.get("unit", "")
+                if capacity is not None and capacity > 0:
+                    pct = (current / capacity * 100) if capacity > 0 else 0
+                    if unit:
+                        lines.append(f"- {res_name.replace('_', ' ').title()}: {current:,}/{capacity:,} {unit} ({pct:.0f}%)")
+                    else:
+                        lines.append(f"- {res_name.replace('_', ' ').title()}: {current:,}/{capacity:,} ({pct:.0f}%)")
+                else:
+                    if unit:
+                        lines.append(f"- {res_name.replace('_', ' ').title()}: {current:,} {unit}")
+                    else:
+                        lines.append(f"- {res_name.replace('_', ' ').title()}: {current:,}")
+            else:
+                lines.append(f"- {res_name.replace('_', ' ').title()}: {res_data}")
+
     return "\n".join(lines)
 
 
@@ -231,6 +259,235 @@ def format_section(faction: Dict, section_name: str) -> str:
     return "\n".join(lines)
 
 
+def format_md(faction: Dict, search_root: Path) -> str:
+    """Format faction as a comprehensive markdown 'character sheet'."""
+    lines = []
+    faction_id = faction.get("id", "unknown")
+    name = faction.get("name", faction_id)
+    faction_type = faction.get("type", "")
+    minimal = faction.get("minimal", {})
+
+    # Header
+    lines.append(f"# {name}")
+    lines.append("")
+
+    # Identity section
+    lines.append("## Identity")
+    if faction_type:
+        lines.append(f"- **Type:** {faction_type}")
+    if minimal.get("essence"):
+        lines.append(f"- **Essence:** {minimal['essence']}")
+    if minimal.get("current_status"):
+        lines.append(f"- **Status:** {minimal['current_status']}")
+    tags = faction.get("tags", [])
+    if tags:
+        lines.append(f"- **Tags:** {', '.join(tags)}")
+    if faction.get("autonomous"):
+        lines.append("- **Autonomous:** yes")
+    lines.append("")
+
+    # Hierarchy section
+    parent = get_parent(faction)
+    children = get_children(faction_id)
+    if parent or children or faction.get("parent"):
+        lines.append("## Hierarchy")
+        if parent:
+            parent_name = parent.get("name", parent.get("id", "Unknown"))
+            lines.append(f"- **Parent:** {parent_name}")
+        elif faction.get("parent"):
+            lines.append(f"- **Parent:** {faction['parent']} [not found]")
+        if children:
+            lines.append("- **Subfactions:**")
+            for child in children:
+                child_name = child.get("name", child.get("id", "Unknown"))
+                child_type = child.get("type", "")
+                type_str = f" ({child_type})" if child_type else ""
+                lines.append(f"  - {child_name}{type_str}")
+        lines.append("")
+
+    # Members section
+    members = faction.get("members", {})
+    named = members.get("named", [])
+    units = members.get("units", [])
+    pools = members.get("pools", [])
+    if named or units or pools:
+        lines.append("## Members")
+        if named:
+            lines.append("### Named Characters")
+            for member_id in named:
+                lines.append(f"- {member_id}")
+        if units:
+            lines.append("### Units")
+            for unit in units:
+                unit_name = unit.get("name", unit.get("id", "Unknown"))
+                count = unit.get("count", 0)
+                role = unit.get("role", "")
+                morale = unit.get("morale", "")
+                details = []
+                if role:
+                    details.append(f"role: {role}")
+                if morale:
+                    details.append(f"morale: {morale}")
+                detail_str = f" - {', '.join(details)}" if details else ""
+                lines.append(f"- {unit_name} ({count}){detail_str}")
+        if pools:
+            lines.append("### Pools")
+            for pool in pools:
+                desc = pool.get("description", pool.get("id", "Unknown"))
+                count = pool.get("count", 0)
+                state = pool.get("state", "")
+                state_str = f" - {state}" if state else ""
+                lines.append(f"- {desc} ({count}){state_str}")
+        lines.append("")
+
+    # Relationships section
+    relationships = faction.get("relationships", [])
+    if relationships:
+        lines.append("## Relationships")
+        # Group by type
+        by_type: Dict[str, List[Dict]] = {}
+        for rel in relationships:
+            rtype = rel.get("type", "unknown")
+            if rtype not in by_type:
+                by_type[rtype] = []
+            by_type[rtype].append(rel)
+        for rtype in sorted(by_type.keys()):
+            lines.append(f"### {rtype.title()}")
+            for rel in by_type[rtype]:
+                target = rel.get("target", "unknown")
+                state = rel.get("state", {})
+                notes = rel.get("notes", "")
+                state_parts = []
+                for k, v in state.items():
+                    state_parts.append(f"{k}={v}")
+                state_str = f" ({', '.join(state_parts)})" if state_parts else ""
+                lines.append(f"- {target}{state_str}")
+                if notes:
+                    lines.append(f"  - Notes: {notes}")
+        lines.append("")
+
+    # Economy section
+    economy = faction.get("economy", {})
+    if economy:
+        lines.append("## Economy")
+        accounts = economy.get("accounts", [])
+        running_costs = economy.get("running_costs", [])
+        inventory = economy.get("inventory", [])
+        assets = economy.get("assets", [])
+
+        # Calculate summary
+        liquid = sum(a.get("balance", 0) for a in accounts if a.get("category") == "liquid")
+        receivables = sum(a.get("balance", 0) for a in accounts if a.get("category") == "receivable")
+        payables = sum(a.get("balance", 0) for a in accounts if a.get("category") == "payable")
+        net_worth = liquid + receivables + payables
+        monthly_burn = sum(
+            c.get("amount", 0) if c.get("period", "monthly") == "monthly"
+            else c.get("amount", 0) // 12
+            for c in running_costs
+        )
+
+        lines.append(f"- **Liquid Assets:** {liquid:,} cr")
+        lines.append(f"- **Receivables:** {receivables:,} cr")
+        lines.append(f"- **Payables:** {payables:,} cr")
+        lines.append(f"- **Net Worth:** {net_worth:,} cr")
+        if monthly_burn > 0:
+            lines.append(f"- **Monthly Burn:** {monthly_burn:,} cr")
+            if liquid > 0:
+                runway = liquid / monthly_burn
+                lines.append(f"- **Runway:** {runway:.1f} months")
+        if inventory:
+            lines.append(f"- **Inventory Items:** {len(inventory)}")
+        if assets:
+            lines.append(f"- **Assets:** {len(assets)}")
+        lines.append("")
+
+    # Resources section
+    resources = faction.get("resources", {})
+    if resources:
+        lines.append("## Resources")
+        for res_name, res_data in resources.items():
+            # Handle both structured and simple format
+            if isinstance(res_data, (int, float)):
+                lines.append(f"- **{res_name.replace('_', ' ').title()}:** {res_data:,}")
+            elif isinstance(res_data, str):
+                lines.append(f"- **{res_name.replace('_', ' ').title()}:** {res_data}")
+            elif isinstance(res_data, dict):
+                current = res_data.get("current", 0)
+                capacity = res_data.get("capacity")
+                unit = res_data.get("unit", "")
+                if capacity is not None and capacity > 0:
+                    pct = (current / capacity * 100) if capacity > 0 else 0
+                    if unit:
+                        lines.append(f"- **{res_name.replace('_', ' ').title()}:** {current:,}/{capacity:,} {unit} ({pct:.0f}%)")
+                    else:
+                        lines.append(f"- **{res_name.replace('_', ' ').title()}:** {current:,}/{capacity:,} ({pct:.0f}%)")
+                else:
+                    if unit:
+                        lines.append(f"- **{res_name.replace('_', ' ').title()}:** {current:,} {unit}")
+                    else:
+                        lines.append(f"- **{res_name.replace('_', ' ').title()}:** {current:,}")
+            else:
+                lines.append(f"- **{res_name.replace('_', ' ').title()}:** {res_data}")
+        lines.append("")
+
+    # Full description/narrative sections
+    full = faction.get("full", {})
+    if full.get("description"):
+        lines.append("## Description")
+        lines.append(full["description"])
+        lines.append("")
+    if full.get("history"):
+        lines.append("## History")
+        lines.append(full["history"])
+        lines.append("")
+    if full.get("goals"):
+        lines.append("## Goals")
+        lines.append(full["goals"])
+        lines.append("")
+    if full.get("structure"):
+        lines.append("## Structure")
+        lines.append(full["structure"])
+        lines.append("")
+
+    # Custom sections
+    sections = faction.get("sections", {})
+    for section_name, section_data in sections.items():
+        lines.append(f"## {section_name.replace('_', ' ').title()}")
+        if isinstance(section_data, dict):
+            for key, value in section_data.items():
+                if isinstance(value, list):
+                    lines.append(f"### {key.replace('_', ' ').title()}")
+                    for item in value:
+                        if isinstance(item, dict):
+                            # Format as key-value pairs
+                            parts = [f"{k}: {v}" for k, v in item.items()]
+                            lines.append(f"- {', '.join(parts)}")
+                        else:
+                            lines.append(f"- {item}")
+                elif isinstance(value, dict):
+                    lines.append(f"### {key.replace('_', ' ').title()}")
+                    for k, v in value.items():
+                        lines.append(f"- **{k}:** {v}")
+                else:
+                    lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
+        elif isinstance(section_data, list):
+            for item in section_data:
+                if isinstance(item, dict):
+                    era = item.get("era", "")
+                    event = item.get("event", str(item))
+                    if era:
+                        lines.append(f"- **{era}:** {event}")
+                    else:
+                        lines.append(f"- {event}")
+                else:
+                    lines.append(f"- {item}")
+        else:
+            lines.append(str(section_data))
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def cmd_list(
     faction_type: Optional[str] = None,
     tag: Optional[str] = None,
@@ -279,12 +536,16 @@ def cmd_list(
 def cmd_get(
     faction_name: str,
     depth: str = "minimal",
-    section: Optional[str] = None
+    section: Optional[str] = None,
+    output_format: Optional[str] = None
 ) -> None:
     """Get a faction's profile at specified depth."""
+    search_root = Path.cwd()
     faction = find_item(factions, faction_name, "Faction")
 
-    if section:
+    if output_format == "md":
+        print(format_md(faction, search_root))
+    elif section:
         print(format_section(faction, section))
     elif depth == "full":
         print(format_full(faction))
@@ -1706,6 +1967,308 @@ def calculate_asset_maintenance(assets: List[Dict]) -> int:
     return int(total)
 
 
+# ============================================================================
+# Resource Management
+# ============================================================================
+
+def find_resource(faction: Dict, resource_name: str) -> Optional[Dict]:
+    """Find a resource by name (case-insensitive)."""
+    resources = faction.get("resources", {})
+    name_lower = resource_name.lower()
+
+    for name, resource in resources.items():
+        if name.lower() == name_lower:
+            return {"name": name, **resource}
+
+    return None
+
+
+def format_resource(name: str, resource: Any) -> str:
+    """Format a single resource for display.
+
+    Handles both structured format (dict with current/capacity/unit)
+    and simple format (int/string value).
+    """
+    # Handle simple format (just a value)
+    if isinstance(resource, (int, float)):
+        return f"- {name.replace('_', ' ').title()}: {format_number(resource)}"
+    elif isinstance(resource, str):
+        return f"- {name.replace('_', ' ').title()}: {resource}"
+    elif not isinstance(resource, dict):
+        return f"- {name.replace('_', ' ').title()}: {resource}"
+
+    # Handle structured format
+    current = resource.get("current", 0)
+    capacity = resource.get("capacity")
+    unit = resource.get("unit", "")
+
+    # Build the display string
+    if capacity is not None and capacity > 0:
+        pct = (current / capacity * 100) if capacity > 0 else 0
+        if unit:
+            return f"- {name.replace('_', ' ').title()}: {format_number(current)}/{format_number(capacity)} {unit} ({pct:.0f}%)"
+        else:
+            return f"- {name.replace('_', ' ').title()}: {format_number(current)}/{format_number(capacity)} ({pct:.0f}%)"
+    else:
+        if unit:
+            return f"- {name.replace('_', ' ').title()}: {format_number(current)} {unit}"
+        else:
+            return f"- {name.replace('_', ' ').title()}: {format_number(current)}"
+
+
+def format_resources(faction: Dict) -> str:
+    """Format all resources for a faction."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    resources = faction.get("resources", {})
+
+    lines = [f"# {name} Resources"]
+
+    if not resources:
+        lines.append("\nNo resources defined")
+        return "\n".join(lines)
+
+    lines.append("")
+    for res_name, res_data in resources.items():
+        lines.append(format_resource(res_name, res_data))
+
+    return "\n".join(lines)
+
+
+def cmd_resources(
+    faction_name: str,
+    output_json: bool = False
+) -> None:
+    """Show faction resources."""
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+
+    resources = faction.get("resources", {})
+
+    if output_json:
+        result = {
+            "faction": faction_id,
+            "resources": resources
+        }
+        print(json.dumps(result, indent=2))
+        return
+
+    print(format_resources(faction))
+
+
+def cmd_resources_set(
+    faction_name: str,
+    resource_name: str,
+    current: int,
+    capacity: Optional[int] = None,
+    unit: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Set (create or replace) a resource for a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Initialize resources if needed
+    if "resources" not in faction:
+        faction["resources"] = {}
+
+    # Get old value if exists
+    old_resource = faction["resources"].get(resource_name)
+
+    # Build new resource
+    resource: Dict[str, Any] = {"current": current}
+    if capacity is not None:
+        resource["capacity"] = capacity
+    if unit is not None:
+        resource["unit"] = unit
+
+    # Set the resource
+    faction["resources"][resource_name] = resource
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"resources.{resource_name}",
+        from_value=old_resource,
+        to_value=resource,
+        reason=reason or f"Set resource: {resource_name}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "set-resource",
+            "faction": faction_id,
+            "resource_name": resource_name,
+            "resource": resource,
+            "replaced": old_resource is not None,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        action = "Updated" if old_resource else "Added"
+        print(f"{action} resource for {faction_display}")
+        print(f"  Name: {resource_name}")
+        print(f"  Current: {format_number(current)}")
+        if capacity is not None:
+            print(f"  Capacity: {format_number(capacity)}")
+        if unit:
+            print(f"  Unit: {unit}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_resources_update(
+    faction_name: str,
+    resource_name: str,
+    current: int,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update a resource's current value."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    resources = faction.get("resources", {})
+
+    # Find the resource (case-insensitive)
+    actual_name = None
+    for name in resources.keys():
+        if name.lower() == resource_name.lower():
+            actual_name = name
+            break
+
+    if not actual_name:
+        print(f"Error: Resource '{resource_name}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    resource = resources[actual_name]
+    old_current = resource.get("current")
+
+    # Update current value
+    resource["current"] = current
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"resources.{actual_name}.current",
+        from_value=old_current,
+        to_value=current,
+        reason=reason or f"Updated resource {actual_name}: {old_current} -> {current}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-resource",
+            "faction": faction_id,
+            "resource_name": actual_name,
+            "from": old_current,
+            "to": current,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        unit = resource.get("unit", "")
+        capacity = resource.get("capacity")
+        print(f"Updated resource {actual_name} for {faction_display}")
+        if capacity:
+            old_pct = (old_current / capacity * 100) if capacity > 0 and old_current else 0
+            new_pct = (current / capacity * 100) if capacity > 0 else 0
+            print(f"  {format_number(old_current)}/{format_number(capacity)} ({old_pct:.0f}%) -> {format_number(current)}/{format_number(capacity)} ({new_pct:.0f}%)")
+        else:
+            print(f"  {format_number(old_current)} -> {format_number(current)}{' ' + unit if unit else ''}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_resources_remove(
+    faction_name: str,
+    resource_name: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove a resource from a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    resources = faction.get("resources", {})
+
+    # Find the resource (case-insensitive)
+    actual_name = None
+    for name in resources.keys():
+        if name.lower() == resource_name.lower():
+            actual_name = name
+            break
+
+    if not actual_name:
+        print(f"Error: Resource '{resource_name}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    removed = resources.pop(actual_name)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"resources.{actual_name}",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed resource: {actual_name}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-resource",
+            "faction": faction_id,
+            "resource_name": actual_name,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Removed resource {actual_name} from {faction_display}")
+        current = removed.get("current", 0)
+        capacity = removed.get("capacity")
+        unit = removed.get("unit", "")
+        if capacity:
+            print(f"  Was: {format_number(current)}/{format_number(capacity)} {unit}")
+        else:
+            print(f"  Was: {format_number(current)} {unit}")
+        print(f"Change logged: {entry.id}")
+
+
 def format_economy_inventory(faction: Dict) -> str:
     """Format economy inventory view."""
     name = faction.get("name", faction.get("id", "Unknown"))
@@ -3123,6 +3686,171 @@ def cmd_remove_member(
         print(f"Change logged: {entry.id}")
 
 
+def cmd_validate(
+    faction_name: str,
+    fix: bool = False,
+    output_json: bool = False
+) -> None:
+    """Validate a faction's data integrity."""
+    search_root = Path.cwd()
+
+    # Discover characters if not already loaded
+    if not characters:
+        discover_characters(search_root)
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    issues = []
+    fixes_applied = []
+
+    # Check required fields
+    if not faction.get("id"):
+        issues.append({"type": "missing_field", "field": "id", "severity": "error"})
+    if not faction.get("name"):
+        issues.append({"type": "missing_field", "field": "name", "severity": "error"})
+    if not faction.get("type"):
+        issues.append({"type": "missing_field", "field": "type", "severity": "warning"})
+    minimal = faction.get("minimal", {})
+    if not minimal.get("essence"):
+        issues.append({"type": "missing_field", "field": "minimal.essence", "severity": "warning"})
+
+    # Check parent faction exists
+    parent_id = faction.get("parent")
+    if parent_id:
+        if parent_id not in factions:
+            # Try case-insensitive search
+            parent_found = False
+            for f in factions.values():
+                if f.get("id", "").lower() == parent_id.lower():
+                    parent_found = True
+                    break
+            if not parent_found:
+                issues.append({
+                    "type": "parent_not_found",
+                    "parent_id": parent_id,
+                    "severity": "error"
+                })
+
+    # Check relationship targets exist
+    relationships = faction.get("relationships", [])
+    for rel in relationships:
+        target = rel.get("target", "")
+        if target:
+            target_exists, _ = validate_target_exists(target)
+            if not target_exists:
+                issues.append({
+                    "type": "relationship_target_not_found",
+                    "target": target,
+                    "relationship_type": rel.get("type", "unknown"),
+                    "severity": "warning"
+                })
+
+    # Check member characters exist and have matching faction field
+    members = faction.get("members", {})
+    named_members = members.get("named", [])
+    for member_id in named_members:
+        # Find character
+        char = None
+        member_lower = member_id.lower()
+        for c in characters.values():
+            if c.get("id", "").lower() == member_lower:
+                char = c
+                break
+            if c.get("name", "").lower() == member_lower:
+                char = c
+                break
+
+        if not char:
+            issues.append({
+                "type": "member_character_not_found",
+                "member_id": member_id,
+                "severity": "warning"
+            })
+        else:
+            char_faction = char.get("faction", "")
+            if char_faction.lower() != faction_id.lower():
+                issues.append({
+                    "type": "member_faction_mismatch",
+                    "member_id": member_id,
+                    "character_name": char.get("name", member_id),
+                    "expected_faction": faction_id,
+                    "actual_faction": char_faction or "(none)",
+                    "severity": "warning",
+                    "fixable": True
+                })
+
+                # Apply fix if requested
+                if fix:
+                    char["faction"] = faction_id
+                    char_file = find_source_file("characters", char.get("id", member_id), search_root)
+                    if char_file:
+                        with open(char_file, 'w', encoding='utf-8') as f:
+                            json.dump(char, f, indent=2)
+                        fixes_applied.append({
+                            "type": "set_character_faction",
+                            "character_id": char.get("id", member_id),
+                            "faction": faction_id
+                        })
+
+    # Check for orphaned subfactions (this faction has parent that doesn't exist)
+    # Already handled above in parent check
+
+    if output_json:
+        result = {
+            "faction": faction_id,
+            "valid": len([i for i in issues if i.get("severity") == "error"]) == 0,
+            "issues": issues,
+            "fixes_applied": fixes_applied if fix else []
+        }
+        print(json.dumps(result, indent=2))
+        return
+
+    # Human-readable output
+    errors = [i for i in issues if i.get("severity") == "error"]
+    warnings = [i for i in issues if i.get("severity") == "warning"]
+
+    if not issues:
+        print(f"Validation passed: {faction_display}")
+        return
+
+    print(f"Validation results for {faction_display}:")
+    print()
+
+    if errors:
+        print(f"Errors ({len(errors)}):")
+        for issue in errors:
+            if issue["type"] == "missing_field":
+                print(f"  - Missing required field: {issue['field']}")
+            elif issue["type"] == "parent_not_found":
+                print(f"  - Parent faction not found: {issue['parent_id']}")
+
+    if warnings:
+        print(f"\nWarnings ({len(warnings)}):")
+        for issue in warnings:
+            if issue["type"] == "missing_field":
+                print(f"  - Missing recommended field: {issue['field']}")
+            elif issue["type"] == "relationship_target_not_found":
+                print(f"  - Relationship target not found: {issue['target']} ({issue['relationship_type']})")
+            elif issue["type"] == "member_character_not_found":
+                print(f"  - Member character not found: {issue['member_id']}")
+            elif issue["type"] == "member_faction_mismatch":
+                fixable_str = " [fixable]" if issue.get("fixable") else ""
+                print(f"  - Member {issue['character_name']} has faction '{issue['actual_faction']}', expected '{issue['expected_faction']}'{fixable_str}")
+
+    if fixes_applied:
+        print(f"\nFixes applied ({len(fixes_applied)}):")
+        for fix_item in fixes_applied:
+            if fix_item["type"] == "set_character_faction":
+                print(f"  - Set {fix_item['character_id']}.faction = {fix_item['faction']}")
+
+    if not fix:
+        fixable = [i for i in issues if i.get("fixable")]
+        if fixable:
+            print(f"\n{len(fixable)} issue(s) can be auto-fixed with --fix")
+
+
 def main():
     # Find search root (current directory or script parent)
     search_root = Path.cwd()
@@ -3142,7 +3870,9 @@ def main():
         print("  get <name>                     Get minimal profile")
         print("  get <name> --depth full        Get full profile")
         print("  get <name> --section NAME      Get specific section")
+        print("  get <name> --format md         Get full markdown 'character sheet'")
         print("  sections <name>                List available sections")
+        print("  validate <name> [--fix]        Validate faction data integrity")
         print("  show <name>                    Show raw JSON")
         print("  update <name> --field FIELD --value VAL --reason R")
         print("                                 Update faction field (dot notation)")
@@ -3196,6 +3926,14 @@ def main():
         print("                                 Update asset fields")
         print("  economy <name> remove-asset ID [--reason '...']")
         print("                                 Remove an asset")
+        print("\nResource management:")
+        print("  resources <name> [--json]      Show faction resources")
+        print("  resources <name> set RESOURCE_NAME --current N [--capacity N] [--unit UNIT]")
+        print("                   [--reason '...']   Set/create a resource")
+        print("  resources <name> update RESOURCE_NAME --current N [--reason '...']")
+        print("                                 Update resource current value")
+        print("  resources <name> remove RESOURCE_NAME [--reason '...']")
+        print("                                 Remove a resource")
         print("\nCreate options:")
         print("  --name NAME                    Faction display name (required)")
         print("  --type TYPE                    Faction type: fleet|house|organization|military|other (required)")
@@ -3250,6 +3988,14 @@ def main():
         print("  --asset-type TYPE              Asset type (ship, property, vehicle, etc.)")
         print("  --details '{...}'              JSON object with asset details (e.g., class, tonnage)")
         print("  --notes '...'                  Freeform notes")
+        print("\nResource options:")
+        print("  --current N                    Current resource amount")
+        print("  --capacity N                   Maximum capacity (optional)")
+        print("  --unit UNIT                    Unit label (e.g., months, missiles, jumps)")
+        print("\nValidate options:")
+        print("  --fix                          Auto-fix fixable issues")
+        print("\nFormat options:")
+        print("  --format md                    Output as markdown 'character sheet'")
         print("\nUpdate options:")
         print("  --field FIELD                  Field to update (dot notation, e.g., full.goals)")
         print("  --value VALUE                  New value (JSON arrays/objects auto-parsed)")
@@ -3316,6 +4062,14 @@ def main():
     asset_type = None
     # Economy subcommand (add-account, update-account, etc.)
     economy_subcommand = None
+    # Resource command options
+    resource_subcommand = None
+    resource_name = None
+    current = None
+    capacity = None
+    unit = None
+    # Format option
+    output_format = None
 
     i = 2
     positional_count = 0
@@ -3455,6 +4209,26 @@ def main():
         elif arg == "--asset-type" and i + 1 < len(sys.argv):
             asset_type = sys.argv[i + 1]
             i += 2
+        elif arg == "--current" and i + 1 < len(sys.argv):
+            try:
+                current = int(sys.argv[i + 1])
+            except ValueError:
+                print(f"Error: --current must be an integer", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        elif arg == "--capacity" and i + 1 < len(sys.argv):
+            try:
+                capacity = int(sys.argv[i + 1])
+            except ValueError:
+                print(f"Error: --capacity must be an integer", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        elif arg == "--unit" and i + 1 < len(sys.argv):
+            unit = sys.argv[i + 1]
+            i += 2
+        elif arg == "--format" and i + 1 < len(sys.argv):
+            output_format = sys.argv[i + 1]
+            i += 2
         elif not arg.startswith("--"):
             # Positional argument
             if positional_count == 0:
@@ -3466,6 +4240,9 @@ def main():
                                                      "add-item", "update-item", "remove-item",
                                                      "add-asset", "update-asset", "remove-asset"):
                     economy_subcommand = arg
+                # Check if this is a resources subcommand
+                elif command == "resources" and arg in ("set", "update", "remove"):
+                    resource_subcommand = arg
                 else:
                     character_name = arg
             elif positional_count == 2:
@@ -3473,6 +4250,9 @@ def main():
                 if economy_subcommand in ("update-account", "remove-account", "update-cost", "remove-cost",
                                           "update-item", "remove-item", "update-asset", "remove-asset"):
                     item_id = arg
+                # For resources subcommands that need a resource name as third positional
+                elif resource_subcommand in ("set", "update", "remove"):
+                    resource_name = arg
             positional_count += 1
             i += 1
         else:
@@ -3513,7 +4293,7 @@ def main():
         if not faction_name:
             print("Error: faction name is required for 'get' command", file=sys.stderr)
             sys.exit(1)
-        cmd_get(faction_name, depth, section)
+        cmd_get(faction_name, depth, section, output_format)
     elif command == "sections":
         if not faction_name:
             print("Error: faction name is required for 'sections' command", file=sys.stderr)
@@ -3753,6 +4533,47 @@ def main():
             print("Error: character name required", file=sys.stderr)
             sys.exit(1)
         cmd_remove_member(faction_name, character_name, session_name, output_json)
+    elif command == "resources":
+        if not faction_name:
+            print("Error: faction name required", file=sys.stderr)
+            sys.exit(1)
+
+        if resource_subcommand == "set":
+            if not resource_name:
+                print("Error: resource name required for set", file=sys.stderr)
+                sys.exit(1)
+            if current is None:
+                print("Error: --current required for set", file=sys.stderr)
+                sys.exit(1)
+            cmd_resources_set(
+                faction_name, resource_name, current, capacity, unit,
+                reason, session_name, output_json
+            )
+        elif resource_subcommand == "update":
+            if not resource_name:
+                print("Error: resource name required for update", file=sys.stderr)
+                sys.exit(1)
+            if current is None:
+                print("Error: --current required for update", file=sys.stderr)
+                sys.exit(1)
+            cmd_resources_update(
+                faction_name, resource_name, current, reason, session_name, output_json
+            )
+        elif resource_subcommand == "remove":
+            if not resource_name:
+                print("Error: resource name required for remove", file=sys.stderr)
+                sys.exit(1)
+            cmd_resources_remove(
+                faction_name, resource_name, reason, session_name, output_json
+            )
+        else:
+            # Default: show resources
+            cmd_resources(faction_name, output_json)
+    elif command == "validate":
+        if not faction_name:
+            print("Error: faction name required", file=sys.stderr)
+            sys.exit(1)
+        cmd_validate(faction_name, force, output_json)
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
         sys.exit(1)
