@@ -761,9 +761,1502 @@ def cmd_members(
     print("\n".join(lines))
 
 
-def cmd_economy(faction_name: str) -> None:
+# Account categories for economy
+ACCOUNT_CATEGORIES = ["liquid", "receivable", "payable", "other"]
+
+
+def calculate_net_worth(economy: Dict) -> Dict[str, int]:
+    """Calculate net worth from economy accounts.
+
+    Returns dict with liquid, receivables, payables, and net_worth totals.
+    """
+    accounts = economy.get("accounts", [])
+
+    liquid = sum(a.get("balance", 0) for a in accounts if a.get("category") == "liquid")
+    receivables = sum(a.get("balance", 0) for a in accounts if a.get("category") == "receivable")
+    payables = sum(a.get("balance", 0) for a in accounts if a.get("category") == "payable")
+    other = sum(a.get("balance", 0) for a in accounts if a.get("category") == "other")
+
+    return {
+        "liquid": liquid,
+        "receivables": receivables,
+        "payables": payables,
+        "other": other,
+        "net_worth": liquid + receivables + payables + other
+    }
+
+
+def calculate_monthly_burn(economy: Dict) -> int:
+    """Calculate total monthly burn from running costs.
+
+    Monthly costs are summed directly, annual costs are divided by 12.
+    """
+    costs = economy.get("running_costs", [])
+    total = 0
+
+    for cost in costs:
+        amount = cost.get("amount", 0)
+        period = cost.get("period", "monthly").lower()
+
+        if period == "monthly":
+            total += amount
+        elif period == "annual":
+            total += amount // 12
+
+    return total
+
+
+def calculate_runway(liquid: int, monthly_burn: int) -> Optional[float]:
+    """Calculate runway in months (liquid / monthly_burn).
+
+    Returns None if monthly_burn is zero.
+    """
+    if monthly_burn <= 0:
+        return None
+    return liquid / monthly_burn
+
+
+def find_account(economy: Dict, account_id: str) -> Optional[Dict]:
+    """Find an account by ID."""
+    accounts = economy.get("accounts", [])
+    account_id_lower = account_id.lower()
+
+    for account in accounts:
+        if account.get("id", "").lower() == account_id_lower:
+            return account
+
+    return None
+
+
+def find_running_cost(economy: Dict, cost_id: str) -> Optional[Dict]:
+    """Find a running cost by ID."""
+    costs = economy.get("running_costs", [])
+    cost_id_lower = cost_id.lower()
+
+    for cost in costs:
+        if cost.get("id", "").lower() == cost_id_lower:
+            return cost
+
+    return None
+
+
+def format_economy_summary(faction: Dict) -> str:
+    """Format economy summary view."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    economy = faction.get("economy", {})
+
+    # Calculate totals
+    totals = calculate_net_worth(economy)
+    monthly_burn = calculate_monthly_burn(economy)
+    runway = calculate_runway(totals["liquid"], monthly_burn)
+
+    lines = [f"# {name} Economy", "", "## Summary"]
+
+    # Assets and liabilities
+    lines.append(f"Liquid Assets:     {format_number(totals['liquid']):>12} cr")
+    lines.append(f"Receivables:       {format_number(totals['receivables']):>12} cr")
+    lines.append(f"Payables:          {format_number(totals['payables']):>12} cr")
+    if totals["other"] != 0:
+        lines.append(f"Other:             {format_number(totals['other']):>12} cr")
+    lines.append("-" * 37)
+    lines.append(f"Net Worth:         {format_number(totals['net_worth']):>12} cr")
+    lines.append("")
+    lines.append(f"Monthly Burn:      {format_number(monthly_burn):>12} cr")
+
+    if runway is not None:
+        lines.append(f"Runway:            {runway:>11.1f} months")
+    else:
+        lines.append("Runway:                     N/A")
+
+    return "\n".join(lines)
+
+
+def format_economy_accounts(faction: Dict) -> str:
+    """Format economy accounts view."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    economy = faction.get("economy", {})
+    accounts = economy.get("accounts", [])
+
+    lines = [f"# {name} Economy", "", "## Accounts"]
+
+    if not accounts:
+        lines.append("No accounts defined")
+        return "\n".join(lines)
+
+    for account in accounts:
+        acc_id = account.get("id", "unknown")
+        balance = account.get("balance", 0)
+        category = account.get("category", "other")
+        notes = account.get("notes", "")
+        interest = account.get("interest")
+
+        # Build line
+        parts = [f"- {acc_id}: {format_number(balance)} cr"]
+
+        if interest is not None:
+            if isinstance(interest, float) and interest < 1:
+                parts.append(f"@ {int(interest * 100)}% annual")
+            else:
+                parts.append(f"@ {interest}% annual")
+
+        parts.append(f"({category})")
+
+        if notes:
+            parts.append(f"- {notes}")
+
+        lines.append(" ".join(parts))
+
+    return "\n".join(lines)
+
+
+def format_economy_costs(faction: Dict) -> str:
+    """Format economy running costs view."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    economy = faction.get("economy", {})
+    costs = economy.get("running_costs", [])
+
+    lines = [f"# {name} Economy", "", "## Running Costs (Monthly)"]
+
+    if not costs:
+        lines.append("No running costs defined")
+        return "\n".join(lines)
+
+    total_monthly = 0
+
+    for cost in costs:
+        desc = cost.get("description", cost.get("id", "unknown"))
+        amount = cost.get("amount", 0)
+        period = cost.get("period", "monthly").lower()
+        formula = cost.get("formula")
+
+        # Calculate monthly equivalent
+        if period == "monthly":
+            monthly = amount
+        else:  # annual
+            monthly = amount // 12
+
+        total_monthly += monthly
+
+        # Build line
+        line = f"- {desc}: {format_number(monthly)} cr"
+
+        if formula:
+            line += f" (= {formula})"
+        elif period == "annual":
+            line += f" ({format_number(amount)}/year)"
+
+        lines.append(line)
+
+    lines.append("-" * 37)
+    lines.append(f"Total Monthly Burn: {format_number(total_monthly)} cr")
+
+    return "\n".join(lines)
+
+
+def format_economy_full(faction: Dict) -> str:
+    """Format complete economy view (summary + accounts + costs)."""
+    parts = [
+        format_economy_summary(faction),
+        "",
+        format_economy_accounts(faction).split("\n", 3)[-1] if faction.get("economy", {}).get("accounts") else "",
+        "",
+        format_economy_costs(faction).split("\n", 3)[-1] if faction.get("economy", {}).get("running_costs") else ""
+    ]
+
+    # Clean up empty parts
+    return "\n".join(p for p in parts if p.strip())
+
+
+def cmd_economy(
+    faction_name: str,
+    show_accounts: bool = False,
+    show_costs: bool = False,
+    show_inventory: bool = False,
+    show_assets: bool = False,
+    show_summary: bool = True,
+    output_json: bool = False
+) -> None:
     """Show faction economy."""
-    print("Not implemented yet")
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+
+    economy = faction.get("economy", {})
+    inventory = economy.get("inventory", [])
+    assets = economy.get("assets", [])
+
+    if output_json:
+        # Calculate totals for JSON output
+        totals = calculate_net_worth(economy)
+        monthly_burn = calculate_monthly_burn(economy)
+        inv_value = calculate_inventory_value(inventory)
+        asset_value = calculate_asset_value(assets)
+        asset_maint = calculate_asset_maintenance(assets)
+        total_monthly = monthly_burn + asset_maint
+        runway = calculate_runway(totals["liquid"], total_monthly)
+
+        result = {
+            "faction": faction_id,
+            "accounts": economy.get("accounts", []),
+            "running_costs": economy.get("running_costs", []),
+            "inventory": inventory,
+            "assets": assets,
+            "summary": {
+                "liquid": totals["liquid"],
+                "receivables": totals["receivables"],
+                "payables": totals["payables"],
+                "other": totals["other"],
+                "inventory_value": inv_value,
+                "asset_value": asset_value,
+                "net_worth": totals["net_worth"] + inv_value + asset_value,
+                "monthly_burn": monthly_burn,
+                "asset_maintenance": asset_maint,
+                "total_monthly_burn": total_monthly,
+                "runway_months": round(runway, 1) if runway else None
+            }
+        }
+        print(json.dumps(result, indent=2))
+        return
+
+    # Determine what to show (single view flags)
+    if show_inventory:
+        print(format_economy_inventory(faction))
+    elif show_assets:
+        print(format_economy_assets(faction))
+    elif show_accounts and not show_costs:
+        print(format_economy_accounts(faction))
+    elif show_costs and not show_accounts:
+        print(format_economy_costs(faction))
+    elif show_accounts and show_costs:
+        print(format_economy_full(faction))
+    else:
+        # Default: enhanced summary including inventory/asset values
+        name = faction.get("name", faction.get("id", "Unknown"))
+        totals = calculate_net_worth(economy)
+        monthly_burn = calculate_monthly_burn(economy)
+        inv_value = calculate_inventory_value(inventory)
+        asset_value = calculate_asset_value(assets)
+        asset_maint = calculate_asset_maintenance(assets)
+        total_monthly = monthly_burn + asset_maint
+        runway = calculate_runway(totals["liquid"], total_monthly)
+
+        lines = [f"# {name} Economy", "", "## Summary"]
+
+        # Assets and liabilities
+        lines.append(f"Liquid Assets:     {format_number(totals['liquid']):>12} cr")
+        lines.append(f"Receivables:       {format_number(totals['receivables']):>12} cr")
+        lines.append(f"Payables:          {format_number(totals['payables']):>12} cr")
+        if totals["other"] != 0:
+            lines.append(f"Other:             {format_number(totals['other']):>12} cr")
+        if inv_value > 0:
+            lines.append(f"Inventory Value:   {format_number(inv_value):>12} cr")
+        if asset_value > 0:
+            lines.append(f"Asset Value:       {format_number(asset_value):>12} cr")
+        lines.append("-" * 37)
+        total_net_worth = totals["net_worth"] + inv_value + asset_value
+        lines.append(f"Net Worth:         {format_number(total_net_worth):>12} cr")
+        lines.append("")
+        lines.append(f"Monthly Burn:      {format_number(monthly_burn):>12} cr")
+        if asset_maint > 0:
+            lines.append(f"Asset Maintenance: {format_number(asset_maint):>12} cr")
+            lines.append(f"Total Monthly:     {format_number(total_monthly):>12} cr")
+
+        if runway is not None:
+            lines.append(f"Runway:            {runway:>11.1f} months")
+        else:
+            lines.append("Runway:                     N/A")
+
+        print("\n".join(lines))
+
+
+def cmd_add_account(
+    faction_name: str,
+    account_id: str,
+    category: str,
+    balance: int,
+    interest: Optional[float] = None,
+    notes: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Add an account to a faction's economy."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Validate category
+    if category not in ACCOUNT_CATEGORIES:
+        print(f"Error: Invalid category '{category}'. Must be one of: {', '.join(ACCOUNT_CATEGORIES)}", file=sys.stderr)
+        sys.exit(1)
+
+    # Initialize economy if needed
+    if "economy" not in faction:
+        faction["economy"] = {}
+    if "accounts" not in faction["economy"]:
+        faction["economy"]["accounts"] = []
+
+    # Check for duplicate ID
+    existing = find_account(faction["economy"], account_id)
+    if existing:
+        print(f"Error: Account '{account_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build account
+    account = {
+        "id": account_id,
+        "category": category,
+        "balance": balance
+    }
+
+    if interest is not None:
+        account["interest"] = interest
+
+    if notes:
+        account["notes"] = notes
+
+    # Add to accounts
+    faction["economy"]["accounts"].append(account)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.accounts",
+        from_value=None,
+        to_value=account,
+        reason=reason or f"Added {category} account: {account_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "add-account",
+            "faction": faction_id,
+            "account": account,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Added account to {faction_display}")
+        print(f"  ID: {account_id}")
+        print(f"  Category: {category}")
+        print(f"  Balance: {format_number(balance)} cr")
+        if interest is not None:
+            print(f"  Interest: {interest}")
+        if notes:
+            print(f"  Notes: {notes}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_update_account(
+    faction_name: str,
+    account_id: str,
+    balance: Optional[int] = None,
+    interest: Optional[float] = None,
+    notes: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update an account's balance or other fields."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    economy = faction.get("economy", {})
+    account = find_account(economy, account_id)
+
+    if not account:
+        print(f"Error: Account '{account_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Track old values
+    old_balance = account.get("balance")
+    old_interest = account.get("interest")
+    old_notes = account.get("notes")
+
+    changes = []
+
+    # Apply updates
+    if balance is not None:
+        account["balance"] = balance
+        if old_balance != balance:
+            changes.append(f"balance: {format_number(old_balance)} -> {format_number(balance)}")
+
+    if interest is not None:
+        account["interest"] = interest
+        if old_interest != interest:
+            changes.append(f"interest: {old_interest} -> {interest}")
+
+    if notes is not None:
+        if notes == "":
+            # Remove notes if empty string
+            account.pop("notes", None)
+            if old_notes:
+                changes.append(f"notes: removed")
+        else:
+            account["notes"] = notes
+            if old_notes != notes:
+                changes.append(f"notes: updated")
+
+    if not changes:
+        print("No changes made")
+        return
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"economy.accounts[{account_id}].balance",
+        from_value=old_balance,
+        to_value=balance if balance is not None else old_balance,
+        reason=reason or f"Updated account {account_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-account",
+            "faction": faction_id,
+            "account_id": account_id,
+            "changes": changes,
+            "account": account,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Updated account {account_id} for {faction_display}")
+        for change in changes:
+            print(f"  {change}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_remove_account(
+    faction_name: str,
+    account_id: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove an account from a faction's economy."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    economy = faction.get("economy", {})
+    accounts = economy.get("accounts", [])
+
+    # Find and remove account
+    account_id_lower = account_id.lower()
+    removed = None
+    idx = -1
+
+    for i, account in enumerate(accounts):
+        if account.get("id", "").lower() == account_id_lower:
+            removed = account
+            idx = i
+            break
+
+    if removed is None:
+        print(f"Error: Account '{account_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Remove the account
+    del accounts[idx]
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.accounts",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed account {account_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-account",
+            "faction": faction_id,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Removed account {account_id} from {faction_display}")
+        print(f"  Balance was: {format_number(removed.get('balance', 0))} cr")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_add_cost(
+    faction_name: str,
+    cost_id: str,
+    description: str,
+    amount: int,
+    period: str = "monthly",
+    formula: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Add a running cost to a faction's economy."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Validate period
+    if period.lower() not in ("monthly", "annual"):
+        print(f"Error: Invalid period '{period}'. Must be 'monthly' or 'annual'", file=sys.stderr)
+        sys.exit(1)
+
+    # Initialize economy if needed
+    if "economy" not in faction:
+        faction["economy"] = {}
+    if "running_costs" not in faction["economy"]:
+        faction["economy"]["running_costs"] = []
+
+    # Check for duplicate ID
+    existing = find_running_cost(faction["economy"], cost_id)
+    if existing:
+        print(f"Error: Running cost '{cost_id}' already exists", file=sys.stderr)
+        sys.exit(1)
+
+    # Build cost
+    cost = {
+        "id": cost_id,
+        "description": description,
+        "amount": amount,
+        "period": period.lower()
+    }
+
+    if formula:
+        cost["formula"] = formula
+
+    # Add to running costs
+    faction["economy"]["running_costs"].append(cost)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.running_costs",
+        from_value=None,
+        to_value=cost,
+        reason=reason or f"Added running cost: {description}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "add-cost",
+            "faction": faction_id,
+            "cost": cost,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Added running cost to {faction_display}")
+        print(f"  ID: {cost_id}")
+        print(f"  Description: {description}")
+        print(f"  Amount: {format_number(amount)} cr/{period.lower()}")
+        if formula:
+            print(f"  Formula: {formula}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_update_cost(
+    faction_name: str,
+    cost_id: str,
+    amount: Optional[int] = None,
+    description: Optional[str] = None,
+    period: Optional[str] = None,
+    formula: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update a running cost's amount or other fields."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    economy = faction.get("economy", {})
+    cost = find_running_cost(economy, cost_id)
+
+    if not cost:
+        print(f"Error: Running cost '{cost_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Track old values
+    old_amount = cost.get("amount")
+    old_description = cost.get("description")
+    old_period = cost.get("period")
+    old_formula = cost.get("formula")
+
+    changes = []
+
+    # Apply updates
+    if amount is not None:
+        cost["amount"] = amount
+        if old_amount != amount:
+            changes.append(f"amount: {format_number(old_amount)} -> {format_number(amount)}")
+
+    if description is not None:
+        cost["description"] = description
+        if old_description != description:
+            changes.append(f"description: updated")
+
+    if period is not None:
+        if period.lower() not in ("monthly", "annual"):
+            print(f"Error: Invalid period '{period}'. Must be 'monthly' or 'annual'", file=sys.stderr)
+            sys.exit(1)
+        cost["period"] = period.lower()
+        if old_period != period.lower():
+            changes.append(f"period: {old_period} -> {period.lower()}")
+
+    if formula is not None:
+        if formula == "":
+            # Remove formula if empty string
+            cost.pop("formula", None)
+            if old_formula:
+                changes.append(f"formula: removed")
+        else:
+            cost["formula"] = formula
+            if old_formula != formula:
+                changes.append(f"formula: updated")
+
+    if not changes:
+        print("No changes made")
+        return
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"economy.running_costs[{cost_id}].amount",
+        from_value=old_amount,
+        to_value=amount if amount is not None else old_amount,
+        reason=reason or f"Updated running cost {cost_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-cost",
+            "faction": faction_id,
+            "cost_id": cost_id,
+            "changes": changes,
+            "cost": cost,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Updated running cost {cost_id} for {faction_display}")
+        for change in changes:
+            print(f"  {change}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_remove_cost(
+    faction_name: str,
+    cost_id: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove a running cost from a faction's economy."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    economy = faction.get("economy", {})
+    costs = economy.get("running_costs", [])
+
+    # Find and remove cost
+    cost_id_lower = cost_id.lower()
+    removed = None
+    idx = -1
+
+    for i, cost in enumerate(costs):
+        if cost.get("id", "").lower() == cost_id_lower:
+            removed = cost
+            idx = i
+            break
+
+    if removed is None:
+        print(f"Error: Running cost '{cost_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Remove the cost
+    del costs[idx]
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.running_costs",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed running cost {cost_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-cost",
+            "faction": faction_id,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        desc = removed.get("description", cost_id)
+        print(f"Removed running cost from {faction_display}")
+        print(f"  {desc}: {format_number(removed.get('amount', 0))} cr/{removed.get('period', 'monthly')}")
+        print(f"Change logged: {entry.id}")
+
+
+# Inventory and asset helpers
+
+def format_inventory_item(item: Dict) -> List[str]:
+    """Format a single inventory item for display."""
+    lines = []
+    name = item.get("item", item.get("id", "Unknown"))
+    quantity = item.get("quantity", "")
+    value = item.get("value")
+    location = item.get("location")
+    legality = item.get("legality", "legal")
+    notes = item.get("notes")
+
+    # Build main line
+    parts = [f"- {name}"]
+    if quantity:
+        if isinstance(quantity, (int, float)):
+            parts.append(f": {format_number(quantity)}")
+        else:
+            parts.append(f": {quantity}")
+    if value is not None:
+        parts.append(f", value: {format_number(value)} cr")
+
+    # Add legality if not legal
+    if legality and legality.lower() != "legal":
+        parts.append(f" [{legality}]")
+
+    # Add location
+    if location:
+        parts.append(f" (location: {location})")
+
+    lines.append("".join(parts))
+
+    # Add notes on separate line
+    if notes:
+        lines.append(f"  Notes: {notes}")
+
+    return lines
+
+
+def format_asset(asset: Dict) -> List[str]:
+    """Format a single asset for display."""
+    lines = []
+    name = asset.get("name", asset.get("id", "Unknown"))
+    asset_type = asset.get("type", "")
+    value = asset.get("value")
+    details = asset.get("details", {})
+
+    # Build main line
+    type_str = f" ({asset_type})" if asset_type else ""
+    value_str = f": {format_number(value)} cr" if value is not None else ""
+    lines.append(f"- {name}{type_str}{value_str}")
+
+    # Format details based on type
+    if asset_type == "vessel" and details:
+        capacity = details.get("capacity")
+        current_load = details.get("current_load")
+        configuration = details.get("configuration")
+        maintenance_cost = details.get("maintenance_cost")
+
+        detail_parts = []
+        if capacity is not None:
+            if current_load is not None:
+                pct = (current_load / capacity * 100) if capacity > 0 else 0
+                detail_parts.append(f"Capacity: {format_number(capacity)}t, Load: {format_number(current_load)}t ({pct:.0f}%)")
+            else:
+                detail_parts.append(f"Capacity: {format_number(capacity)}t")
+        if configuration:
+            detail_parts.append(f"Configuration: {configuration}")
+        if maintenance_cost is not None:
+            detail_parts.append(f"Maintenance: {format_number(maintenance_cost)} cr/month")
+
+        for part in detail_parts:
+            lines.append(f"  {part}")
+    elif details:
+        # Generic details formatting
+        for key, val in details.items():
+            if isinstance(val, (dict, list)):
+                lines.append(f"  {key}: {json.dumps(val)}")
+            else:
+                lines.append(f"  {key}: {val}")
+
+    return lines
+
+
+def find_inventory_item(faction: Dict, item_id: str) -> Optional[Dict]:
+    """Find an inventory item by ID."""
+    economy = faction.get("economy", {})
+    inventory = economy.get("inventory", [])
+    item_lower = item_id.lower()
+
+    for item in inventory:
+        if item.get("id", "").lower() == item_lower:
+            return item
+
+    return None
+
+
+def find_asset(faction: Dict, asset_id: str) -> Optional[Dict]:
+    """Find an asset by ID."""
+    economy = faction.get("economy", {})
+    assets = economy.get("assets", [])
+    asset_lower = asset_id.lower()
+
+    for asset in assets:
+        if asset.get("id", "").lower() == asset_lower:
+            return asset
+
+    return None
+
+
+def calculate_inventory_value(inventory: List[Dict]) -> int:
+    """Calculate total value of inventory items."""
+    total = 0
+    for item in inventory:
+        value = item.get("value")
+        if value is not None and isinstance(value, (int, float)):
+            total += value
+    return int(total)
+
+
+def calculate_asset_value(assets: List[Dict]) -> int:
+    """Calculate total value of assets."""
+    total = 0
+    for asset in assets:
+        value = asset.get("value")
+        if value is not None and isinstance(value, (int, float)):
+            total += value
+    return int(total)
+
+
+def calculate_asset_maintenance(assets: List[Dict]) -> int:
+    """Calculate total maintenance cost of assets."""
+    total = 0
+    for asset in assets:
+        details = asset.get("details", {})
+        maintenance = details.get("maintenance_cost")
+        if maintenance is not None and isinstance(maintenance, (int, float)):
+            total += maintenance
+    return int(total)
+
+
+def format_economy_inventory(faction: Dict) -> str:
+    """Format economy inventory view."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    economy = faction.get("economy", {})
+    inventory = economy.get("inventory", [])
+
+    lines = [f"# {name} Economy", "", "## Inventory"]
+
+    if not inventory:
+        lines.append("No inventory items")
+        return "\n".join(lines)
+
+    for item in inventory:
+        lines.extend(format_inventory_item(item))
+
+    inv_value = calculate_inventory_value(inventory)
+    lines.append(f"\nTotal Inventory Value: {format_number(inv_value)} cr")
+
+    return "\n".join(lines)
+
+
+def format_economy_assets(faction: Dict) -> str:
+    """Format economy assets view."""
+    name = faction.get("name", faction.get("id", "Unknown"))
+    economy = faction.get("economy", {})
+    assets = economy.get("assets", [])
+
+    lines = [f"# {name} Economy", "", "## Assets"]
+
+    if not assets:
+        lines.append("No assets")
+        return "\n".join(lines)
+
+    for asset in assets:
+        lines.extend(format_asset(asset))
+
+    asset_value = calculate_asset_value(assets)
+    asset_maint = calculate_asset_maintenance(assets)
+    lines.append(f"\nTotal Asset Value: {format_number(asset_value)} cr")
+    if asset_maint > 0:
+        lines.append(f"Total Asset Maintenance: {format_number(asset_maint)} cr/month")
+
+    return "\n".join(lines)
+
+
+def cmd_add_item(
+    faction_name: str,
+    item_id: str,
+    item_name: str,
+    quantity: str,
+    value: Optional[int] = None,
+    location: Optional[str] = None,
+    legality: str = "legal",
+    notes: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Add an inventory item to a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Check for existing item with same ID
+    existing = find_inventory_item(faction, item_id)
+    if existing:
+        print(f"Error: Inventory item '{item_id}' already exists", file=sys.stderr)
+        print("  Use update-item to modify it, or remove-item first", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse quantity (could be number or string like "15% capacity")
+    parsed_quantity: Any = quantity
+    try:
+        if '.' in quantity:
+            parsed_quantity = float(quantity)
+        else:
+            parsed_quantity = int(quantity)
+    except ValueError:
+        pass  # Keep as string
+
+    # Build item
+    item: Dict[str, Any] = {
+        "id": item_id,
+        "item": item_name,
+        "quantity": parsed_quantity
+    }
+
+    if value is not None:
+        item["value"] = value
+    if location:
+        item["location"] = location
+    if legality and legality.lower() != "legal":
+        item["legality"] = legality
+    if notes:
+        item["notes"] = notes
+
+    # Ensure economy.inventory exists
+    if "economy" not in faction:
+        faction["economy"] = {}
+    if "inventory" not in faction["economy"]:
+        faction["economy"]["inventory"] = []
+
+    faction["economy"]["inventory"].append(item)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.inventory",
+        from_value=None,
+        to_value=item,
+        reason=reason or f"Added inventory item: {item_name}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "add-item",
+            "faction": faction_id,
+            "item": item,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Added inventory item to {faction_display}")
+        print(f"  ID: {item_id}")
+        print(f"  Item: {item_name}")
+        print(f"  Quantity: {parsed_quantity}")
+        if value is not None:
+            print(f"  Value: {format_number(value)} cr")
+        if location:
+            print(f"  Location: {location}")
+        if legality and legality.lower() != "legal":
+            print(f"  Legality: {legality}")
+        if notes:
+            print(f"  Notes: {notes}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_update_item(
+    faction_name: str,
+    item_id: str,
+    quantity: Optional[str] = None,
+    value: Optional[int] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update an inventory item."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the item
+    item = find_inventory_item(faction, item_id)
+    if not item:
+        print(f"Error: Inventory item '{item_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    changes = []
+
+    if quantity is not None:
+        old_quantity = item.get("quantity")
+        # Parse quantity
+        parsed_quantity: Any = quantity
+        try:
+            if '.' in quantity:
+                parsed_quantity = float(quantity)
+            else:
+                parsed_quantity = int(quantity)
+        except ValueError:
+            pass  # Keep as string
+        item["quantity"] = parsed_quantity
+        changes.append({"field": "quantity", "from": old_quantity, "to": parsed_quantity})
+
+    if value is not None:
+        old_value = item.get("value")
+        item["value"] = value
+        changes.append({"field": "value", "from": old_value, "to": value})
+
+    if not changes:
+        print("Error: No changes specified (use --quantity or --value)", file=sys.stderr)
+        sys.exit(1)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"economy.inventory[{item_id}]",
+        from_value={c["field"]: c["from"] for c in changes},
+        to_value={c["field"]: c["to"] for c in changes},
+        reason=reason or f"Updated inventory item: {item_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-item",
+            "faction": faction_id,
+            "item_id": item_id,
+            "changes": changes,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        item_name = item.get("item", item_id)
+        print(f"Updated inventory item in {faction_display}")
+        print(f"  Item: {item_name}")
+        for change in changes:
+            fld = change["field"]
+            from_val = change["from"]
+            to_val = change["to"]
+            if fld == "value":
+                from_str = f"{format_number(from_val)} cr" if from_val is not None else "none"
+                to_str = f"{format_number(to_val)} cr"
+                print(f"  {fld}: {from_str} -> {to_str}")
+            else:
+                print(f"  {fld}: {from_val} -> {to_val}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_remove_item(
+    faction_name: str,
+    item_id: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove an inventory item from a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the item
+    economy = faction.get("economy", {})
+    inventory = economy.get("inventory", [])
+    item_lower = item_id.lower()
+
+    removed = None
+    idx = -1
+    for i, item in enumerate(inventory):
+        if item.get("id", "").lower() == item_lower:
+            removed = item
+            idx = i
+            break
+
+    if removed is None:
+        print(f"Error: Inventory item '{item_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Remove the item
+    del inventory[idx]
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.inventory",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed inventory item: {removed.get('item', item_id)}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-item",
+            "faction": faction_id,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        item_name = removed.get("item", item_id)
+        print(f"Removed inventory item from {faction_display}")
+        print(f"  Item: {item_name}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_add_asset(
+    faction_name: str,
+    asset_id: str,
+    asset_name: str,
+    asset_type: str,
+    value: int,
+    details: Optional[str] = None,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Add an asset to a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Check for existing asset with same ID
+    existing = find_asset(faction, asset_id)
+    if existing:
+        print(f"Error: Asset '{asset_id}' already exists", file=sys.stderr)
+        print("  Use update-asset to modify it, or remove-asset first", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse details JSON if provided
+    details_dict = {}
+    if details:
+        try:
+            details_dict = json.loads(details)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON in --details: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Build asset
+    asset: Dict[str, Any] = {
+        "id": asset_id,
+        "name": asset_name,
+        "type": asset_type,
+        "value": value
+    }
+
+    if details_dict:
+        asset["details"] = details_dict
+
+    # Ensure economy.assets exists
+    if "economy" not in faction:
+        faction["economy"] = {}
+    if "assets" not in faction["economy"]:
+        faction["economy"]["assets"] = []
+
+    faction["economy"]["assets"].append(asset)
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.assets",
+        from_value=None,
+        to_value=asset,
+        reason=reason or f"Added asset: {asset_name}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "add-asset",
+            "faction": faction_id,
+            "asset": asset,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        print(f"Added asset to {faction_display}")
+        print(f"  ID: {asset_id}")
+        print(f"  Name: {asset_name}")
+        print(f"  Type: {asset_type}")
+        print(f"  Value: {format_number(value)} cr")
+        if details_dict:
+            print(f"  Details: {details_dict}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_update_asset(
+    faction_name: str,
+    asset_id: str,
+    field: str,
+    value: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Update an asset field."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the asset
+    asset = find_asset(faction, asset_id)
+    if not asset:
+        print(f"Error: Asset '{asset_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Navigate to the field (supports dot notation like details.capacity)
+    parts = field.split('.')
+    obj = asset
+    for part in parts[:-1]:
+        if part not in obj:
+            obj[part] = {}
+        obj = obj[part]
+
+    final_key = parts[-1]
+    old_value = obj.get(final_key)
+
+    # Try to parse value as JSON or number
+    parsed_value: Any = value
+    if value.startswith('{') or value.startswith('['):
+        try:
+            parsed_value = json.loads(value)
+        except json.JSONDecodeError:
+            pass  # Keep as string
+    elif value.lower() == 'true':
+        parsed_value = True
+    elif value.lower() == 'false':
+        parsed_value = False
+    elif value.lower() == 'null':
+        parsed_value = None
+    else:
+        # Try to parse as number
+        try:
+            if '.' in value:
+                parsed_value = float(value)
+            else:
+                parsed_value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+    # Update the value
+    obj[final_key] = parsed_value
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field=f"economy.assets[{asset_id}].{field}",
+        from_value=old_value,
+        to_value=parsed_value,
+        reason=reason or f"Updated asset: {asset_id}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "update-asset",
+            "faction": faction_id,
+            "asset_id": asset_id,
+            "field": field,
+            "from": old_value,
+            "to": parsed_value,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        asset_name = asset.get("name", asset_id)
+        print(f"Updated asset in {faction_display}")
+        print(f"  Asset: {asset_name}")
+        print(f"  {field}: {old_value} -> {parsed_value}")
+        print(f"Change logged: {entry.id}")
+
+
+def cmd_remove_asset(
+    faction_name: str,
+    asset_id: str,
+    reason: Optional[str] = None,
+    session: Optional[str] = None,
+    output_json: bool = False
+) -> None:
+    """Remove an asset from a faction."""
+    search_root = Path.cwd()
+
+    faction = find_item(factions, faction_name, "Faction")
+    faction_id = faction.get("id", faction_name)
+    faction_display = faction.get("name", faction_id)
+
+    # Find the asset
+    economy = faction.get("economy", {})
+    assets = economy.get("assets", [])
+    asset_lower = asset_id.lower()
+
+    removed = None
+    idx = -1
+    for i, asset in enumerate(assets):
+        if asset.get("id", "").lower() == asset_lower:
+            removed = asset
+            idx = i
+            break
+
+    if removed is None:
+        print(f"Error: Asset '{asset_id}' not found", file=sys.stderr)
+        sys.exit(1)
+
+    # Remove the asset
+    del assets[idx]
+
+    # Save faction file
+    faction_file = find_source_file("factions", faction_id, search_root)
+    if faction_file:
+        with open(faction_file, 'w', encoding='utf-8') as f:
+            json.dump(faction, f, indent=2)
+
+    # Log to changelog
+    changelog = load_changelog(search_root)
+    entry = changelog.add(
+        session=session or "current",
+        character=faction_id,
+        tier="state",
+        field="economy.assets",
+        from_value=removed,
+        to_value=None,
+        reason=reason or f"Removed asset: {removed.get('name', asset_id)}"
+    )
+
+    if output_json:
+        print(json.dumps({
+            "action": "remove-asset",
+            "faction": faction_id,
+            "removed": removed,
+            "change_id": entry.id
+        }, indent=2))
+    else:
+        asset_name = removed.get("name", asset_id)
+        print(f"Removed asset from {faction_display}")
+        print(f"  Asset: {asset_name}")
+        print(f"Change logged: {entry.id}")
 
 
 def build_tree_lines(
@@ -1670,8 +3163,39 @@ def main():
         print("                   [--reason '...']  Update relationship field")
         print("  remove-relationship <faction> --target TARGET [--reason '...']")
         print("                                 Remove a relationship edge")
-        print("\nStub commands (not yet implemented):")
-        print("  economy <name>                 Show faction economy")
+        print("\nEconomy management:")
+        print("  economy <name> [--accounts] [--costs] [--inventory] [--assets]")
+        print("                   [--summary] [--json]   Show faction economy")
+        print("  economy <name> add-account --id ID --category CAT --balance N")
+        print("                   [--interest RATE] [--notes '...']")
+        print("                                 Add an economy account")
+        print("  economy <name> update-account ID --balance N [--reason '...']")
+        print("                                 Update account balance")
+        print("  economy <name> remove-account ID [--reason '...']")
+        print("                                 Remove an account")
+        print("  economy <name> add-cost --id ID --description '...' --amount N")
+        print("                   [--period monthly|annual] [--formula '...']")
+        print("                                 Add a running cost")
+        print("  economy <name> update-cost ID --amount N [--reason '...']")
+        print("                                 Update running cost")
+        print("  economy <name> remove-cost ID [--reason '...']")
+        print("                                 Remove a running cost")
+        print("  economy <name> add-item --id ID --item NAME --quantity Q --value V")
+        print("                   [--location LOC] [--legality LEG] [--notes '...']")
+        print("                                 Add inventory item")
+        print("  economy <name> update-item ID [--quantity Q] [--value V] [--location LOC]")
+        print("                   [--legality LEG] [--notes '...'] [--reason '...']")
+        print("                                 Update inventory item")
+        print("  economy <name> remove-item ID [--reason '...']")
+        print("                                 Remove inventory item")
+        print("  economy <name> add-asset --id ID --name NAME --asset-type TYPE --value V")
+        print("                   [--details '{...}'] [--notes '...']")
+        print("                                 Add an asset (ships, property, etc.)")
+        print("  economy <name> update-asset ID [--value V] [--details '{...}']")
+        print("                   [--notes '...'] [--reason '...']")
+        print("                                 Update asset fields")
+        print("  economy <name> remove-asset ID [--reason '...']")
+        print("                                 Remove an asset")
         print("\nCreate options:")
         print("  --name NAME                    Faction display name (required)")
         print("  --type TYPE                    Faction type: fleet|house|organization|military|other (required)")
@@ -1704,6 +3228,28 @@ def main():
         print("  patron: protection, expectations")
         print("  reports_to: via, bypasses")
         print("  (all types allow additional freeform fields)")
+        print("\nEconomy options:")
+        print("  --accounts                     Show accounts only")
+        print("  --costs                        Show running costs only")
+        print("  --inventory                    Show inventory only")
+        print("  --assets                       Show assets only")
+        print("  --summary                      Show summary (default)")
+        print("  --id ID                        Account, cost, item, or asset ID")
+        print("  --category CAT                 Account category: liquid|receivable|payable|other")
+        print("  --balance N                    Account balance (positive for assets, negative for liabilities)")
+        print("  --interest RATE                Interest rate (decimal, e.g., 0.19 for 19%)")
+        print("  --amount N                     Running cost amount")
+        print("  --period PERIOD                Cost period: monthly|annual (default: monthly)")
+        print("  --description TEXT             Cost description")
+        print("  --formula TEXT                 Cost formula (documentation only)")
+        print("\nInventory/Asset options:")
+        print("  --item NAME                    Item name for inventory")
+        print("  --quantity Q                   Quantity (number or string like '15% capacity')")
+        print("  --location LOC                 Storage location")
+        print("  --legality LEG                 Legality status (legal, restricted, contraband)")
+        print("  --asset-type TYPE              Asset type (ship, property, vehicle, etc.)")
+        print("  --details '{...}'              JSON object with asset details (e.g., class, tonnage)")
+        print("  --notes '...'                  Freeform notes")
         print("\nUpdate options:")
         print("  --field FIELD                  Field to update (dot notation, e.g., full.goals)")
         print("  --value VALUE                  New value (JSON arrays/objects auto-parsed)")
@@ -1747,6 +3293,29 @@ def main():
     target = None
     state_json = None
     notes = None
+    # Economy command options
+    show_accounts = False
+    show_costs = False
+    show_inventory = False
+    show_assets = False
+    show_summary = False
+    item_id = None
+    category = None
+    balance = None
+    interest = None
+    amount = None
+    period = None
+    description = None
+    formula = None
+    # Inventory/asset specific options
+    item_name = None
+    quantity = None
+    location = None
+    legality = None
+    details_json = None
+    asset_type = None
+    # Economy subcommand (add-account, update-account, etc.)
+    economy_subcommand = None
 
     i = 2
     positional_count = 0
@@ -1817,12 +3386,93 @@ def main():
         elif arg == "--notes" and i + 1 < len(sys.argv):
             notes = sys.argv[i + 1]
             i += 2
+        elif arg == "--accounts":
+            show_accounts = True
+            i += 1
+        elif arg == "--costs":
+            show_costs = True
+            i += 1
+        elif arg == "--summary":
+            show_summary = True
+            i += 1
+        elif arg == "--id" and i + 1 < len(sys.argv):
+            item_id = sys.argv[i + 1]
+            i += 2
+        elif arg == "--category" and i + 1 < len(sys.argv):
+            category = sys.argv[i + 1]
+            i += 2
+        elif arg == "--balance" and i + 1 < len(sys.argv):
+            try:
+                balance = int(sys.argv[i + 1])
+            except ValueError:
+                print(f"Error: --balance must be an integer", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        elif arg == "--interest" and i + 1 < len(sys.argv):
+            try:
+                interest = float(sys.argv[i + 1])
+            except ValueError:
+                print(f"Error: --interest must be a number", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        elif arg == "--amount" and i + 1 < len(sys.argv):
+            try:
+                amount = int(sys.argv[i + 1])
+            except ValueError:
+                print(f"Error: --amount must be an integer", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        elif arg == "--period" and i + 1 < len(sys.argv):
+            period = sys.argv[i + 1]
+            i += 2
+        elif arg == "--description" and i + 1 < len(sys.argv):
+            description = sys.argv[i + 1]
+            i += 2
+        elif arg == "--formula" and i + 1 < len(sys.argv):
+            formula = sys.argv[i + 1]
+            i += 2
+        elif arg == "--inventory":
+            show_inventory = True
+            i += 1
+        elif arg == "--assets":
+            show_assets = True
+            i += 1
+        elif arg == "--item" and i + 1 < len(sys.argv):
+            item_name = sys.argv[i + 1]
+            i += 2
+        elif arg == "--quantity" and i + 1 < len(sys.argv):
+            quantity = sys.argv[i + 1]
+            i += 2
+        elif arg == "--location" and i + 1 < len(sys.argv):
+            location = sys.argv[i + 1]
+            i += 2
+        elif arg == "--legality" and i + 1 < len(sys.argv):
+            legality = sys.argv[i + 1]
+            i += 2
+        elif arg == "--details" and i + 1 < len(sys.argv):
+            details_json = sys.argv[i + 1]
+            i += 2
+        elif arg == "--asset-type" and i + 1 < len(sys.argv):
+            asset_type = sys.argv[i + 1]
+            i += 2
         elif not arg.startswith("--"):
             # Positional argument
             if positional_count == 0:
                 faction_name = arg
             elif positional_count == 1:
-                character_name = arg
+                # Check if this is an economy subcommand
+                if command == "economy" and arg in ("add-account", "update-account", "remove-account",
+                                                     "add-cost", "update-cost", "remove-cost",
+                                                     "add-item", "update-item", "remove-item",
+                                                     "add-asset", "update-asset", "remove-asset"):
+                    economy_subcommand = arg
+                else:
+                    character_name = arg
+            elif positional_count == 2:
+                # For economy subcommands that need an ID as third positional
+                if economy_subcommand in ("update-account", "remove-account", "update-cost", "remove-cost",
+                                          "update-item", "remove-item", "update-asset", "remove-asset"):
+                    item_id = arg
             positional_count += 1
             i += 1
         else:
@@ -1897,7 +3547,148 @@ def main():
         if not faction_name:
             print("Error: faction name required", file=sys.stderr)
             sys.exit(1)
-        cmd_economy(faction_name)
+
+        if economy_subcommand == "add-account":
+            if not item_id:
+                print("Error: --id required for add-account", file=sys.stderr)
+                sys.exit(1)
+            if not category:
+                print("Error: --category required for add-account", file=sys.stderr)
+                sys.exit(1)
+            if balance is None:
+                print("Error: --balance required for add-account", file=sys.stderr)
+                sys.exit(1)
+            cmd_add_account(
+                faction_name, item_id, category, balance,
+                interest, notes, reason, session_name, output_json
+            )
+        elif economy_subcommand == "update-account":
+            if not item_id:
+                print("Error: account ID required for update-account", file=sys.stderr)
+                sys.exit(1)
+            cmd_update_account(
+                faction_name, item_id, balance, interest, notes,
+                reason, session_name, output_json
+            )
+        elif economy_subcommand == "remove-account":
+            if not item_id:
+                print("Error: account ID required for remove-account", file=sys.stderr)
+                sys.exit(1)
+            cmd_remove_account(faction_name, item_id, reason, session_name, output_json)
+        elif economy_subcommand == "add-cost":
+            if not item_id:
+                print("Error: --id required for add-cost", file=sys.stderr)
+                sys.exit(1)
+            if not description:
+                print("Error: --description required for add-cost", file=sys.stderr)
+                sys.exit(1)
+            if amount is None:
+                print("Error: --amount required for add-cost", file=sys.stderr)
+                sys.exit(1)
+            cmd_add_cost(
+                faction_name, item_id, description, amount,
+                period or "monthly", formula, reason, session_name, output_json
+            )
+        elif economy_subcommand == "update-cost":
+            if not item_id:
+                print("Error: cost ID required for update-cost", file=sys.stderr)
+                sys.exit(1)
+            cmd_update_cost(
+                faction_name, item_id, amount, description, period,
+                formula, reason, session_name, output_json
+            )
+        elif economy_subcommand == "remove-cost":
+            if not item_id:
+                print("Error: cost ID required for remove-cost", file=sys.stderr)
+                sys.exit(1)
+            cmd_remove_cost(faction_name, item_id, reason, session_name, output_json)
+        elif economy_subcommand == "add-item":
+            if not item_id:
+                print("Error: --id required for add-item", file=sys.stderr)
+                sys.exit(1)
+            if not item_name:
+                print("Error: --item required for add-item", file=sys.stderr)
+                sys.exit(1)
+            if not quantity:
+                print("Error: --quantity required for add-item", file=sys.stderr)
+                sys.exit(1)
+            # Parse value from --value if provided (reuse value variable)
+            item_value = None
+            if value:
+                try:
+                    item_value = int(value)
+                except ValueError:
+                    print(f"Error: --value must be an integer for add-item", file=sys.stderr)
+                    sys.exit(1)
+            cmd_add_item(
+                faction_name, item_id, item_name, quantity, item_value,
+                location, legality or "legal", notes, reason, session_name, output_json
+            )
+        elif economy_subcommand == "update-item":
+            if not item_id:
+                print("Error: item ID required for update-item", file=sys.stderr)
+                sys.exit(1)
+            # Parse value if provided
+            item_value = None
+            if value:
+                try:
+                    item_value = int(value)
+                except ValueError:
+                    print(f"Error: --value must be an integer for update-item", file=sys.stderr)
+                    sys.exit(1)
+            cmd_update_item(
+                faction_name, item_id, quantity, item_value,
+                reason, session_name, output_json
+            )
+        elif economy_subcommand == "remove-item":
+            if not item_id:
+                print("Error: item ID required for remove-item", file=sys.stderr)
+                sys.exit(1)
+            cmd_remove_item(faction_name, item_id, reason, session_name, output_json)
+        elif economy_subcommand == "add-asset":
+            if not item_id:
+                print("Error: --id required for add-asset", file=sys.stderr)
+                sys.exit(1)
+            if not name:
+                print("Error: --name required for add-asset", file=sys.stderr)
+                sys.exit(1)
+            if not asset_type:
+                print("Error: --asset-type required for add-asset", file=sys.stderr)
+                sys.exit(1)
+            if not value:
+                print("Error: --value required for add-asset", file=sys.stderr)
+                sys.exit(1)
+            try:
+                asset_value = int(value)
+            except ValueError:
+                print(f"Error: --value must be an integer for add-asset", file=sys.stderr)
+                sys.exit(1)
+            cmd_add_asset(
+                faction_name, item_id, name, asset_type, asset_value,
+                details_json, reason, session_name, output_json
+            )
+        elif economy_subcommand == "update-asset":
+            if not item_id:
+                print("Error: asset ID required for update-asset", file=sys.stderr)
+                sys.exit(1)
+            if not field:
+                print("Error: --field required for update-asset", file=sys.stderr)
+                sys.exit(1)
+            if not value:
+                print("Error: --value required for update-asset", file=sys.stderr)
+                sys.exit(1)
+            cmd_update_asset(
+                faction_name, item_id, field, value,
+                reason, session_name, output_json
+            )
+        elif economy_subcommand == "remove-asset":
+            if not item_id:
+                print("Error: asset ID required for remove-asset", file=sys.stderr)
+                sys.exit(1)
+            cmd_remove_asset(faction_name, item_id, reason, session_name, output_json)
+        else:
+            # Default: show economy (summary, accounts, costs, inventory, or assets)
+            cmd_economy(faction_name, show_accounts, show_costs, show_inventory, show_assets, show_summary, output_json)
     elif command == "tree":
         if not faction_name:
             print("Error: faction name required", file=sys.stderr)
