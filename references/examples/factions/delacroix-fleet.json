@@ -1,0 +1,240 @@
+{
+  "id": "delacroix-fleet",
+  "name": "Delacroix Fleet",
+  "type": "fleet",
+  "tags": ["salvage", "independent", "smuggling", "tight-scale"],
+
+  "minimal": {
+    "essence": "Five-ship salvage fleet on the margins. Family by necessity, bound by debt and loyalty. Juno Delacroix leads with pragmatism and fierce protectiveness. Survive first, profit second.",
+    "symbol": "Crossed wrenches over a star field",
+    "motto": "We came for salvage.",
+    "current_status": "Financially strained after recent losses. Fleet intact but resources running low. Perseverance debt looms."
+  },
+
+  "full": {
+    "history": "Started as a single ship operation under Juno's parents. After their deaths, Juno rebuilt with a small crew. Grew to five ships through salvage rights and careful deals. Recently took on major debt to save Perseverance.",
+    "values": "Crew comes first. No job worth dying for - but some things worth risking for. Fair shares, straight dealing with your own.",
+    "operations": "Long-haul salvage runs, occasional cargo work. Will smuggle but not slaving or weapons. Each ship operates semi-independently but profits pool.",
+    "structure": "Loose hierarchy. Juno commands fleet operations. Each ship has captain with autonomy on their vessel. Bridge crew handles strategy.",
+    "territories": "No fixed territory. Works the margins between Imperial and Free space.",
+    "arc": {
+      "trajectory": "Debt is crushing them slowly. Must find big score or new patron.",
+      "themes": ["survival", "family", "debt", "freedom"]
+    }
+  },
+
+  "hierarchy": {
+    "subfactions": [
+      {
+        "id": "honest-fortune",
+        "name": "Honest Fortune",
+        "autonomy": true,
+        "role": "Primary salvage vessel, Juno's ship"
+      },
+      {
+        "id": "swift-return",
+        "name": "Swift Return",
+        "autonomy": true,
+        "role": "Fast courier and scout"
+      },
+      {
+        "id": "lucky-find",
+        "name": "Lucky Find",
+        "autonomy": true,
+        "role": "Heavy hauler for bulk salvage"
+      },
+      {
+        "id": "pleasant-journey",
+        "name": "Pleasant Journey",
+        "autonomy": true,
+        "role": "Passenger and light cargo"
+      },
+      {
+        "id": "steady-progress",
+        "name": "Steady Progress",
+        "autonomy": true,
+        "role": "Mobile repair dock"
+      }
+    ]
+  },
+
+  "members": {
+    "named": [
+      "juno-delacroix",
+      "tam-delacroix",
+      "marcus-pilot",
+      "wen-engineer",
+      "kira-navigator",
+      "old-chen",
+      "remi-comms"
+    ],
+    "units": [
+      {
+        "name": "Fleet Marines",
+        "count": 12,
+        "morale": "stable",
+        "role": "Security and boarding operations",
+        "location": "honest-fortune",
+        "linked_members": ["sergeant-voss"]
+      }
+    ],
+    "pools": [
+      {
+        "label": "~25 general crew",
+        "state": "stable"
+      }
+    ]
+  },
+
+  "relationships": [
+    {
+      "type": "creditor",
+      "target": "perseverance",
+      "state": {
+        "principal": 5000000,
+        "rate": 0.0,
+        "accruing": false
+      },
+      "notes": "Juno's fleet effectively owns Perseverance after rescue. Debt is moral, not financial - Perseverance owes their existence to the fleet."
+    },
+    {
+      "type": "debtor",
+      "target": "syndicate-credit",
+      "state": {
+        "principal": 500000,
+        "rate": 0.19,
+        "accruing": true
+      },
+      "notes": "High-interest loan to fund Perseverance rescue. Monthly payments crushing cash flow."
+    },
+    {
+      "type": "ally",
+      "target": "fence-marcus",
+      "state": {
+        "trust": "moderate",
+        "terms": "70/30 split on salvage"
+      },
+      "notes": "Regular buyer for salvage. Reliable but always looking for angle."
+    },
+    {
+      "type": "neutral",
+      "target": "imperial-customs",
+      "state": {
+        "last_contact": "Y3.D180"
+      },
+      "notes": "Officially licensed salvagers. Keep heads down, papers clean."
+    }
+  ],
+
+  "economy": {
+    "accounts": [
+      {
+        "category": "liquid",
+        "balance": 400000,
+        "notes": "Operating funds across fleet"
+      },
+      {
+        "category": "payables",
+        "balance": -500000,
+        "interest": 0.19,
+        "notes": "Syndicate loan - crushing interest"
+      }
+    ],
+    "running_costs": [
+      {
+        "line": "Crew wages and shares",
+        "amount": 120000,
+        "period": "month"
+      },
+      {
+        "line": "Fuel and consumables",
+        "amount": 45000,
+        "period": "month"
+      },
+      {
+        "line": "Maintenance reserve",
+        "amount": 25000,
+        "period": "month"
+      },
+      {
+        "line": "Docking and port fees",
+        "amount": 15000,
+        "period": "month"
+      },
+      {
+        "line": "Insurance and licensing",
+        "amount": 20000,
+        "period": "month"
+      },
+      {
+        "line": "Loan payment",
+        "amount": 8000,
+        "period": "month",
+        "notes": "Minimum payment, barely covers interest"
+      }
+    ],
+    "inventory": [
+      {
+        "item": "Salvaged hull plating",
+        "qty": 200,
+        "value": 50,
+        "location": "lucky-find-hold"
+      },
+      {
+        "item": "Reclaimed electronics",
+        "qty": 50,
+        "value": 200,
+        "location": "honest-fortune-hold"
+      }
+    ],
+    "assets": [
+      {
+        "name": "Honest Fortune",
+        "type": "ship",
+        "value": 800000,
+        "notes": "Modified salvage vessel, Juno's command"
+      },
+      {
+        "name": "Swift Return",
+        "type": "ship",
+        "value": 400000,
+        "notes": "Fast courier, lightly armed"
+      },
+      {
+        "name": "Lucky Find",
+        "type": "ship",
+        "value": 600000,
+        "notes": "Heavy hauler, expanded cargo"
+      },
+      {
+        "name": "Pleasant Journey",
+        "type": "ship",
+        "value": 350000,
+        "notes": "Passenger vessel, converted yacht"
+      },
+      {
+        "name": "Steady Progress",
+        "type": "ship",
+        "value": 500000,
+        "notes": "Mobile repair dock"
+      }
+    ]
+  },
+
+  "resources": {
+    "supply": 75,
+    "ammunition": 60,
+    "fuel": 70,
+    "repair_materials": 45,
+    "morale": "strained"
+  },
+
+  "sections": {
+    "fleet_status": {
+      "total_tonnage": "~15,000 tons combined",
+      "operational_ships": 5,
+      "combat_capability": "Defensive only. Can discourage pirates, not fight warships.",
+      "jump_capability": "All ships jump-capable. Fleet jumps require coordination."
+    }
+  }
+}
