@@ -2,6 +2,20 @@
 
 Namesets provide culturally-appropriate names for NPCs, places, or any entity needing generated names. The namegen tool supports three nameset types with flexible composition.
 
+## Contents
+
+- [Quick Reference](#quick-reference)
+- [Nameset Types](#nameset-types) — Simple, Aggregate, Grouped
+- [Schema Reference](#schema-reference) — Core fields, name categories, gender weights, frequency
+- [Format Strings](#format-strings)
+- [Aggregate Namesets](#aggregate-namesets)
+- [File Discovery](#file-discovery)
+- [Design Guidelines](#design-guidelines)
+- [Examples](#examples)
+- [Legacy Format](#legacy-format)
+
+---
+
 ## Quick Reference
 
 ```bash

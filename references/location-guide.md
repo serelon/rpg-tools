@@ -2,6 +2,20 @@
 
 Create location JSON files for the hierarchical location loading system. Files go in `locations/` folder.
 
+## Contents
+
+- [JSON Schema](#json-schema)
+- [Hierarchy & Graph](#hierarchy--graph) — Tree (containment) and graph (travel) connections
+- [File Organization](#file-organization)
+- [Workflow](#workflow) — Steps 1-5: establish hierarchy, create roots, build down, add connections, full details
+- [Multi-Parent Locations](#multi-parent-locations)
+- [Tags](#tags)
+- [Faction Control](#faction-control)
+- [Anti-Patterns](#anti-patterns---avoid)
+- [Example: Grouped File](#example-grouped-file)
+
+---
+
 ## JSON Schema
 
 ```json

@@ -4,6 +4,16 @@ The oracle tool provides randomness to stimulate interpretation. It gives you ra
 
 There are no predefined meanings. A rune doesn't "mean" one thing. A hexagram doesn't dictate an outcome. The oracle provides friction, surprise, and direction. The narrative intelligence does the rest.
 
+## Contents
+
+- [When to Consult the Oracle](#when-to-consult-the-oracle)
+- [Oracle Types](#oracle-types) — Axis, Omni, Tarot, Runes, I Ching, Fate, Prompt
+- [Working with Oracle Output](#working-with-oracle-output)
+- [Combining Systems](#combining-systems)
+- [Philosophy](#philosophy)
+
+---
+
 ## When to Consult the Oracle
 
 Use the oracle when you need:

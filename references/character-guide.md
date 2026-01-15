@@ -2,6 +2,17 @@
 
 Create character JSON files for the incremental character loading system. Files go in `characters/` folder and are loaded on-demand during sessions.
 
+## Contents
+
+- [JSON Schema](#json-schema)
+- [Workflow](#workflow) — Steps 1-6: gather, extract minimal, decide full, extract full, add sections, save
+- [Anti-Patterns](#anti-patterns---avoid-these)
+- [Example: Minimal-Only Character](#example-minimal-only-character)
+- [Faction Integration](#faction-integration)
+- [Example: Full Character](#example-full-character)
+
+---
+
 ## JSON Schema
 
 ```json
