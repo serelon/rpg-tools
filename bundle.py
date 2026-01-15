@@ -25,6 +25,7 @@ INCLUDE_DIRS = [
     ('modifiers', '*.md'),
     ('scripts/lib', '*.py'),
     ('scripts/lib/calendars', '*.py'),
+    ('tools/data/namesets', '*.json'),
 ]
 
 

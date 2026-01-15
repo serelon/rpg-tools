@@ -1,0 +1,31 @@
+{
+  "id": "metropolitan-names",
+  "name": "Metropolitan Names",
+  "description": "Diverse multicultural names for cosmopolitan settings. Includes Western, Eastern European, East Asian, South Asian, Middle Eastern, African, and Latin American names. Perfect for modern cities, space stations, international organizations, or any diverse setting.",
+  "tags": ["metropolitan", "multicultural", "diverse", "aggregate", "default"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-american", "weight": 15, "label": "american"},
+    {"nameset": "names-british", "weight": 8, "label": "british"},
+    {"nameset": "names-german", "weight": 5, "label": "german"},
+    {"nameset": "names-french", "weight": 5, "label": "french"},
+    {"nameset": "names-spanish", "weight": 4, "label": "spanish"},
+    {"nameset": "names-italian", "weight": 4, "label": "italian"},
+    {"nameset": "names-chinese", "weight": 12, "label": "chinese"},
+    {"nameset": "names-japanese", "weight": 6, "label": "japanese"},
+    {"nameset": "names-korean", "weight": 4, "label": "korean"},
+    {"nameset": "names-indian", "weight": 10, "label": "indian"},
+    {"nameset": "names-pakistani", "weight": 4, "label": "pakistani"},
+    {"nameset": "names-arabic", "weight": 5, "label": "arabic"},
+    {"nameset": "names-persian", "weight": 3, "label": "persian"},
+    {"nameset": "names-nigerian", "weight": 4, "label": "nigerian"},
+    {"nameset": "names-ethiopian", "weight": 3, "label": "ethiopian"},
+    {"nameset": "names-brazilian", "weight": 4, "label": "brazilian"},
+    {"nameset": "names-mexican", "weight": 4, "label": "mexican"},
+    {"nameset": "names-russian", "weight": 3, "label": "russian"},
+    {"nameset": "names-polish", "weight": 2, "label": "polish"},
+    {"nameset": "names-ukrainian", "weight": 2, "label": "ukrainian"}
+  ]
+}

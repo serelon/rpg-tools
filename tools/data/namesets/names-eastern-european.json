@@ -1,0 +1,14 @@
+{
+  "id": "names-eastern-european",
+  "name": "Eastern European Names",
+  "description": "Aggregate of Slavic and Eastern European names",
+  "tags": ["eastern-european", "slavic", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-russian", "weight": 40, "label": "russian"},
+    {"nameset": "names-polish", "weight": 35, "label": "polish"},
+    {"nameset": "names-ukrainian", "weight": 25, "label": "ukrainian"}
+  ]
+}
