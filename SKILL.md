@@ -112,8 +112,8 @@ python scripts/characters.py memories NAME               # Show memories involvi
 python scripts/characters.py create ID --name "Name" --role "Role" --essence "Description"
 python scripts/characters.py create ID --name "Name" --role "Role" --essence "Desc" --faction fleet --tags "pilot,veteran"
 python scripts/characters.py update NAME --field full.motivation --value "New goal" --reason "Story event"
-python scripts/characters.py delete ID                   # Delete character (checks references)
-python scripts/characters.py delete ID --force           # Delete without confirmation
+python scripts/characters.py delete NAME                 # Delete character (checks references)
+python scripts/characters.py delete NAME --force         # Delete without confirmation
 ```
 
 Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
@@ -138,7 +138,7 @@ python scripts/locations.py memories NAME                # Show memories at loca
 python scripts/locations.py create ID --name "Name" --type district --essence "Description"
 python scripts/locations.py create ID --name "Name" --type building --essence "Desc" --parent district-id
 python scripts/locations.py update NAME --field full.atmosphere --value "Tense and watchful"
-python scripts/locations.py delete ID                    # Delete location
+python scripts/locations.py delete NAME                  # Delete location
 ```
 
 Filter options: `--tag`, `--parent`, `--type`
@@ -168,15 +168,15 @@ Requires `memories/*.json`
 ```bash
 python scripts/memories.py list --campaign NAME          # List all memories
 python scripts/memories.py list --campaign NAME --type vivid-moment --intensity 5
-python scripts/memories.py get --campaign NAME --memory MEMORY_ID
+python scripts/memories.py get MEMORY_ID                 # Get specific memory
 python scripts/memories.py random --campaign NAME        # Random memory
 python scripts/memories.py recent --campaign NAME        # Most recent memories
 python scripts/memories.py recent --campaign NAME --count 10 --by-era
 python scripts/memories.py search "query" --campaign NAME
-python scripts/memories.py character NAME --campaign NAME    # Memories involving character
-python scripts/memories.py location NAME --campaign NAME     # Memories at location
-python scripts/memories.py connections --campaign NAME --memory MEMORY_ID  # Show cross-references
-python scripts/memories.py chain --campaign NAME --memory MEMORY_ID        # Follow related memories
+python scripts/memories.py character NAME                # Memories involving character
+python scripts/memories.py location NAME                 # Memories at location
+python scripts/memories.py connections MEMORY_ID         # Show cross-references
+python scripts/memories.py chain MEMORY_ID               # Follow related memories
 python scripts/memories.py meta --campaign NAME          # Show type/intensity/tag counts
 python scripts/memories.py create --campaign NAME --title "Memory Title" --text "Memory content..."
 python scripts/memories.py create --campaign NAME --title "Title" --text "Content" --type vivid-moment --intensity 4 --characters "juno,tam"
