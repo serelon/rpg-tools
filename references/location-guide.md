@@ -11,7 +11,7 @@ Create location JSON files for the hierarchical location loading system. Files g
 - [Multi-Parent Locations](#multi-parent-locations)
 - [Tags](#tags)
 - [Faction Control](#faction-control)
-- [Anti-Patterns](#anti-patterns---avoid)
+- [Anti-Patterns](#anti-patterns---avoid-these)
 - [Example: Grouped File](#example-grouped-file)
 
 ---
@@ -205,7 +205,7 @@ For military installations, ships, or faction headquarters, the faction relation
 
 See [Creating Factions](faction-guide.md) for faction schema and territory tracking.
 
-## Anti-Patterns - AVOID
+## Anti-Patterns - AVOID These
 
 - Exhaustive history for minor locations - evocative > exhaustive
 - Missing parent references - breaks tree view
