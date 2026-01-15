@@ -2,6 +2,26 @@
 
 Track campaign state across sessions with event logs, character state, branches for multi-protagonist campaigns, and a complete audit trail of all changes.
 
+## Contents
+
+- [System Overview](#system-overview)
+- [Campaign Initialization](#campaign-initialization)
+- [Export and Import](#export-and-import)
+- [Branch Management](#branch-management)
+- [Campaign Log](#campaign-log) — Adding, listing, viewing, deleting entries
+- [State Tracking](#state-tracking) — Volatile character state vs profile
+- [Character Development](#character-development) — Updating character profiles
+- [Changelog Queries](#changelog-queries) — Audit trail
+- [Calendar System](#calendar-system) — Offset and loose dates
+- [Campaign Digest](#campaign-digest) — Tiered overview
+- [Integration Patterns](#integration-patterns) — Session start/during/end workflows
+- [File Structure](#file-structure)
+- [Example Workflow: Multi-Branch Campaign](#example-workflow-multi-branch-campaign)
+- [Best Practices](#best-practices)
+- [Anti-Patterns](#anti-patterns---avoid-these)
+
+---
+
 ## System Overview
 
 The campaign state system provides:

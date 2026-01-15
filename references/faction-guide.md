@@ -2,6 +2,24 @@
 
 Create faction JSON files for tracking organizations with agency. Factions are treated as characters with structure, resources, and relationships. Files go in `factions/` folder.
 
+## Contents
+
+- [Design Philosophy](#design-philosophy)
+- [JSON Schema](#json-schema)
+- [Field Reference](#field-reference) — Required, recommended, minimal, full profile
+- [Hierarchy & Subfactions](#hierarchy--subfactions) — Parent, autonomy, siblings
+- [Relationship Edge Types](#relationship-edge-types) — ally, enemy, rival, debtor, etc.
+- [Member Tiers](#member-tiers) — Named, units, pools
+- [Economy Submodule](#economy-submodule) — Accounts, costs, inventory, assets
+- [Resources](#resources)
+- [Scale Examples](#scale-examples) — Crew, ship, vast organization
+- [Bidirectional Sync](#bidirectional-sync)
+- [Changelog Integration](#changelog-integration)
+- [Anti-Patterns](#anti-patterns---avoid-these)
+- [Workflow](#workflow) — Steps 1-7
+
+---
+
 ## Design Philosophy
 
 Factions are characters with agency. They have:

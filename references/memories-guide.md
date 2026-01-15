@@ -2,6 +2,19 @@
 
 Create memory JSON files for campaign memory tracking. Files go in `memories/` folder and support cross-references to characters, locations, and other memories.
 
+## Contents
+
+- [JSON Schema](#json-schema)
+- [Field Reference](#field-reference) — Required, recommended, optional metadata, connections
+- [CLI Reference](#cli-reference)
+- [Workflow](#workflow) — Steps 1-5: capture, write, categorize, connect, save
+- [Example: Vivid Moment](#example-vivid-moment)
+- [Example: Quiet Moment](#example-quiet-moment)
+- [Example: World-Building](#example-world-building)
+- [Using Memories in Sessions](#using-memories-in-sessions)
+
+---
+
 ## JSON Schema
 
 ```json

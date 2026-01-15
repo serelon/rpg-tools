@@ -2,6 +2,20 @@
 
 Create location JSON files for the hierarchical location loading system. Files go in `locations/` folder.
 
+## Contents
+
+- [JSON Schema](#json-schema)
+- [Hierarchy & Graph](#hierarchy--graph) — Tree (containment) and graph (travel) connections
+- [File Organization](#file-organization)
+- [Workflow](#workflow) — Steps 1-5: establish hierarchy, create roots, build down, add connections, full details
+- [Multi-Parent Locations](#multi-parent-locations)
+- [Tags](#tags)
+- [Faction Control](#faction-control)
+- [Anti-Patterns](#anti-patterns---avoid-these)
+- [Example: Grouped File](#example-grouped-file)
+
+---
+
 ## JSON Schema
 
 ```json
@@ -191,7 +205,7 @@ For military installations, ships, or faction headquarters, the faction relation
 
 See [Creating Factions](faction-guide.md) for faction schema and territory tracking.
 
-## Anti-Patterns - AVOID
+## Anti-Patterns - AVOID These
 
 - Exhaustive history for minor locations - evocative > exhaustive
 - Missing parent references - breaks tree view
