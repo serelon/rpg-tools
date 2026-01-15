@@ -33,12 +33,16 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 Roll20-compatible notation with full modifier support.
 
 ```bash
-python scripts/dice.py "2d6+5"        # Basic roll with modifier
-python scripts/dice.py "4d6kh3"       # Keep highest 3 (ability scores)
-python scripts/dice.py "2d20kh1+5"    # Advantage
-python scripts/dice.py "8d6!"         # Exploding dice
-python scripts/dice.py "4dF"          # Fudge/Fate dice
-python scripts/dice.py "6d10>=7"      # Count successes
+python scripts/dice.py "2d6+5"      # Basic roll with modifier
+python scripts/dice.py "4d6kh3"     # Keep highest 3 (ability scores)
+python scripts/dice.py "2d20kh1+5"  # Advantage
+python scripts/dice.py "8d6!"       # Exploding dice (add new die on max)
+python scripts/dice.py "8d6!!"      # Compounding (add to same die on max)
+python scripts/dice.py "8d6!p"      # Penetrating (explode with -1 penalty)
+python scripts/dice.py "2d6r1"      # Reroll 1s once
+python scripts/dice.py "2d6rr1"     # Reroll 1s until not 1
+python scripts/dice.py "4dF"        # Fudge/Fate dice
+python scripts/dice.py "6d10>=7"    # Count successes
 ```
 
 Supports: `kh/kl` (keep), `dh/dl` (drop), `r/rr` (reroll), `!` (exploding), `!!` (compounding), `!p` (penetrating), comparison operators for success counting.
@@ -98,13 +102,18 @@ Options: `--nameset` (required), `--count`, `--gender`, `--group`, `--show-group
 Requires `characters/*.json`
 
 ```bash
-python scripts/characters.py list                        # List character names
-python scripts/characters.py list --short                # Show minimal profiles
-python scripts/characters.py get NAME                    # Get minimal profile
-python scripts/characters.py get NAME --depth full       # Get full profile
-python scripts/characters.py get NAME --section powers   # Get specific section
-python scripts/characters.py sections NAME               # List available sections
-python scripts/characters.py update NAME --field full.motivation --value "New goal" --reason "Story event"
+python scripts/characters.py list                         # List character names
+python scripts/characters.py list --short                 # Show minimal profiles
+python scripts/characters.py get NAME                     # Get minimal profile
+python scripts/characters.py get NAME --depth full        # Get full profile
+python scripts/characters.py get NAME --section powers    # Get specific section
+python scripts/characters.py sections NAME                # List available sections
+python scripts/characters.py memories NAME                # Show memories involving character
+python scripts/characters.py create ID --name "N" --role "R" --essence "Desc"                    # Create character
+python scripts/characters.py create ID --name "N" --role "R" --essence "D" --faction f --tags t  # With options
+python scripts/characters.py update NAME --field F --value "V" --reason "R"                      # Update field
+python scripts/characters.py delete NAME                  # Delete (checks references)
+python scripts/characters.py delete NAME --force          # Delete without confirmation
 ```
 
 Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
@@ -114,11 +123,22 @@ Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
 Requires `locations/*.json`
 
 ```bash
-python scripts/locations.py list                         # List all locations
-python scripts/locations.py list --tag settlement        # Filter by tag
-python scripts/locations.py tree                         # Show full hierarchy
-python scripts/locations.py get NAME --depth full        # Get full profile
-python scripts/locations.py connections NAME             # Show all connections
+python scripts/locations.py list                              # List all locations
+python scripts/locations.py list --short                      # Show minimal profiles
+python scripts/locations.py list --tag settlement             # Filter by tag
+python scripts/locations.py get NAME                          # Get minimal profile
+python scripts/locations.py get NAME --depth full             # Get full profile
+python scripts/locations.py get NAME --section npcs           # Get specific section
+python scripts/locations.py sections NAME                     # List available sections
+python scripts/locations.py tree                              # Show full hierarchy
+python scripts/locations.py tree NAME                         # Show subtree from location
+python scripts/locations.py path NAME                         # Show path from root to location
+python scripts/locations.py connections NAME                  # Show all connections
+python scripts/locations.py memories NAME                     # Show memories at location
+python scripts/locations.py create ID --name "N" --type T --essence "Desc"             # Create location
+python scripts/locations.py create ID --name "N" --type T --essence "D" --parent P     # With parent
+python scripts/locations.py update NAME --field full.atmosphere --value "Tense"        # Update field
+python scripts/locations.py delete NAME                       # Delete location
 ```
 
 Filter options: `--tag`, `--parent`, `--type`
@@ -128,10 +148,15 @@ Filter options: `--tag`, `--parent`, `--type`
 Requires `stories/*.json`
 
 ```bash
-python scripts/stories.py meta --campaign NAME           # Show available tags/counts
-python scripts/stories.py random --campaign NAME         # Random story
-python scripts/stories.py random --campaign NAME --theme loss --mood melancholic
-python scripts/stories.py show --campaign NAME --story STORY_ID
+python scripts/stories.py meta --campaign NAME                          # Show available tags/counts
+python scripts/stories.py list --campaign NAME                          # List all stories
+python scripts/stories.py list --campaign NAME --collection told        # Filter by collection/theme
+python scripts/stories.py get --campaign NAME --story STORY_ID          # Get story text only
+python scripts/stories.py show --campaign NAME --story STORY_ID         # Get story with metadata
+python scripts/stories.py random --campaign NAME                        # Random story
+python scripts/stories.py random --campaign NAME --theme loss           # Random with filters
+python scripts/stories.py create --campaign NAME --title "T" --text "C" # Create story
+python scripts/stories.py create --campaign NAME --title "T" --text "C" --collection told --era "Y3"
 ```
 
 Filter options: `--collection`, `--theme`, `--mood`, `--era`
@@ -141,11 +166,20 @@ Filter options: `--collection`, `--theme`, `--mood`, `--era`
 Requires `memories/*.json`
 
 ```bash
-python scripts/memories.py list --campaign NAME          # List all memories
-python scripts/memories.py random --campaign NAME        # Random memory
-python scripts/memories.py search "query" --campaign NAME
-python scripts/memories.py character NAME                # Memories involving character
-python scripts/memories.py location NAME                 # Memories at location
+python scripts/memories.py list --campaign NAME                 # List all memories
+python scripts/memories.py list --campaign NAME --type T        # Filter by type/intensity
+python scripts/memories.py get MEMORY_ID                        # Get specific memory
+python scripts/memories.py random --campaign NAME               # Random memory
+python scripts/memories.py recent --campaign NAME               # Most recent memories
+python scripts/memories.py recent --campaign NAME --count 10    # Recent with count
+python scripts/memories.py search "query" --campaign NAME       # Full-text search
+python scripts/memories.py character NAME                       # Memories involving character
+python scripts/memories.py location NAME                        # Memories at location
+python scripts/memories.py connections MEMORY_ID                # Show cross-references
+python scripts/memories.py chain MEMORY_ID                      # Follow related memories
+python scripts/memories.py meta --campaign NAME                 # Show type/intensity/tag counts
+python scripts/memories.py create --campaign NAME --title "T" --text "C"               # Create memory
+python scripts/memories.py create --campaign NAME --title "T" --text "C" --type T      # With options
 ```
 
 Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
@@ -182,37 +216,49 @@ See **[Creating Factions](references/faction-guide.md)** for schema and workflow
 Requires `campaign/log.json`
 
 ```bash
-python scripts/log.py add "Event summary" --date Y3.D45  # Add log entry
-python scripts/log.py add "Event" --date-loose "after the festival"
-python scripts/log.py add "Major event" --importance critical --branch main
+python scripts/log.py add "Event summary" --date Y3.D45       # Add log entry
+python scripts/log.py add "Event" --date-loose "after fest"   # With loose date
+python scripts/log.py add "Event" --importance critical       # With importance
 python scripts/log.py add "Event" --characters "juno:defining,tam:present"
-python scripts/log.py list                               # List all entries
-python scripts/log.py list --branch main                 # Filter by branch
-python scripts/log.py list --character juno              # Filter by character
-python scripts/log.py list --from Y3.D1 --to Y3.D100     # Date range
-python scripts/log.py show log-00001                     # Show specific entry
-python scripts/log.py delete log-00001                   # Delete entry
+python scripts/log.py list                                    # List all entries
+python scripts/log.py list --branch main                      # Filter by branch
+python scripts/log.py list --character juno                   # Filter by character
+python scripts/log.py list --importance major+                # Major and critical entries
+python scripts/log.py list --from Y3.D1 --to Y3.D100          # Date range
+python scripts/log.py show log-00001                          # Show specific entry
+python scripts/log.py delete log-00001                        # Delete entry
+python scripts/log.py digest                                  # Tiered summary (pillars/recent/current)
+python scripts/log.py digest --character juno                 # Digest for one character
 ```
 
 Key options: `--date`, `--date-loose`, `--branch`, `--characters`, `--locations`, `--importance`, `--tags`, `--session`, `--json`
 
 Filter options: `--branch`, `--character`, `--location`, `--importance`, `--tag`, `--from`, `--to`, `--limit`, `--verbose`
 
+Digest shows three tiers: PILLARS (critical events all-time), RECENT ARC (major+ from recent sessions), CURRENT (all from last few sessions). Configure defaults in `campaign/config.json` under `digest` key.
+
 ### Campaign Management
 
 Requires `campaign/config.json`
 
 ```bash
-python scripts/campaign.py init "Campaign Name"          # Initialize new campaign
-python scripts/campaign.py show                          # Show config
-python scripts/campaign.py branch list                   # List all branches
-python scripts/campaign.py branch switch main            # Switch active branch
-python scripts/campaign.py branch create arc-two "The Second Arc" --from main
-python scripts/campaign.py state show                    # Show campaign state
-python scripts/campaign.py state show --character juno   # Show character state
-python scripts/campaign.py state set juno location "The Spire" --reason "Traveled north"
-python scripts/campaign.py changelog show                # Show all changes
-python scripts/campaign.py changelog show --character juno --limit 5
+python scripts/campaign.py init "Campaign Name"                  # Initialize new campaign
+python scripts/campaign.py show                                  # Show config
+python scripts/campaign.py branch list                           # List all branches
+python scripts/campaign.py branch switch main                    # Switch active branch
+python scripts/campaign.py branch create ID "Name" --from main   # Fork from branch
+python scripts/campaign.py branch create ID "Name" --protagonists "juno,tam"
+python scripts/campaign.py state show                            # Show campaign state
+python scripts/campaign.py state show --character juno           # Show character state
+python scripts/campaign.py state set juno location "Spire" --reason "R"
+python scripts/campaign.py state set juno,tam status "rest" --reason "R"
+python scripts/campaign.py state delete juno temp_buff --reason "R"
+python scripts/campaign.py changelog show                        # Show all changes
+python scripts/campaign.py changelog show --character juno       # Filter changelog
+python scripts/campaign.py export                                # Backup to zip
+python scripts/campaign.py export --output backup.zip            # Custom output
+python scripts/campaign.py import backup.zip                     # Restore from backup
+python scripts/campaign.py import backup.zip --into ./dir        # Restore to directory
 ```
 
 Key options: `--json`, `--reason` (required for state changes)
