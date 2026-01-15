@@ -246,17 +246,17 @@ Aggregates compose from multiple source namesets, each with its own weight.
 
 ```bash
 # Force Japanese names only
-python scripts/namegen.py full --nameset station-crew --group japanese --count 5
+python scripts/namegen.py full --nameset station-personnel --group japanese --count 5
 
 # See which source was selected
-python scripts/namegen.py full --nameset station-crew --show-group
+python scripts/namegen.py full --nameset station-personnel --show-group
 # Output: Takeshi Yamamoto|japanese
 ```
 
 ### Listing Sources
 
 ```bash
-python scripts/namegen.py groups --nameset station-crew
+python scripts/namegen.py groups --nameset station-personnel
 # Shows each source with weight percentage and name counts
 ```
 
