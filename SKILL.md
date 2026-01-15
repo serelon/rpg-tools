@@ -28,246 +28,185 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 
 ## Instant Tools
 
-### Dice Rolling
+### Dice
 
-Roll20-compatible notation with full modifier support.
+Roll20-compatible notation: `kh/kl` (keep), `dh/dl` (drop), `r/rr` (reroll), `!`/`!!`/`!p` (exploding), comparison operators.
 
 ```bash
-python scripts/dice.py "2d6+5"      # Basic roll with modifier
-python scripts/dice.py "4d6kh3"     # Keep highest 3 (ability scores)
-python scripts/dice.py "2d20kh1+5"  # Advantage
-python scripts/dice.py "8d6!"       # Exploding dice (add new die on max)
-python scripts/dice.py "8d6!!"      # Compounding (add to same die on max)
-python scripts/dice.py "8d6!p"      # Penetrating (explode with -1 penalty)
+python scripts/dice.py "2d6+5"      # Basic roll
+python scripts/dice.py "4d6kh3"     # Keep highest 3
+python scripts/dice.py "8d6!"       # Exploding dice
 python scripts/dice.py "2d6r1"      # Reroll 1s once
-python scripts/dice.py "2d6rr1"     # Reroll 1s until not 1
-python scripts/dice.py "4dF"        # Fudge/Fate dice
 python scripts/dice.py "6d10>=7"    # Count successes
 ```
 
-Supports: `kh/kl` (keep), `dh/dl` (drop), `r/rr` (reroll), `!` (exploding), `!!` (compounding), `!p` (penetrating), comparison operators for success counting.
-
 ### Tarot
 
-Draw cards for oracular guidance.
-
 ```bash
-python scripts/tarot.py         # Single card
-python scripts/tarot.py 3       # Three-card spread
-python scripts/tarot.py 5       # Five-card spread
+python scripts/tarot.py       # Single card
+python scripts/tarot.py 3     # Three-card spread
 ```
 
-Max 10 cards per draw. Full 78-card deck (Major + Minor Arcana).
+Max 10 cards. Full 78-card deck.
 
 ### Oracle
 
-Multi-system oracle for injecting randomness. Provides raw symbolic material for creative interpretation.
+See **[oracle-guide.md](references/oracle-guide.md)** for when to use each type.
 
 ```bash
-python scripts/oracle.py axis              # Multi-axis reading (tone/direction/element/action/twist)
-python scripts/oracle.py omni              # Full reading: axis + tarot + rune + I Ching + fate + prompt
-python scripts/oracle.py tarot [n]         # Draw tarot card(s)
-python scripts/oracle.py rune [n]          # Draw Elder Futhark rune(s)
-python scripts/oracle.py iching            # Cast I Ching hexagram
-python scripts/oracle.py fate [likelihood] # Yes/no oracle (impossible/unlikely/even/likely/certain)
-python scripts/oracle.py prompt            # Action + Theme word pair
+python scripts/oracle.py axis               # Tone/direction/element/action/twist
+python scripts/oracle.py omni               # Full reading (all systems)
+python scripts/oracle.py tarot [n]          # Draw tarot
+python scripts/oracle.py rune [n]           # Draw runes
+python scripts/oracle.py iching             # I Ching hexagram
+python scripts/oracle.py fate [likelihood]  # Yes/no (impossible/unlikely/even/likely/certain)
+python scripts/oracle.py prompt             # Action + Theme pair
 ```
-
-See **[Using the Oracle](references/oracle-guide.md)** for guidance on when to use each oracle type.
 
 ---
 
 ## Campaign Tools
 
-These tools require JSON data files. See guides for schemas and examples.
-
 ### Name Generation
 
-Requires `namesets/*.json`
+See **[nameset-guide.md](references/nameset-guide.md)** for creating namesets.
 
 ```bash
-python scripts/namegen.py list                                    # Show available namesets
-python scripts/namegen.py full --nameset NAME                     # Generate one name
-python scripts/namegen.py full --nameset NAME --count 5           # Generate multiple names
-python scripts/namegen.py full --nameset NAME --gender female     # Filter by gender
-python scripts/namegen.py full --nameset NAME --group western     # Force specific group/source
-python scripts/namegen.py full --nameset NAME --show-group        # Show which group was selected
-python scripts/namegen.py groups --nameset NAME                   # List groups/sources in nameset
+python scripts/namegen.py list                          # Available namesets
+python scripts/namegen.py full --nameset NAME           # Generate name
+python scripts/namegen.py full --nameset NAME --count 5 --gender female
+python scripts/namegen.py groups --nameset NAME         # List groups/sources
 ```
-
-Options: `--nameset` (required), `--count`, `--gender`, `--group`, `--show-group`
 
 ### Characters
 
-Requires `characters/*.json`
+See **[character-guide.md](references/character-guide.md)** for schema.
 
 ```bash
-python scripts/characters.py list                         # List character names
-python scripts/characters.py list --short                 # Show minimal profiles
-python scripts/characters.py get NAME                     # Get minimal profile
-python scripts/characters.py get NAME --depth full        # Get full profile
-python scripts/characters.py get NAME --section powers    # Get specific section
-python scripts/characters.py sections NAME                # List available sections
-python scripts/characters.py memories NAME                # Show memories involving character
-python scripts/characters.py create ID --name "N" --role "R" --essence "Desc"                    # Create character
-python scripts/characters.py create ID --name "N" --role "R" --essence "D" --faction f --tags t  # With options
-python scripts/characters.py update NAME --field F --value "V" --reason "R"                      # Update field
-python scripts/characters.py delete NAME                  # Delete (checks references)
-python scripts/characters.py delete NAME --force          # Delete without confirmation
+python scripts/characters.py list [--short]                    # List characters
+python scripts/characters.py get NAME [--depth full]           # Get profile
+python scripts/characters.py get NAME --section SECTION        # Get section
+python scripts/characters.py sections NAME                     # List sections
+python scripts/characters.py memories NAME                     # Related memories
+python scripts/characters.py create ID --name N --role R --essence E
+python scripts/characters.py update NAME --field F --value V --reason R
+python scripts/characters.py delete NAME [--force]
 ```
 
-Filter options: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
+Filters: `--faction`, `--subfaction`, `--tag`, `--location`, `--branch`
 
 ### Locations
 
-Requires `locations/*.json`
+See **[location-guide.md](references/location-guide.md)** for schema.
 
 ```bash
-python scripts/locations.py list                              # List all locations
-python scripts/locations.py list --short                      # Show minimal profiles
-python scripts/locations.py list --tag settlement             # Filter by tag
-python scripts/locations.py get NAME                          # Get minimal profile
-python scripts/locations.py get NAME --depth full             # Get full profile
-python scripts/locations.py get NAME --section npcs           # Get specific section
-python scripts/locations.py sections NAME                     # List available sections
-python scripts/locations.py tree                              # Show full hierarchy
-python scripts/locations.py tree NAME                         # Show subtree from location
-python scripts/locations.py path NAME                         # Show path from root to location
-python scripts/locations.py connections NAME                  # Show all connections
-python scripts/locations.py memories NAME                     # Show memories at location
-python scripts/locations.py create ID --name "N" --type T --essence "Desc"             # Create location
-python scripts/locations.py create ID --name "N" --type T --essence "D" --parent P     # With parent
-python scripts/locations.py update NAME --field full.atmosphere --value "Tense"        # Update field
-python scripts/locations.py delete NAME                       # Delete location
+python scripts/locations.py list [--short]              # List locations
+python scripts/locations.py get NAME [--depth full]     # Get profile
+python scripts/locations.py sections NAME               # List sections
+python scripts/locations.py tree [NAME]                 # Show hierarchy
+python scripts/locations.py path NAME                   # Path to root
+python scripts/locations.py connections NAME            # Graph connections
+python scripts/locations.py memories NAME               # Related memories
+python scripts/locations.py create ID --name N --type T --essence E [--parent P]
+python scripts/locations.py update NAME --field F --value V
+python scripts/locations.py delete NAME
 ```
 
-Filter options: `--tag`, `--parent`, `--type`
+Filters: `--tag`, `--parent`, `--type`
 
 ### Stories
 
-Requires `stories/*.json`
+See **[story-capture-guide.md](references/story-capture-guide.md)** for schema.
 
 ```bash
-python scripts/stories.py meta --campaign NAME                          # Show available tags/counts
-python scripts/stories.py list --campaign NAME                          # List all stories
-python scripts/stories.py list --campaign NAME --collection told        # Filter by collection/theme
-python scripts/stories.py get --campaign NAME --story STORY_ID          # Get story text only
-python scripts/stories.py show --campaign NAME --story STORY_ID         # Get story with metadata
-python scripts/stories.py random --campaign NAME                        # Random story
-python scripts/stories.py random --campaign NAME --theme loss           # Random with filters
-python scripts/stories.py create --campaign NAME --title "T" --text "C" # Create story
-python scripts/stories.py create --campaign NAME --title "T" --text "C" --collection told --era "Y3"
+python scripts/stories.py meta --campaign NAME          # Tags/counts
+python scripts/stories.py list --campaign NAME          # List stories
+python scripts/stories.py get --campaign NAME --story ID
+python scripts/stories.py show --campaign NAME --story ID
+python scripts/stories.py random --campaign NAME
+python scripts/stories.py create --campaign NAME --title T --text C
 ```
 
-Filter options: `--collection`, `--theme`, `--mood`, `--era`
+Filters: `--collection`, `--theme`, `--mood`, `--era`
 
 ### Memories
 
-Requires `memories/*.json`
+See **[memories-guide.md](references/memories-guide.md)** for schema.
 
 ```bash
-python scripts/memories.py list --campaign NAME                 # List all memories
-python scripts/memories.py list --campaign NAME --type T        # Filter by type/intensity
-python scripts/memories.py get MEMORY_ID                        # Get specific memory
-python scripts/memories.py random --campaign NAME               # Random memory
-python scripts/memories.py recent --campaign NAME               # Most recent memories
-python scripts/memories.py recent --campaign NAME --count 10    # Recent with count
-python scripts/memories.py search "query" --campaign NAME       # Full-text search
-python scripts/memories.py character NAME                       # Memories involving character
-python scripts/memories.py location NAME                        # Memories at location
-python scripts/memories.py connections MEMORY_ID                # Show cross-references
-python scripts/memories.py chain MEMORY_ID                      # Follow related memories
-python scripts/memories.py meta --campaign NAME                 # Show type/intensity/tag counts
-python scripts/memories.py create --campaign NAME --title "T" --text "C"               # Create memory
-python scripts/memories.py create --campaign NAME --title "T" --text "C" --type T      # With options
+python scripts/memories.py list --campaign NAME         # List memories
+python scripts/memories.py get MEMORY_ID                # Get specific
+python scripts/memories.py random --campaign NAME
+python scripts/memories.py recent --campaign NAME       # Most recent
+python scripts/memories.py search "query" --campaign NAME
+python scripts/memories.py character NAME               # By character
+python scripts/memories.py location NAME                # By location
+python scripts/memories.py connections MEMORY_ID        # Cross-references
+python scripts/memories.py chain MEMORY_ID              # Follow related
+python scripts/memories.py meta --campaign NAME         # Counts
+python scripts/memories.py create --campaign NAME --title T --text C
 ```
 
-Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
+Filters: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
 
 ### Factions
 
-Requires `factions/*.json`
+See **[faction-guide.md](references/faction-guide.md)** for schema.
 
 ```bash
-python scripts/factions.py list                          # List all factions
-python scripts/factions.py list --type fleet             # Filter by type
-python scripts/factions.py list --tag military           # Filter by tag
-python scripts/factions.py list --short                  # Show minimal profiles
-python scripts/factions.py get NAME                      # Get minimal profile
-python scripts/factions.py get NAME --depth full         # Get full profile
-python scripts/factions.py get NAME --section economy    # Get specific section
-python scripts/factions.py tree                          # Show faction hierarchy
-python scripts/factions.py tree NAME                     # Show hierarchy from faction
-python scripts/factions.py members NAME                  # List faction members
-python scripts/factions.py relationships NAME            # Show faction relationships
-python scripts/factions.py economy NAME                  # Show faction economy
-python scripts/factions.py resources NAME                # Show faction resources
-python scripts/factions.py create ID --name "Name" --type fleet --essence "Description"
-python scripts/factions.py update NAME --field minimal.current_status --value "New status" --reason "Event"
-python scripts/factions.py delete NAME                   # Delete faction (with confirmation)
+python scripts/factions.py list [--short]               # List factions
+python scripts/factions.py get NAME [--depth full]      # Get profile
+python scripts/factions.py tree [NAME]                  # Hierarchy
+python scripts/factions.py members NAME                 # List members
+python scripts/factions.py relationships NAME           # Relationships
+python scripts/factions.py economy NAME                 # Economy
+python scripts/factions.py resources NAME               # Resources
+python scripts/factions.py create ID --name N --type T --essence E
+python scripts/factions.py update NAME --field F --value V --reason R
+python scripts/factions.py delete NAME
 ```
 
-Filter options: `--type`, `--tag`
-
-See **[Creating Factions](references/faction-guide.md)** for schema and workflow.
+Filters: `--type`, `--tag`
 
 ### Campaign Log
 
-Requires `campaign/log.json`
+See **[campaign-state-guide.md](references/campaign-state-guide.md)** for full documentation.
 
 ```bash
-python scripts/log.py add "Event summary" --date Y3.D45       # Add log entry
-python scripts/log.py add "Event" --date-loose "after fest"   # With loose date
-python scripts/log.py add "Event" --importance critical       # With importance
+python scripts/log.py add "Event" --date Y3.D45         # Add entry
+python scripts/log.py add "Event" --date-loose "after the festival"
 python scripts/log.py add "Event" --characters "juno:defining,tam:present"
-python scripts/log.py list                                    # List all entries
-python scripts/log.py list --branch main                      # Filter by branch
-python scripts/log.py list --character juno                   # Filter by character
-python scripts/log.py list --importance major+                # Major and critical entries
-python scripts/log.py list --from Y3.D1 --to Y3.D100          # Date range
-python scripts/log.py show log-00001                          # Show specific entry
-python scripts/log.py delete log-00001                        # Delete entry
-python scripts/log.py digest                                  # Tiered summary (pillars/recent/current)
-python scripts/log.py digest --character juno                 # Digest for one character
+python scripts/log.py list                              # List entries
+python scripts/log.py show ID                           # Show entry
+python scripts/log.py delete ID                         # Delete entry
+python scripts/log.py digest                            # Tiered summary
 ```
 
-Key options: `--date`, `--date-loose`, `--branch`, `--characters`, `--locations`, `--importance`, `--tags`, `--session`, `--json`
+Add options: `--date`, `--date-loose`, `--branch`, `--characters`, `--locations`, `--importance`, `--tags`, `--session`
 
-Filter options: `--branch`, `--character`, `--location`, `--importance`, `--tag`, `--from`, `--to`, `--limit`, `--verbose`
-
-Digest shows three tiers: PILLARS (critical events all-time), RECENT ARC (major+ from recent sessions), CURRENT (all from last few sessions). Configure defaults in `campaign/config.json` under `digest` key.
+Filters: `--branch`, `--character`, `--location`, `--importance`, `--tag`, `--from`, `--to`, `--limit`
 
 ### Campaign Management
 
-Requires `campaign/config.json`
+See **[campaign-state-guide.md](references/campaign-state-guide.md)** for full documentation.
 
 ```bash
-python scripts/campaign.py init "Campaign Name"                  # Initialize new campaign
-python scripts/campaign.py show                                  # Show config
-python scripts/campaign.py branch list                           # List all branches
-python scripts/campaign.py branch switch main                    # Switch active branch
-python scripts/campaign.py branch create ID "Name" --from main   # Fork from branch
-python scripts/campaign.py branch create ID "Name" --protagonists "juno,tam"
-python scripts/campaign.py state show                            # Show campaign state
-python scripts/campaign.py state show --character juno           # Show character state
-python scripts/campaign.py state set juno location "Spire" --reason "R"
-python scripts/campaign.py state set juno,tam status "rest" --reason "R"
-python scripts/campaign.py state delete juno temp_buff --reason "R"
-python scripts/campaign.py changelog show                        # Show all changes
-python scripts/campaign.py changelog show --character juno       # Filter changelog
-python scripts/campaign.py export                                # Backup to zip
-python scripts/campaign.py export --output backup.zip            # Custom output
-python scripts/campaign.py import backup.zip                     # Restore from backup
-python scripts/campaign.py import backup.zip --into ./dir        # Restore to directory
+python scripts/campaign.py init "Campaign Name"
+python scripts/campaign.py show
+python scripts/campaign.py branch list
+python scripts/campaign.py branch switch BRANCH
+python scripts/campaign.py branch create ID "Name" [--from BRANCH] [--protagonists "a,b"]
+python scripts/campaign.py state show [--character NAME]
+python scripts/campaign.py state set CHAR field "value" --reason R
+python scripts/campaign.py state delete CHAR field --reason R
+python scripts/campaign.py changelog show [--character NAME] [--limit N]
+python scripts/campaign.py export [--output FILE.zip]
+python scripts/campaign.py import FILE.zip [--into DIR]
 ```
-
-Key options: `--json`, `--reason` (required for state changes)
 
 ---
 
 ## Session Workflow
-
-Guides for before and after play:
 
 - **[Session Setup](references/session-setup-guide.md)** - Calibrate tone, direction, and pacing
 - **[Session Debrief](references/session-debrief-guide.md)** - Post-session reflection and character growth
@@ -280,13 +219,11 @@ Guides for before and after play:
 
 ## Creating Campaign Data
 
-Guides for creating your own JSON data files:
-
-- **[Creating Characters](references/character-guide.md)** - Character JSON schema and workflow
-- **[Creating Locations](references/location-guide.md)** - Location hierarchy and connections
-- **[Creating Factions](references/faction-guide.md)** - Faction hierarchy, members, economy, relationships
-- **[Creating Memories](references/memories-guide.md)** - Memory tracking with cross-references
-- **[Creating Namesets](references/nameset-guide.md)** - Name generation collections
-- **[Capturing Stories](references/story-capture-guide.md)** - Story extraction workflow
-- **[Using the Oracle](references/oracle-guide.md)** - Oracle types and when to use them
-- **[Managing Campaign State](references/campaign-state-guide.md)** - Branches, log, state, and changelog
+- **[character-guide.md](references/character-guide.md)** - Character JSON schema
+- **[location-guide.md](references/location-guide.md)** - Location hierarchy and connections
+- **[faction-guide.md](references/faction-guide.md)** - Faction hierarchy and economy
+- **[memories-guide.md](references/memories-guide.md)** - Memory tracking
+- **[nameset-guide.md](references/nameset-guide.md)** - Name generation collections
+- **[story-capture-guide.md](references/story-capture-guide.md)** - Story extraction
+- **[oracle-guide.md](references/oracle-guide.md)** - Oracle types
+- **[campaign-state-guide.md](references/campaign-state-guide.md)** - Branches, log, state
