@@ -82,10 +82,16 @@ These tools require JSON data files. See guides for schemas and examples.
 Requires `namesets/*.json`
 
 ```bash
-python scripts/namegen.py list                              # Show available namesets
-python scripts/namegen.py full --nameset ice-age-names      # Generate one name
-python scripts/namegen.py full --nameset NAME --count 5     # Multiple names
+python scripts/namegen.py list                                    # Show available namesets
+python scripts/namegen.py full --nameset NAME                     # Generate one name
+python scripts/namegen.py full --nameset NAME --count 5           # Generate multiple names
+python scripts/namegen.py full --nameset NAME --gender female     # Filter by gender
+python scripts/namegen.py full --nameset NAME --group western     # Force specific group/source
+python scripts/namegen.py full --nameset NAME --show-group        # Show which group was selected
+python scripts/namegen.py groups --nameset NAME                   # List groups/sources in nameset
 ```
+
+Options: `--nameset` (required), `--count`, `--gender`, `--group`, `--show-group`
 
 ### Characters
 

@@ -1,0 +1,65 @@
+{
+  "id": "custom-categories-example",
+  "name": "Tribal Naming (Custom Categories)",
+  "description": "Demonstrates custom name categories for cultures without traditional surnames. Uses epithets (earned descriptors) and clan markers instead of family names. Suitable for prehistoric, tribal, or fantasy cultures.",
+  "setting": "Prehistoric / Tribal Fantasy",
+  "tags": ["tribal", "epithets", "custom-format", "example"],
+
+  "nameCategories": {
+    "firstName": [
+      {"name": "Keth", "gender": "male"},
+      {"name": "Thar", "gender": "male"},
+      {"name": "Brak", "gender": "male"},
+      {"name": "Vorn", "gender": "male"},
+      {"name": "Grenn", "gender": "male"},
+      {"name": "Sorh", "gender": "male"},
+      {"name": "Aella", "gender": "female"},
+      {"name": "Kela", "gender": "female"},
+      {"name": "Senna", "gender": "female"},
+      {"name": "Vorah", "gender": "female"},
+      {"name": "Brenna", "gender": "female"},
+      {"name": "Thela", "gender": "female"}
+    ],
+    "epithet": [
+      {"name": "the Swift", "frequency": 3},
+      {"name": "the Strong", "frequency": 3},
+      {"name": "Bear-Slayer", "frequency": 2},
+      {"name": "the Keen-Eyed", "frequency": 2},
+      {"name": "Flame-Keeper"},
+      {"name": "Storm-Bringer"},
+      {"name": "the Wise"},
+      {"name": "Bone-Carver"},
+      {"name": "the Scarred"},
+      {"name": "Ice-Walker"},
+      {"name": "Star-Reader"},
+      {"name": "the Silent"}
+    ],
+    "clan": [
+      {"name": "of the Elk-Hunters", "frequency": 4},
+      {"name": "of the Wolf-Pack", "frequency": 4},
+      {"name": "of the River-Folk", "frequency": 3},
+      {"name": "of the High-Passes", "frequency": 2},
+      {"name": "of the Steppe-Walkers", "frequency": 2},
+      {"name": "of the Frost-Line"},
+      {"name": "of the Bone-Keepers"},
+      {"name": "of the Star-Children"}
+    ]
+  },
+
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {epithet}",
+
+  "_notes": {
+    "alternative_formats": {
+      "with_clan": "{firstName} {epithet} {clan}",
+      "formal": "{firstName} {clan}",
+      "simple": "{firstName}"
+    },
+    "design_notes": [
+      "Epithets are earned through deeds and can change over a character's life",
+      "Clan markers show band/tribe affiliation",
+      "Young or unnamed characters might use just firstName",
+      "Frequency weighting makes common epithets more likely"
+    ]
+  }
+}
