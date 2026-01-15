@@ -167,7 +167,7 @@ Requires `memories/*.json`
 
 ```bash
 python scripts/memories.py list --campaign NAME          # List all memories
-python scripts/memories.py list --campaign NAME --type vivid-moment --intensity 5
+python scripts/memories.py list --campaign NAME --type vivid-moment --intensity high
 python scripts/memories.py get MEMORY_ID                 # Get specific memory
 python scripts/memories.py random --campaign NAME        # Random memory
 python scripts/memories.py recent --campaign NAME        # Most recent memories
@@ -179,7 +179,7 @@ python scripts/memories.py connections MEMORY_ID         # Show cross-references
 python scripts/memories.py chain MEMORY_ID               # Follow related memories
 python scripts/memories.py meta --campaign NAME          # Show type/intensity/tag counts
 python scripts/memories.py create --campaign NAME --title "Memory Title" --text "Memory content..."
-python scripts/memories.py create --campaign NAME --title "Title" --text "Content" --type vivid-moment --intensity 4 --characters "juno,tam"
+python scripts/memories.py create --campaign NAME --title "Title" --text "Content" --type vivid-moment --intensity medium --characters "juno,tam"
 ```
 
 Filter options: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
