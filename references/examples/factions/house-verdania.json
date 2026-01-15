@@ -148,80 +148,94 @@
   "economy": {
     "accounts": [
       {
+        "id": "treasury",
         "category": "liquid",
         "balance": 50000000,
         "notes": "House treasury - accessible funds"
       },
       {
-        "category": "invested",
+        "id": "investments",
+        "category": "other",
         "balance": 300000000,
         "notes": "Trade ventures, shipping contracts, banking"
       },
       {
-        "category": "receivables",
+        "id": "receivables",
+        "category": "receivable",
         "balance": 25000000,
         "notes": "Outstanding debts from various parties"
       },
       {
-        "category": "reserves",
+        "id": "reserves",
+        "category": "other",
         "balance": 75000000,
         "notes": "Emergency funds - accessed only by Lord's authority"
       }
     ],
     "running_costs": [
       {
-        "line": "Household operations",
+        "id": "household-ops",
+        "description": "Household operations",
         "amount": 500000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Trade fleet operations",
+        "id": "trade-fleet",
+        "description": "Trade fleet operations",
         "amount": 2000000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Intelligence network",
+        "id": "intel-network",
+        "description": "Intelligence network",
         "amount": 200000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Political expenses",
+        "id": "political",
+        "description": "Political expenses",
         "amount": 300000,
-        "period": "month",
+        "period": "monthly",
         "notes": "Bribes, gifts, sponsorships"
       },
       {
-        "line": "Guard and security",
+        "id": "security",
+        "description": "Guard and security",
         "amount": 400000,
-        "period": "month"
+        "period": "monthly"
       }
     ],
     "assets": [
       {
+        "id": "verdania-tower",
         "name": "Verdania Tower",
         "type": "property",
         "value": 100000000,
         "notes": "Ancestral seat, Verdania Prime"
       },
       {
+        "id": "trade-fleet",
         "name": "Trade Fleet",
         "type": "ships",
         "value": 200000000,
         "notes": "47 vessels of various classes"
       },
       {
+        "id": "regional-estates",
         "name": "Regional Estates",
         "type": "property",
         "value": 150000000,
         "notes": "Properties across 12 systems"
       },
       {
+        "id": "banking-interests",
         "name": "Banking Interests",
         "type": "financial",
         "value": 100000000,
         "notes": "Shares in major banking houses"
       },
       {
+        "id": "whisper-network",
         "name": "The Whisper Network",
         "type": "intangible",
         "value": "incalculable",

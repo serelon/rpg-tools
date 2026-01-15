@@ -218,66 +218,77 @@
   "economy": {
     "accounts": [
       {
-        "category": "operations-budget",
+        "id": "ops-budget",
+        "category": "liquid",
         "balance": 2000000,
         "notes": "Quarterly allocation from Fleet Command"
       },
       {
-        "category": "discretionary",
+        "id": "discretionary",
+        "category": "liquid",
         "balance": 150000,
         "notes": "Captain's discretionary fund"
       }
     ],
     "running_costs": [
       {
-        "line": "Crew payroll (handled by Fleet)",
+        "id": "crew-payroll",
+        "description": "Crew payroll (handled by Fleet)",
         "amount": 0,
-        "period": "month",
+        "period": "monthly",
         "notes": "Paid centrally by Imperial Navy"
       },
       {
-        "line": "Consumables and supplies",
+        "id": "consumables",
+        "description": "Consumables and supplies",
         "amount": 400000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Fuel and reaction mass",
+        "id": "fuel",
+        "description": "Fuel and reaction mass",
         "amount": 250000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Maintenance and repairs",
+        "id": "maintenance",
+        "description": "Maintenance and repairs",
         "amount": 300000,
-        "period": "month",
+        "period": "monthly",
         "notes": "Increasing as systems age"
       },
       {
-        "line": "Ammunition resupply",
+        "id": "ammo-resupply",
+        "description": "Ammunition resupply",
         "amount": 150000,
-        "period": "month",
+        "period": "monthly",
         "notes": "Varies by patrol activity"
       }
     ],
     "assets": [
       {
+        "id": "ins-leviathan",
         "name": "INS Leviathan",
         "type": "ship",
         "value": 500000000,
         "notes": "Venator-class carrier, 40 years service"
       },
       {
+        "id": "fighter-complement",
         "name": "Fighter complement",
         "type": "spacecraft",
         "value": 50000000,
         "notes": "24 fighters across two squadrons"
       },
       {
+        "id": "shuttle-complement",
         "name": "Shuttle complement",
         "type": "spacecraft",
         "value": 10000000,
         "notes": "Various utility and assault shuttles"
       },
       {
+        "id": "ground-vehicles",
         "name": "Ground vehicle bay",
         "type": "vehicles",
         "value": 5000000,

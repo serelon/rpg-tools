@@ -129,12 +129,14 @@
   "economy": {
     "accounts": [
       {
+        "id": "operating-funds",
         "category": "liquid",
         "balance": 400000,
         "notes": "Operating funds across fleet"
       },
       {
-        "category": "payables",
+        "id": "syndicate-loan",
+        "category": "payable",
         "balance": -500000,
         "interest": 0.19,
         "notes": "Syndicate loan - crushing interest"
@@ -142,77 +144,90 @@
     ],
     "running_costs": [
       {
-        "line": "Crew wages and shares",
+        "id": "crew-wages",
+        "description": "Crew wages and shares",
         "amount": 120000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Fuel and consumables",
+        "id": "fuel-consumables",
+        "description": "Fuel and consumables",
         "amount": 45000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Maintenance reserve",
+        "id": "maintenance-reserve",
+        "description": "Maintenance reserve",
         "amount": 25000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Docking and port fees",
+        "id": "port-fees",
+        "description": "Docking and port fees",
         "amount": 15000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Insurance and licensing",
+        "id": "insurance-licensing",
+        "description": "Insurance and licensing",
         "amount": 20000,
-        "period": "month"
+        "period": "monthly"
       },
       {
-        "line": "Loan payment",
+        "id": "loan-payment",
+        "description": "Loan payment",
         "amount": 8000,
-        "period": "month",
+        "period": "monthly",
         "notes": "Minimum payment, barely covers interest"
       }
     ],
     "inventory": [
       {
+        "id": "salvaged-plating",
         "item": "Salvaged hull plating",
-        "qty": 200,
+        "quantity": 200,
         "value": 50,
         "location": "lucky-find-hold"
       },
       {
+        "id": "reclaimed-electronics",
         "item": "Reclaimed electronics",
-        "qty": 50,
+        "quantity": 50,
         "value": 200,
         "location": "honest-fortune-hold"
       }
     ],
     "assets": [
       {
+        "id": "honest-fortune",
         "name": "Honest Fortune",
         "type": "ship",
         "value": 800000,
         "notes": "Modified salvage vessel, Juno's command"
       },
       {
+        "id": "swift-return",
         "name": "Swift Return",
         "type": "ship",
         "value": 400000,
         "notes": "Fast courier, lightly armed"
       },
       {
+        "id": "lucky-find",
         "name": "Lucky Find",
         "type": "ship",
         "value": 600000,
         "notes": "Heavy hauler, expanded cargo"
       },
       {
+        "id": "pleasant-journey",
         "name": "Pleasant Journey",
         "type": "ship",
         "value": 350000,
         "notes": "Passenger vessel, converted yacht"
       },
       {
+        "id": "steady-progress",
         "name": "Steady Progress",
         "type": "ship",
         "value": 500000,

@@ -94,15 +94,17 @@ Factions are characters with agency. They have:
     ],
     "running_costs": [
       {
-        "line": "Crew wages",
+        "id": "crew-wages",
+        "description": "Crew wages",
         "amount": 12000,
-        "period": "month"
+        "period": "monthly"
       }
     ],
     "inventory": [
       {
+        "id": "cargo-containers",
         "item": "Cargo container",
-        "qty": 20,
+        "quantity": 20,
         "value": 500,
         "location": "main-hold",
         "legality": "legal"
@@ -110,6 +112,7 @@ Factions are characters with agency. They have:
     ],
     "assets": [
       {
+        "id": "the-still-here",
         "name": "The Still Here",
         "type": "ship",
         "value": 250000,
@@ -390,17 +393,20 @@ Account categories:
 ```json
 "running_costs": [
   {
-    "line": "Crew wages",
+    "id": "crew-wages",
+    "description": "Crew wages",
     "amount": 12000,
-    "period": "month"
+    "period": "monthly"
   },
   {
-    "line": "Fuel and supplies",
+    "id": "fuel-supplies",
+    "description": "Fuel and supplies",
     "amount": 3000,
-    "period": "month"
+    "period": "monthly"
   },
   {
-    "line": "Docking fees",
+    "id": "docking-fees",
+    "description": "Docking fees",
     "amount": "500 * days_docked",
     "period": "variable",
     "notes": "Formula-driven"
@@ -415,14 +421,16 @@ Default legality is "legal" unless specified.
 ```json
 "inventory": [
   {
+    "id": "medical-supplies",
     "item": "Medical supplies",
-    "qty": 50,
+    "quantity": 50,
     "value": 100,
     "location": "cargo-bay-2"
   },
   {
+    "id": "restricted-weapons",
     "item": "Restricted weapons",
-    "qty": 10,
+    "quantity": 10,
     "value": 2000,
     "location": "hidden-compartment",
     "legality": "illegal"
@@ -506,17 +514,17 @@ Small organization with full economic detail and mostly named members.
 
   "economy": {
     "accounts": [
-      {"category": "liquid", "balance": 12000, "notes": "After last job"}
+      {"id": "operating", "category": "liquid", "balance": 12000, "notes": "After last job"}
     ],
     "running_costs": [
-      {"line": "Crew shares", "amount": 6000, "period": "month"},
-      {"line": "Ship maintenance", "amount": 2000, "period": "month"}
+      {"id": "crew-shares", "description": "Crew shares", "amount": 6000, "period": "monthly"},
+      {"id": "maintenance", "description": "Ship maintenance", "amount": 2000, "period": "monthly"}
     ],
     "inventory": [
-      {"item": "Salvage haul", "qty": 1, "value": 8000, "location": "cargo-hold"}
+      {"id": "salvage-haul", "item": "Salvage haul", "quantity": 1, "value": 8000, "location": "cargo-hold"}
     ],
     "assets": [
-      {"name": "The Still Here", "type": "ship", "value": 180000}
+      {"id": "the-still-here", "name": "The Still Here", "type": "ship", "value": 180000}
     ]
   },
 
