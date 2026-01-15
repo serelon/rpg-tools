@@ -478,6 +478,8 @@ Use whatever makes sense for your faction. Values can be numeric or descriptive.
 
 ## Scale Examples
 
+> **Note:** These examples are simplified for documentation clarity. For complete, production-ready examples, see the files in `references/examples/factions/`.
+
 ### Tight Scale: Crew/Fleet (~40 named)
 
 **Example: Delacroix Fleet**

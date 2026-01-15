@@ -135,6 +135,13 @@
         "notes": "Operating funds across fleet"
       },
       {
+        "id": "perseverance-debt",
+        "category": "receivable",
+        "balance": 5000000,
+        "interest": 0.0,
+        "notes": "Moral debt from Perseverance rescue - not actively collected"
+      },
+      {
         "id": "syndicate-loan",
         "category": "payable",
         "balance": -500000,
