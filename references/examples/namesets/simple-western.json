@@ -1,0 +1,49 @@
+{
+  "id": "simple-western-example",
+  "name": "Simple Western Names",
+  "description": "Basic Western naming structure with first and last names. Demonstrates gender tags and frequency weighting for realistic distribution.",
+  "setting": "Modern/Contemporary",
+  "tags": ["western", "modern", "example"],
+
+  "nameCategories": {
+    "firstName": [
+      {"name": "James", "gender": "male", "frequency": 5},
+      {"name": "John", "gender": "male", "frequency": 5},
+      {"name": "Robert", "gender": "male", "frequency": 4},
+      {"name": "Michael", "gender": "male", "frequency": 4},
+      {"name": "William", "gender": "male", "frequency": 3},
+      {"name": "David", "gender": "male", "frequency": 3},
+      {"name": "Thomas", "gender": "male", "frequency": 2},
+      {"name": "Marcus", "gender": "male"},
+      {"name": "Elena", "gender": "female", "frequency": 5},
+      {"name": "Maria", "gender": "female", "frequency": 5},
+      {"name": "Sofia", "gender": "female", "frequency": 4},
+      {"name": "Anna", "gender": "female", "frequency": 4},
+      {"name": "Sarah", "gender": "female", "frequency": 3},
+      {"name": "Emma", "gender": "female", "frequency": 3},
+      {"name": "Grace", "gender": "female", "frequency": 2},
+      {"name": "Vera", "gender": "female"},
+      {"name": "Alex", "gender": "unisex", "frequency": 3},
+      {"name": "Jordan", "gender": "unisex", "frequency": 2},
+      {"name": "Taylor", "gender": "unisex"},
+      {"name": "Morgan", "gender": "unisex"}
+    ],
+    "lastName": [
+      {"name": "Smith", "frequency": 5},
+      {"name": "Johnson", "frequency": 5},
+      {"name": "Williams", "frequency": 4},
+      {"name": "Brown", "frequency": 4},
+      {"name": "Jones", "frequency": 3},
+      {"name": "Garcia", "frequency": 3},
+      {"name": "Miller", "frequency": 2},
+      {"name": "Davis", "frequency": 2},
+      {"name": "Chen", "frequency": 2},
+      {"name": "Patel"},
+      {"name": "Kim"},
+      {"name": "Okonkwo"}
+    ]
+  },
+
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}"
+}

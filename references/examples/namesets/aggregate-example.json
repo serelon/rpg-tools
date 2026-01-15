@@ -1,0 +1,63 @@
+{
+  "id": "aggregate-example",
+  "name": "Metropolitan Station Crew",
+  "description": "Aggregate nameset demonstrating multi-source composition. References other namesets by ID and selects from them based on weight. Perfect for multicultural settings like space stations, international organizations, or cosmopolitan cities.",
+  "setting": "Sci-Fi / International",
+  "tags": ["aggregate", "multicultural", "example"],
+
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+
+  "sources": [
+    {
+      "nameset": "names-american",
+      "weight": 25,
+      "label": "american"
+    },
+    {
+      "nameset": "names-chinese",
+      "weight": 20,
+      "label": "chinese"
+    },
+    {
+      "nameset": "names-russian",
+      "weight": 15,
+      "label": "russian"
+    },
+    {
+      "nameset": "names-indian",
+      "weight": 15,
+      "label": "indian"
+    },
+    {
+      "nameset": "names-brazilian",
+      "weight": 10,
+      "label": "brazilian"
+    },
+    {
+      "nameset": "names-nigerian",
+      "weight": 10,
+      "label": "nigerian"
+    },
+    {
+      "nameset": "names-japanese",
+      "weight": 5,
+      "label": "japanese"
+    }
+  ],
+
+  "_notes": {
+    "usage": [
+      "Each source nameset must exist and have nameCategories with firstName and lastName",
+      "Weights are relative - total doesn't need to equal 100",
+      "Use --group japanese to force a specific source",
+      "Use --show-group to see which source was selected for each name"
+    ],
+    "example_commands": [
+      "python scripts/namegen.py full --nameset aggregate-example --count 10",
+      "python scripts/namegen.py full --nameset aggregate-example --group chinese --count 5",
+      "python scripts/namegen.py groups --nameset aggregate-example"
+    ]
+  }
+}
