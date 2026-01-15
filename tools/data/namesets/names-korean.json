@@ -1,0 +1,2408 @@
+{
+  "id": "names-korean",
+  "name": "Korean Names",
+  "description": "Authentic Korean names in Revised Romanization. Reflects South Korean naming conventions with family name first, given name second. Includes both traditional and modern given names with frequency weighting based on actual usage patterns.",
+  "tags": [
+    "korean",
+    "east-asian",
+    "asia"
+  ],
+  "nameCategories": {
+    "firstName": [
+      {
+        "name": "Minho",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Junwoo",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Jihun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Seojun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Jimin",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Hyunwoo",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Minsu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Junhyeok",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Dohyun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Jiho",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Seungmin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Yejun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jiwon",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Siwoo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Donghyun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Taemin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jaehyun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Junho",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Sunwoo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Woojin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Minjun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Hajun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Seonghun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jinwoo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Hyunjun",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Seunghoon",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jaemin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Yuchan",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Hanbin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Seongjin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Taehyun",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Junseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Kyungsoo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Changmin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Eunwoo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Hyunbin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sangwoo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jeonghwan",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Daewon",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sungho",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Youngho",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Wooseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Dongjin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Minseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sehun",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chanyeol",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jonghyun",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Kibum",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jinseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Seungyeon",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Gwangmin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Hyeongseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Taewoo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jinyoung",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Mingyu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Seungcheol",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Hansol",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Wonwoo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Soonyoung",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Seokmin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Myungho",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jungkook",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Taehyung",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Namjoon",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Seokjin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Hoseok",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Yoongi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Dongwook",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jaebum",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Yugyeom",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Gyeongsu",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Seungwoo",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Dongho",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sanghyuk",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jaewon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Inseong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Hwiyoung",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jaeseong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Taeyang",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Seungri",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Daesung",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Youngbae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jiyong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Hyunsik",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Ilhoon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Peniel",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Minhyuk",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sungjae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Changsub",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Eunkwang",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Byunghun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Changjo",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Niel",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Chunji",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Ricky",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jongin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Baekhyun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jongdae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Yixing",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Luhan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Joonmyeon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Kris",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Tao",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sunggyu",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Dongwoo",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Woohyun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Howon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sungyeol",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Myungsoo",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sungjong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sangwon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Yongguk",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Himchan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Daehyun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Youngjae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jongup",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Junhong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Leeteuk",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Heechul",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Yesung",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Shindong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sungmin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Eunhyuk",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Donghae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Siwon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Ryeowook",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Kyuhyun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Gunwoo",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jaewan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Seonho",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Guanlin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Daewhi",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jihoon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jinyeong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Kuanlin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Daniel",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Ong",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jaehwan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Minhyun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jisoo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jeonghan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Joshua",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Hoshi",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Dokyeom",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Dino",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sangyeon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jacob",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Younghoon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Hyunjae",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Juyeon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Kevin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Haknyeon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Eric",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Heeseung",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jay",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jake",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Sunghoon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jungwon",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Niki",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Yeonjun",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Soobin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Beomgyu",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Huening",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Bangchan",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Changbin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Hyunjin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jisung",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Felix",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Jeongin",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Yedam",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Junghwan",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Haruto",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Jeongwoo",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Doyoung",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Yoshi",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Jaehyuk",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Asahi",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Mashiho",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Hyunsuk",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Junkyu",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Geonhak",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Seoho",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Leedo",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Keonhee",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Hwanwoong",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Xion",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Yongseok",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Sangheon",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Intak",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Geonhee",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Dojoon",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Junyoung",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Taeseon",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Yuto",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Kino",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Hui",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Yanan",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Shinwon",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Yeoone",
+        "gender": "male",
+        "frequency": 1
+      },
+      {
+        "name": "Jiyeon",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Yuna",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Soyeon",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Minji",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Sooyoung",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Hyejin",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Seulgi",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Jihye",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Yerin",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Dahyun",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Nayeon",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Jeongyeon",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Momo",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sana",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Mina",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Chaeyoung",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Tzuyu",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Irene",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Wendy",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Joy",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Yeri",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Taeyeon",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sunny",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Tiffany",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Hyoyeon",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Yuri",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sooyeon",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Yoona",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Seohyun",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Jessica",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Krystal",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sulli",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Luna",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Amber",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Victoria",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Hani",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Hyerin",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Solji",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Jeonghwa",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Subin",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sujeong",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jiae",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Mijoo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Kei",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Babysoul",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jennie",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Rose",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Lisa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sowon",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Eunha",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "SinB",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Umji",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Seunghee",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Yubin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Binnie",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Arin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hyojung",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Mimi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hwasa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Moonbyul",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Solar",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Wheein",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Haeun",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Soeun",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Naeun",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sujin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chaerin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Bom",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Dara",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Minzy",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Gayoon",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jiyoon",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hyuna",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sohyun",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jihyun",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Gyuri",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jiyoung",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hara",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Nicole",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sunmi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Yuqi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Minnie",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Miyeon",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Shuhua",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Soojin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Eunji",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Bomi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Namjoo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hayoung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chorong",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Nana",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Lizzy",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Raina",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jooyeon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Uee",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Kaeun",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jungah",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Bekah",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jia",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Fei",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Min",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Suzy",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sunye",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yeeun",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sohee",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyomin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Eunjung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Qri",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Boram",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Areum",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hwayoung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Bora",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Dasom",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyolyn",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Soyou",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sunhwa",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyosung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Zinger",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jieun",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "IU",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Ailee",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyorin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jessi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "BoA",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Gain",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Miryo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Narsha",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Wonyoung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sakura",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yujin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Leeseo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Gaeul",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Rei",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Eunbi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yena",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chaewon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hitomi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Nako",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyewon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Minju",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Danielle",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Haerin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hyein",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Hanni",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sullyoon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jinni",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Kyujin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Lily",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Bae",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Haewon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jiwoo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yeoreum",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Luda",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Dayoung",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Seola",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Xuanyi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Bona",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Eunseo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Dawon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Heejin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Haseul",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yeojin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Vivi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Kimlip",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Jinsoul",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Choerry",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yves",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chuu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Gowon",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Olivia",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Yujeong",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Yuki",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Mashiro",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Xiaoting",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Hikaru",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Youngeun",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Yeseo",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Dayeon",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Chaehyun",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Suyeon",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Sheon",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Tsuki",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Kotone",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Moana",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Ririka",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Junghee",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Kyungmi",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Heeju",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Sohyang",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Younha",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Gummy",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Lena",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Baek",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Dalsooobin",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Sua",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Siyeon",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Gahyeon",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Handong",
+        "gender": "female",
+        "frequency": 1
+      },
+      {
+        "name": "Dami",
+        "gender": "female",
+        "frequency": 1
+      }
+    ],
+    "lastName": [
+      {
+        "name": "Kim",
+        "frequency": 5
+      },
+      {
+        "name": "Lee",
+        "frequency": 5
+      },
+      {
+        "name": "Park",
+        "frequency": 5
+      },
+      {
+        "name": "Choi",
+        "frequency": 5
+      },
+      {
+        "name": "Jeong",
+        "frequency": 5
+      },
+      {
+        "name": "Kang",
+        "frequency": 5
+      },
+      {
+        "name": "Cho",
+        "frequency": 5
+      },
+      {
+        "name": "Yun",
+        "frequency": 5
+      },
+      {
+        "name": "Jang",
+        "frequency": 5
+      },
+      {
+        "name": "Im",
+        "frequency": 5
+      },
+      {
+        "name": "Han",
+        "frequency": 4
+      },
+      {
+        "name": "Oh",
+        "frequency": 4
+      },
+      {
+        "name": "Seo",
+        "frequency": 4
+      },
+      {
+        "name": "Shin",
+        "frequency": 4
+      },
+      {
+        "name": "Kwon",
+        "frequency": 4
+      },
+      {
+        "name": "Hwang",
+        "frequency": 4
+      },
+      {
+        "name": "Ahn",
+        "frequency": 4
+      },
+      {
+        "name": "Song",
+        "frequency": 4
+      },
+      {
+        "name": "Yoo",
+        "frequency": 4
+      },
+      {
+        "name": "Hong",
+        "frequency": 4
+      },
+      {
+        "name": "Jeon",
+        "frequency": 3
+      },
+      {
+        "name": "Ko",
+        "frequency": 3
+      },
+      {
+        "name": "Moon",
+        "frequency": 3
+      },
+      {
+        "name": "Yang",
+        "frequency": 3
+      },
+      {
+        "name": "Son",
+        "frequency": 3
+      },
+      {
+        "name": "Bae",
+        "frequency": 3
+      },
+      {
+        "name": "Baek",
+        "frequency": 3
+      },
+      {
+        "name": "Heo",
+        "frequency": 3
+      },
+      {
+        "name": "Nam",
+        "frequency": 3
+      },
+      {
+        "name": "Sim",
+        "frequency": 3
+      },
+      {
+        "name": "Ryu",
+        "frequency": 3
+      },
+      {
+        "name": "Ha",
+        "frequency": 3
+      },
+      {
+        "name": "Kwak",
+        "frequency": 3
+      },
+      {
+        "name": "No",
+        "frequency": 3
+      },
+      {
+        "name": "Won",
+        "frequency": 3
+      },
+      {
+        "name": "Jin",
+        "frequency": 3
+      },
+      {
+        "name": "Gu",
+        "frequency": 3
+      },
+      {
+        "name": "Min",
+        "frequency": 3
+      },
+      {
+        "name": "Yu",
+        "frequency": 3
+      },
+      {
+        "name": "Cheon",
+        "frequency": 3
+      },
+      {
+        "name": "Bang",
+        "frequency": 2
+      },
+      {
+        "name": "Eom",
+        "frequency": 2
+      },
+      {
+        "name": "Yeo",
+        "frequency": 2
+      },
+      {
+        "name": "Pyo",
+        "frequency": 2
+      },
+      {
+        "name": "Gi",
+        "frequency": 2
+      },
+      {
+        "name": "Do",
+        "frequency": 2
+      },
+      {
+        "name": "Seong",
+        "frequency": 2
+      },
+      {
+        "name": "Cha",
+        "frequency": 2
+      },
+      {
+        "name": "Woo",
+        "frequency": 2
+      },
+      {
+        "name": "Ji",
+        "frequency": 2
+      },
+      {
+        "name": "Byeon",
+        "frequency": 2
+      },
+      {
+        "name": "Gong",
+        "frequency": 2
+      },
+      {
+        "name": "Yeom",
+        "frequency": 2
+      },
+      {
+        "name": "Pang",
+        "frequency": 2
+      },
+      {
+        "name": "Mae",
+        "frequency": 2
+      },
+      {
+        "name": "Bin",
+        "frequency": 2
+      },
+      {
+        "name": "Sa",
+        "frequency": 2
+      },
+      {
+        "name": "Wi",
+        "frequency": 2
+      },
+      {
+        "name": "Mun",
+        "frequency": 2
+      },
+      {
+        "name": "Tak",
+        "frequency": 2
+      },
+      {
+        "name": "Gye",
+        "frequency": 2
+      },
+      {
+        "name": "Myeong",
+        "frequency": 2
+      },
+      {
+        "name": "Seok",
+        "frequency": 2
+      },
+      {
+        "name": "Gyeong",
+        "frequency": 2
+      },
+      {
+        "name": "Pi",
+        "frequency": 2
+      },
+      {
+        "name": "Maeng",
+        "frequency": 2
+      },
+      {
+        "name": "Bong",
+        "frequency": 2
+      },
+      {
+        "name": "Chu",
+        "frequency": 2
+      },
+      {
+        "name": "Bok",
+        "frequency": 1
+      },
+      {
+        "name": "Ok",
+        "frequency": 1
+      },
+      {
+        "name": "Gal",
+        "frequency": 1
+      },
+      {
+        "name": "Pan",
+        "frequency": 1
+      },
+      {
+        "name": "Tan",
+        "frequency": 1
+      },
+      {
+        "name": "Ran",
+        "frequency": 1
+      },
+      {
+        "name": "Seop",
+        "frequency": 1
+      },
+      {
+        "name": "San",
+        "frequency": 1
+      },
+      {
+        "name": "Eun",
+        "frequency": 1
+      },
+      {
+        "name": "Bi",
+        "frequency": 1
+      },
+      {
+        "name": "So",
+        "frequency": 1
+      },
+      {
+        "name": "Gan",
+        "frequency": 1
+      },
+      {
+        "name": "Dang",
+        "frequency": 1
+      },
+      {
+        "name": "Geum",
+        "frequency": 1
+      },
+      {
+        "name": "Gok",
+        "frequency": 1
+      },
+      {
+        "name": "In",
+        "frequency": 1
+      },
+      {
+        "name": "Tae",
+        "frequency": 1
+      },
+      {
+        "name": "Pyeon",
+        "frequency": 1
+      },
+      {
+        "name": "Gwak",
+        "frequency": 1
+      },
+      {
+        "name": "Yuk",
+        "frequency": 1
+      },
+      {
+        "name": "Namgung",
+        "frequency": 1
+      },
+      {
+        "name": "Hwangbo",
+        "frequency": 1
+      },
+      {
+        "name": "Dokgo",
+        "frequency": 1
+      },
+      {
+        "name": "Sagong",
+        "frequency": 1
+      },
+      {
+        "name": "Seomun",
+        "frequency": 1
+      },
+      {
+        "name": "Jegal",
+        "frequency": 1
+      },
+      {
+        "name": "Sunwoo",
+        "frequency": 1
+      },
+      {
+        "name": "Seonwu",
+        "frequency": 1
+      },
+      {
+        "name": "Dongbang",
+        "frequency": 1
+      },
+      {
+        "name": "Nambung",
+        "frequency": 1
+      }
+    ]
+  },
+  "genderWeights": {
+    "male": 50,
+    "female": 50
+  },
+  "format": "{lastName} {firstName}"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "names-east-asian",
+  "name": "East Asian Names",
+  "description": "Aggregate of Chinese, Japanese, and Korean names. Note: These cultures use family name first.",
+  "tags": ["east-asian", "asian", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{lastName} {firstName}",
+  "sources": [
+    {"nameset": "names-chinese", "weight": 45, "label": "chinese"},
+    {"nameset": "names-japanese", "weight": 35, "label": "japanese"},
+    {"nameset": "names-korean", "weight": 20, "label": "korean"}
+  ]
+}

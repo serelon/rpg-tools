@@ -1,0 +1,13 @@
+{
+  "id": "names-south-asian",
+  "name": "South Asian Names",
+  "description": "Aggregate of Indian and Pakistani names",
+  "tags": ["south-asian", "asian", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-indian", "weight": 70, "label": "indian"},
+    {"nameset": "names-pakistani", "weight": 30, "label": "pakistani"}
+  ]
+}

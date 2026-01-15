@@ -1,0 +1,2735 @@
+{
+  "id": "names-nigerian",
+  "name": "Nigerian Names",
+  "description": "Nigerian names from major ethnic groups (Yoruba, Igbo, Hausa). Includes traditional and modern names with authentic romanization.",
+  "setting": "Nigeria / West Africa",
+  "tags": [
+    "nigerian",
+    "african",
+    "west-african",
+    "yoruba",
+    "igbo",
+    "hausa"
+  ],
+  "nameCategories": {
+    "firstName": [
+      {
+        "name": "Chidi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Emeka",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Obinna",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Chukwuemeka",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Nnamdi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Ikechukwu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Chibueze",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Kelechi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Uchenna",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Obiora",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chinonso",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Chinedu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Ugochukwu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Tobenna",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Kenechukwu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ekene",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Uzoma",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ebuka",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Ifeanyi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Chijioke",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Okwudili",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Chukwudi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Uche",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Nwachukwu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Azubuike",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Obi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Ikem",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Nnanna",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Olisaemeka",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Somtochukwu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Tochukwu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Lotanna",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Kosisochukwu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Munachiso",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Chidera",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Chiamaka",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Chimaobi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ndubuisi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Okechukwu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Chukwuka",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Arinze",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jidenna",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ikenna",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Obinze",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Udoka",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chisom",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chigoziri",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Chigozie",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Nonso",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Izuchukwu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chidiebube",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Obumneme",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Tobechi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Somadina",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Nzubechukwu",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Onyedikachi",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Onyebuchi",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Chibuzor",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chukwuebuka",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chukwubuikem",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Olusegun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Oluwaseun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Adebayo",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Olumide",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Adekunle",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Babatunde",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Oluwafemi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adeyemi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Oluwole",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Ayodele",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Oladipo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Oluwaseyi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adewale",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Oluwatobi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Temitope",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Kayode",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Olayinka",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adeniyi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Rotimi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Damilola",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Abiodun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Segun",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Olalekan",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Bolaji",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Gbenga",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adebisi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Folarin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Jide",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Kunle",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Femi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Tosin",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Dapo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Wale",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Bayo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Lanre",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Sola",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Tunde",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Niyi",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Dayo",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Yinka",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Lekan",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Ademola",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Olanrewaju",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Olabode",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Adedoyin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Omotayo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Adeoye",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwadamilare",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwatimilehin",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwadamilola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Olaoluwa",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adetokunbo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Bamidele",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Olufunmilayo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Akintunde",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Adegboyega",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwagbenga",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Adesola",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Biodun",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Lateef",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Rasheed",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Musa",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Ibrahim",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Aliyu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Abubakar",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Usman",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Sani",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Bello",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Yusuf",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Muhammadu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Bashir",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Garba",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Ismail",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Kabiru",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Haruna",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Suleiman",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Abdullahi",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Adamu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Shehu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Lawal",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Nuhu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Dauda",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Idris",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Nasiru",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Aminu",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Salisu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Yakubu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Hamza",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Audu",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Jibril",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Alhaji",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Danjuma",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Tanko",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Bala",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Gambo",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Danladi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Iliya",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Rabiu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Farouk",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ahmad",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Mustapha",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Saidu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Babangida",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Buhari",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sadiq",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Nafiu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Tanimu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sulaiman",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Kawu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Rilwanu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Umar",
+        "gender": "male",
+        "frequency": 5
+      },
+      {
+        "name": "Dikko",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Isa",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Magaji",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Yunusa",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Saminu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Hassan",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Hussaini",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Shuaibu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Sanusi",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Yaro",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Mamman",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Danasabe",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Lawan",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Zayyanu",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Attahiru",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Maigari",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Dandare",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Maisamari",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Ogbonna",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Obiajulu",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Okezie",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Nwadike",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Ejike",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Chukwunonso",
+        "gender": "male",
+        "frequency": 3
+      },
+      {
+        "name": "Obiekwe",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Isioma",
+        "gender": "male",
+        "frequency": 2
+      },
+      {
+        "name": "Nnaemeka",
+        "gender": "male",
+        "frequency": 4
+      },
+      {
+        "name": "Adaeze",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Chidinma",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Adaora",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Ngozi",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Nneka",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Obiageli",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ifeoma",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Amaka",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Chioma",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Ogochukwu",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Chidimma",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ebere",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Nkechi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Chinwe",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Obianuju",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Nwando",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Adaobi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Uzoamaka",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Chizoba",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ogechi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ukamaka",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ifunanya",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Nmesoma",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Oluchi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Lotachukwu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Nkiruka",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Munachimso",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ijeoma",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ginika",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chinyere",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Onyinyechi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chinenye",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Amarachi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Chinazo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Onyeka",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Akudo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ifeyinwa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Kamsiyochukwu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Somkene",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Uchechukwu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chidalu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Tobechukwu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sopuruchi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Nneoma",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ujunwa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ozichi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chiagozie",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Ozioma",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Oluebube",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chidiogo",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Adanna",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Kamsiyonna",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Chidiebere",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Nzubechi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Osinachi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ezenwa",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Oluwabunmi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Oluwakemi",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Adebola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Omolara",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Temitayo",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Adeola",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Folake",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Titilayo",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Mojisola",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Abosede",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Aduke",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Simisola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Omolola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Omotola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Bukola",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Funke",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Morenike",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Adenike",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Oluwatomisin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Tolulope",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Opeyemi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Bosede",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Yetunde",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Modupe",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Tinuade",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Abimbola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Adejoke",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ibukun",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ayobami",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Yewande",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Omowunmi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Kehinde",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Taiwo",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Bimpe",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Abiola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ronke",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Bisi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Shade",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Tope",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sade",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Lola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Bola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Nike",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Eniola",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Moyinoluwa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Adetola",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Olasubomi",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Oluwatobiloba",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwafunmilayo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwadunmininu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Anuoluwapo",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Iretiola",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Olabisi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Adunola",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Adebimpe",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Halima",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Aisha",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Fatima",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Hadiza",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Maryam",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Hauwa",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Zainab",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Amina",
+        "gender": "female",
+        "frequency": 5
+      },
+      {
+        "name": "Bilkisu",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Sadiya",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Rabi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Rakiya",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Jamila",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Khadija",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Salamatu",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Binta",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Safiya",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Hassana",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Habiba",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Firdausi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Asabe",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ladidi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Laraba",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Talatu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Uwani",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Kubra",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Nafisa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Maimuna",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Saratu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Jummai",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Rukayya",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Aishatu",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Fatsuma",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hannatu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ummi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Suwaiba",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Bashirat",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Alimat",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Rahmatu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Sakina",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Zubaida",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Baraka",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Yasira",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Sumaiya",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Adama",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Balkisu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Tahira",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Zahra",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Rukaiyat",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Khairat",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Maimunatu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Yagana",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Zara",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Rahila",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Hindatu",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Nnenna",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Nkemdilim",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chinazom",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Chiagoziem",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Onyinye",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Udochukwu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ndidi",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ezinne",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Adaugo",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ogadinma",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Anuoluwa",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Moyosore",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwatimileyin",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Ololade",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Ifeoluwa",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Oluwadunsin",
+        "gender": "female",
+        "frequency": 2
+      },
+      {
+        "name": "Oluwayemisi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Mobolaji",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Olamide",
+        "gender": "female",
+        "frequency": 4
+      },
+      {
+        "name": "Tumininu",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Fadekemi",
+        "gender": "female",
+        "frequency": 3
+      },
+      {
+        "name": "Diekolola",
+        "gender": "female",
+        "frequency": 2
+      }
+    ],
+    "lastName": [
+      {
+        "name": "Okonkwo",
+        "frequency": 5
+      },
+      {
+        "name": "Achebe",
+        "frequency": 4
+      },
+      {
+        "name": "Eze",
+        "frequency": 5
+      },
+      {
+        "name": "Nwosu",
+        "frequency": 5
+      },
+      {
+        "name": "Okafor",
+        "frequency": 5
+      },
+      {
+        "name": "Onyeka",
+        "frequency": 4
+      },
+      {
+        "name": "Nwachukwu",
+        "frequency": 5
+      },
+      {
+        "name": "Obi",
+        "frequency": 5
+      },
+      {
+        "name": "Okoro",
+        "frequency": 5
+      },
+      {
+        "name": "Nnamdi",
+        "frequency": 4
+      },
+      {
+        "name": "Igwe",
+        "frequency": 5
+      },
+      {
+        "name": "Mba",
+        "frequency": 4
+      },
+      {
+        "name": "Chukwu",
+        "frequency": 4
+      },
+      {
+        "name": "Anene",
+        "frequency": 3
+      },
+      {
+        "name": "Agu",
+        "frequency": 4
+      },
+      {
+        "name": "Okwuosa",
+        "frequency": 3
+      },
+      {
+        "name": "Nnaji",
+        "frequency": 4
+      },
+      {
+        "name": "Ekwueme",
+        "frequency": 3
+      },
+      {
+        "name": "Okeke",
+        "frequency": 5
+      },
+      {
+        "name": "Nwoye",
+        "frequency": 4
+      },
+      {
+        "name": "Obiora",
+        "frequency": 3
+      },
+      {
+        "name": "Ezeh",
+        "frequency": 4
+      },
+      {
+        "name": "Ogbu",
+        "frequency": 3
+      },
+      {
+        "name": "Onuoha",
+        "frequency": 4
+      },
+      {
+        "name": "Nwankwo",
+        "frequency": 5
+      },
+      {
+        "name": "Uzoma",
+        "frequency": 3
+      },
+      {
+        "name": "Ibe",
+        "frequency": 4
+      },
+      {
+        "name": "Anyanwu",
+        "frequency": 4
+      },
+      {
+        "name": "Okoye",
+        "frequency": 5
+      },
+      {
+        "name": "Emenike",
+        "frequency": 3
+      },
+      {
+        "name": "Uche",
+        "frequency": 4
+      },
+      {
+        "name": "Chidebe",
+        "frequency": 2
+      },
+      {
+        "name": "Orji",
+        "frequency": 4
+      },
+      {
+        "name": "Ikechukwu",
+        "frequency": 3
+      },
+      {
+        "name": "Odili",
+        "frequency": 3
+      },
+      {
+        "name": "Osuji",
+        "frequency": 3
+      },
+      {
+        "name": "Nduka",
+        "frequency": 3
+      },
+      {
+        "name": "Maduka",
+        "frequency": 3
+      },
+      {
+        "name": "Kanu",
+        "frequency": 4
+      },
+      {
+        "name": "Udeh",
+        "frequency": 3
+      },
+      {
+        "name": "Ezeilo",
+        "frequency": 2
+      },
+      {
+        "name": "Ugwu",
+        "frequency": 4
+      },
+      {
+        "name": "Oguike",
+        "frequency": 2
+      },
+      {
+        "name": "Nweke",
+        "frequency": 4
+      },
+      {
+        "name": "Onyeji",
+        "frequency": 2
+      },
+      {
+        "name": "Ibeh",
+        "frequency": 3
+      },
+      {
+        "name": "Ezema",
+        "frequency": 3
+      },
+      {
+        "name": "Onwueme",
+        "frequency": 2
+      },
+      {
+        "name": "Mbah",
+        "frequency": 3
+      },
+      {
+        "name": "Okechukwu",
+        "frequency": 3
+      },
+      {
+        "name": "Nwogu",
+        "frequency": 3
+      },
+      {
+        "name": "Ogbonna",
+        "frequency": 3
+      },
+      {
+        "name": "Ezeakor",
+        "frequency": 2
+      },
+      {
+        "name": "Nwafor",
+        "frequency": 3
+      },
+      {
+        "name": "Chukwuemeka",
+        "frequency": 2
+      },
+      {
+        "name": "Ozofor",
+        "frequency": 2
+      },
+      {
+        "name": "Okwudiri",
+        "frequency": 2
+      },
+      {
+        "name": "Nwabude",
+        "frequency": 2
+      },
+      {
+        "name": "Adeyemi",
+        "frequency": 5
+      },
+      {
+        "name": "Adeleke",
+        "frequency": 5
+      },
+      {
+        "name": "Ogundimu",
+        "frequency": 4
+      },
+      {
+        "name": "Afolabi",
+        "frequency": 5
+      },
+      {
+        "name": "Adekunle",
+        "frequency": 5
+      },
+      {
+        "name": "Oluwole",
+        "frequency": 4
+      },
+      {
+        "name": "Oladele",
+        "frequency": 4
+      },
+      {
+        "name": "Adebayo",
+        "frequency": 5
+      },
+      {
+        "name": "Balogun",
+        "frequency": 5
+      },
+      {
+        "name": "Bakare",
+        "frequency": 4
+      },
+      {
+        "name": "Oyelaran",
+        "frequency": 3
+      },
+      {
+        "name": "Ogunlana",
+        "frequency": 4
+      },
+      {
+        "name": "Adeniyi",
+        "frequency": 4
+      },
+      {
+        "name": "Olatunji",
+        "frequency": 5
+      },
+      {
+        "name": "Akinyemi",
+        "frequency": 4
+      },
+      {
+        "name": "Soyinka",
+        "frequency": 3
+      },
+      {
+        "name": "Adewale",
+        "frequency": 4
+      },
+      {
+        "name": "Ogunde",
+        "frequency": 3
+      },
+      {
+        "name": "Olayode",
+        "frequency": 3
+      },
+      {
+        "name": "Ojo",
+        "frequency": 5
+      },
+      {
+        "name": "Oni",
+        "frequency": 4
+      },
+      {
+        "name": "Oyeleke",
+        "frequency": 3
+      },
+      {
+        "name": "Fagbemi",
+        "frequency": 3
+      },
+      {
+        "name": "Adesanya",
+        "frequency": 4
+      },
+      {
+        "name": "Olaoye",
+        "frequency": 3
+      },
+      {
+        "name": "Akinola",
+        "frequency": 4
+      },
+      {
+        "name": "Adebiyi",
+        "frequency": 4
+      },
+      {
+        "name": "Babatunde",
+        "frequency": 4
+      },
+      {
+        "name": "Akintola",
+        "frequency": 4
+      },
+      {
+        "name": "Awolowo",
+        "frequency": 3
+      },
+      {
+        "name": "Ogunleye",
+        "frequency": 4
+      },
+      {
+        "name": "Olumide",
+        "frequency": 3
+      },
+      {
+        "name": "Oyedepo",
+        "frequency": 3
+      },
+      {
+        "name": "Adegoke",
+        "frequency": 4
+      },
+      {
+        "name": "Olaniyan",
+        "frequency": 4
+      },
+      {
+        "name": "Fasola",
+        "frequency": 3
+      },
+      {
+        "name": "Makinde",
+        "frequency": 4
+      },
+      {
+        "name": "Fabiyi",
+        "frequency": 3
+      },
+      {
+        "name": "Abubakar",
+        "frequency": 5
+      },
+      {
+        "name": "Ibrahim",
+        "frequency": 5
+      },
+      {
+        "name": "Mohammed",
+        "frequency": 5
+      },
+      {
+        "name": "Usman",
+        "frequency": 5
+      },
+      {
+        "name": "Suleiman",
+        "frequency": 5
+      },
+      {
+        "name": "Bello",
+        "frequency": 5
+      },
+      {
+        "name": "Aliyu",
+        "frequency": 5
+      },
+      {
+        "name": "Musa",
+        "frequency": 5
+      },
+      {
+        "name": "Danjuma",
+        "frequency": 4
+      },
+      {
+        "name": "Audu",
+        "frequency": 4
+      },
+      {
+        "name": "Shehu",
+        "frequency": 4
+      },
+      {
+        "name": "Lawal",
+        "frequency": 4
+      },
+      {
+        "name": "Waziri",
+        "frequency": 4
+      },
+      {
+        "name": "Dikko",
+        "frequency": 4
+      },
+      {
+        "name": "Yusuf",
+        "frequency": 4
+      },
+      {
+        "name": "Abdullahi",
+        "frequency": 5
+      },
+      {
+        "name": "Gwadabe",
+        "frequency": 3
+      },
+      {
+        "name": "Sanusi",
+        "frequency": 4
+      },
+      {
+        "name": "Buhari",
+        "frequency": 4
+      },
+      {
+        "name": "Ladan",
+        "frequency": 3
+      },
+      {
+        "name": "Adamu",
+        "frequency": 4
+      },
+      {
+        "name": "Aminu",
+        "frequency": 4
+      },
+      {
+        "name": "Garba",
+        "frequency": 4
+      },
+      {
+        "name": "Tanko",
+        "frequency": 3
+      },
+      {
+        "name": "Danbatta",
+        "frequency": 3
+      },
+      {
+        "name": "Ringim",
+        "frequency": 3
+      },
+      {
+        "name": "Shettima",
+        "frequency": 3
+      },
+      {
+        "name": "Kyari",
+        "frequency": 3
+      },
+      {
+        "name": "Idris",
+        "frequency": 4
+      },
+      {
+        "name": "Babangida",
+        "frequency": 3
+      },
+      {
+        "name": "Maigari",
+        "frequency": 2
+      },
+      {
+        "name": "Sambo",
+        "frequency": 3
+      },
+      {
+        "name": "Gusau",
+        "frequency": 3
+      },
+      {
+        "name": "Sokoto",
+        "frequency": 2
+      },
+      {
+        "name": "Katsina",
+        "frequency": 2
+      },
+      {
+        "name": "Daura",
+        "frequency": 3
+      },
+      {
+        "name": "Zaria",
+        "frequency": 3
+      },
+      {
+        "name": "Kano",
+        "frequency": 3
+      },
+      {
+        "name": "Maiduguri",
+        "frequency": 2
+      },
+      {
+        "name": "Tukur",
+        "frequency": 3
+      },
+      {
+        "name": "Kabir",
+        "frequency": 3
+      },
+      {
+        "name": "Sani",
+        "frequency": 4
+      },
+      {
+        "name": "Ahmed",
+        "frequency": 4
+      },
+      {
+        "name": "Umar",
+        "frequency": 4
+      },
+      {
+        "name": "Yar'Adua",
+        "frequency": 2
+      },
+      {
+        "name": "Ahmad",
+        "frequency": 4
+      },
+      {
+        "name": "Attahiru",
+        "frequency": 3
+      },
+      {
+        "name": "Gana",
+        "frequency": 3
+      },
+      {
+        "name": "Yola",
+        "frequency": 2
+      },
+      {
+        "name": "Borno",
+        "frequency": 2
+      },
+      {
+        "name": "Bauchi",
+        "frequency": 2
+      },
+      {
+        "name": "Kaduna",
+        "frequency": 2
+      },
+      {
+        "name": "Magaji",
+        "frequency": 3
+      },
+      {
+        "name": "Gwandu",
+        "frequency": 2
+      },
+      {
+        "name": "Birninkebbi",
+        "frequency": 2
+      },
+      {
+        "name": "Jibril",
+        "frequency": 3
+      },
+      {
+        "name": "Haruna",
+        "frequency": 4
+      },
+      {
+        "name": "Yakubu",
+        "frequency": 4
+      },
+      {
+        "name": "Hassan",
+        "frequency": 4
+      },
+      {
+        "name": "Makarfi",
+        "frequency": 2
+      },
+      {
+        "name": "Murtala",
+        "frequency": 3
+      },
+      {
+        "name": "Obaseki",
+        "frequency": 4
+      },
+      {
+        "name": "Osadebe",
+        "frequency": 3
+      },
+      {
+        "name": "Egbuna",
+        "frequency": 3
+      },
+      {
+        "name": "Ogheneovo",
+        "frequency": 2
+      },
+      {
+        "name": "Etomi",
+        "frequency": 2
+      },
+      {
+        "name": "Ayida",
+        "frequency": 3
+      },
+      {
+        "name": "Oduya",
+        "frequency": 2
+      },
+      {
+        "name": "Edebiri",
+        "frequency": 3
+      },
+      {
+        "name": "Imade",
+        "frequency": 3
+      },
+      {
+        "name": "Agho",
+        "frequency": 2
+      },
+      {
+        "name": "Aighobahi",
+        "frequency": 2
+      },
+      {
+        "name": "Osagie",
+        "frequency": 4
+      },
+      {
+        "name": "Omoigui",
+        "frequency": 2
+      },
+      {
+        "name": "Erhimu",
+        "frequency": 2
+      },
+      {
+        "name": "Osemwengie",
+        "frequency": 2
+      },
+      {
+        "name": "Igbinovia",
+        "frequency": 2
+      },
+      {
+        "name": "Arogundade",
+        "frequency": 3
+      },
+      {
+        "name": "Oseni",
+        "frequency": 3
+      },
+      {
+        "name": "Adogbeji",
+        "frequency": 2
+      },
+      {
+        "name": "Orhue",
+        "frequency": 2
+      },
+      {
+        "name": "Omoruyi",
+        "frequency": 3
+      },
+      {
+        "name": "Enabulele",
+        "frequency": 2
+      },
+      {
+        "name": "Ajayi",
+        "frequency": 4
+      },
+      {
+        "name": "Akindele",
+        "frequency": 4
+      },
+      {
+        "name": "Ayodeji",
+        "frequency": 3
+      },
+      {
+        "name": "Oluwasegun",
+        "frequency": 3
+      },
+      {
+        "name": "Oyewole",
+        "frequency": 3
+      },
+      {
+        "name": "Oloruntobi",
+        "frequency": 2
+      },
+      {
+        "name": "Kehinde",
+        "frequency": 3
+      },
+      {
+        "name": "Taiwo",
+        "frequency": 3
+      },
+      {
+        "name": "Ogunwale",
+        "frequency": 3
+      },
+      {
+        "name": "Olawoyin",
+        "frequency": 3
+      },
+      {
+        "name": "Oyewumi",
+        "frequency": 3
+      },
+      {
+        "name": "Ogunbiyi",
+        "frequency": 3
+      },
+      {
+        "name": "Solarin",
+        "frequency": 3
+      },
+      {
+        "name": "Oduwole",
+        "frequency": 3
+      },
+      {
+        "name": "Omolewa",
+        "frequency": 2
+      },
+      {
+        "name": "Ogunyemi",
+        "frequency": 3
+      }
+    ]
+  },
+  "genderWeights": {
+    "male": 50,
+    "female": 50
+  },
+  "format": "{firstName} {lastName}"
+}

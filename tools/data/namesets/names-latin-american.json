@@ -1,0 +1,13 @@
+{
+  "id": "names-latin-american",
+  "name": "Latin American Names",
+  "description": "Aggregate of Brazilian and Mexican names",
+  "tags": ["latin-american", "hispanic", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-brazilian", "weight": 50, "label": "brazilian"},
+    {"nameset": "names-mexican", "weight": 50, "label": "mexican"}
+  ]
+}

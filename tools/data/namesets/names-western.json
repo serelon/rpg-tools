@@ -1,0 +1,17 @@
+{
+  "id": "names-western",
+  "name": "Western Names",
+  "description": "Aggregate of Western European and American names",
+  "tags": ["western", "european", "american", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-american", "weight": 30, "label": "american"},
+    {"nameset": "names-british", "weight": 20, "label": "british"},
+    {"nameset": "names-german", "weight": 15, "label": "german"},
+    {"nameset": "names-french", "weight": 15, "label": "french"},
+    {"nameset": "names-spanish", "weight": 10, "label": "spanish"},
+    {"nameset": "names-italian", "weight": 10, "label": "italian"}
+  ]
+}

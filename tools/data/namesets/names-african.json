@@ -1,0 +1,13 @@
+{
+  "id": "names-african",
+  "name": "African Names",
+  "description": "Aggregate of Nigerian and Ethiopian names representing West and East Africa",
+  "tags": ["african", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-nigerian", "weight": 55, "label": "nigerian"},
+    {"nameset": "names-ethiopian", "weight": 45, "label": "ethiopian"}
+  ]
+}

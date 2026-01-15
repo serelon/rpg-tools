@@ -1,0 +1,13 @@
+{
+  "id": "names-middle-eastern",
+  "name": "Middle Eastern Names",
+  "description": "Aggregate of Arabic and Persian names",
+  "tags": ["middle-eastern", "aggregate"],
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "names-arabic", "weight": 60, "label": "arabic"},
+    {"nameset": "names-persian", "weight": 40, "label": "persian"}
+  ]
+}
