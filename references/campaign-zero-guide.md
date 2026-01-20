@@ -249,7 +249,7 @@ Before session 01, confirm:
 - [ ] `setting-primer.md` - World foundation
 - [ ] `campaign-primer.md` - Story skeleton
 - [ ] `session-01-primer.md` - Bootstrap content
-- [ ] Custom namesets (if any)
+- [ ] `namesets/` (if any)
 
 **Content**
 - [ ] Protagonist sketch (in session-01-primer)
@@ -298,7 +298,7 @@ Session 01 produces raw material. After the session:
 
 1. **Create data files** from what emerged:
    - Protagonist → `characters/[id].json`
-   - Key NPCs → character files
+   - Key NPCs → `characters/[id].json`
    - Visited locations → `locations/[id].json`
    - Important events → `memories/` or log entries
 
