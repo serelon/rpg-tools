@@ -9,12 +9,14 @@ INCLUDE_FILES = [
     'SKILL.md',
     'scripts/dice.py',
     'scripts/tarot.py',
+    'scripts/oracle.py',
+    'scripts/pool.py',
     'scripts/namegen.py',
-    'scripts/stories.py',
     'scripts/characters.py',
     'scripts/locations.py',
+    'scripts/factions.py',
+    'scripts/stories.py',
     'scripts/memories.py',
-    'scripts/oracle.py',
     'scripts/log.py',
     'scripts/campaign.py',
 ]
@@ -26,6 +28,7 @@ INCLUDE_DIRS = [
     ('scripts/lib', '*.py'),
     ('scripts/lib/calendars', '*.py'),
     ('tools/data/namesets', '*.json'),
+    ('pools', '*.json'),
 ]
 
 
