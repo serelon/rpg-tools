@@ -208,6 +208,7 @@ python scripts/campaign.py import FILE.zip [--into DIR]
 
 ## Session Workflow
 
+- **[Campaign Zero](references/campaign-zero-guide.md)** - Pre-campaign brainstorming and bundle creation
 - **[Session Setup](references/session-setup-guide.md)** - Calibrate tone, direction, and pacing
 - **[Session Debrief](references/session-debrief-guide.md)** - Post-session reflection and character growth
 
