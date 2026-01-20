@@ -1,6 +1,6 @@
 ---
 name: rpg-tools
-description: Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory/faction management, and story retrieval. Use when the user asks to roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories or factions, or pull from story collections during RPG sessions.
+description: "Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory/faction management, and story retrieval. Also provides guided campaign creation and pre-session setup. Use when the user asks to: roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories or factions, pull from story collections, start a new campaign, or do campaign prep/planning."
 ---
 
 # RPG Tools
@@ -13,6 +13,7 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 - `dice.py` - Dice rolling
 - `tarot.py` - Tarot draws
 - `oracle.py` - Multi-system oracle
+- `pool.py` - Pool/deck management (needs `pools/` for definitions)
 
 **Campaign Tools** - Require JSON data files in specific directories:
 - `namegen.py` - Name generation (needs `namesets/`)
@@ -62,6 +63,24 @@ python scripts/oracle.py iching             # I Ching hexagram
 python scripts/oracle.py fate [likelihood]  # Yes/no (impossible/unlikely/even/likely/certain)
 python scripts/oracle.py prompt             # Action + Theme pair
 ```
+
+### Pool
+
+See **[pool-guide.md](references/pool-guide.md)** for creating pools and settings.
+
+```bash
+python scripts/pool.py list                          # Available pools
+python scripts/pool.py create NAME                   # Initialize from pools/NAME.json
+python scripts/pool.py create NAME --tokens "a:5,b:3" # Create ad-hoc pool
+python scripts/pool.py draw NAME [n]                 # Draw n tokens (default 1)
+python scripts/pool.py peek NAME [n]                 # Look without removing
+python scripts/pool.py status NAME                   # Show remaining tokens
+python scripts/pool.py shuffle NAME                  # Shuffle remaining
+python scripts/pool.py reset NAME                    # Restore to full
+python scripts/pool.py return NAME TOKEN [--top|--bottom|--random]
+```
+
+Settings (in pool JSON): `draw_mode` (pop_top/pop_bottom/random), `auto_shuffle` (never/on_reset/on_empty), `on_empty` (error/reset/warn)
 
 ---
 
@@ -208,6 +227,8 @@ python scripts/campaign.py import FILE.zip [--into DIR]
 
 ## Session Workflow
 
+**Starting a new campaign?** Read [campaign-zero-guide.md](references/campaign-zero-guide.md) and follow its guided brainstorming process before session 01.
+
 - **[Campaign Zero](references/campaign-zero-guide.md)** - Pre-campaign brainstorming and bundle creation
 - **[Session Setup](references/session-setup-guide.md)** - Calibrate tone, direction, and pacing
 - **[Session Debrief](references/session-debrief-guide.md)** - Post-session reflection and character growth
@@ -227,4 +248,5 @@ python scripts/campaign.py import FILE.zip [--into DIR]
 - **[nameset-guide.md](references/nameset-guide.md)** - Name generation collections
 - **[story-capture-guide.md](references/story-capture-guide.md)** - Story extraction
 - **[oracle-guide.md](references/oracle-guide.md)** - Oracle types
+- **[pool-guide.md](references/pool-guide.md)** - Pool/deck management
 - **[campaign-state-guide.md](references/campaign-state-guide.md)** - Branches, log, state

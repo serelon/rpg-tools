@@ -14,6 +14,7 @@ All tools are standalone Python scripts in `scripts/`. No dependencies beyond Py
 - `dice.py` - Roll20-compatible dice notation
 - `tarot.py` - Tarot card draws
 - `oracle.py` - Multi-system oracle (axis, runes, I Ching, fate, prompts)
+- `pool.py` - Pool/deck management (needs `pools/` for definitions)
 
 **Campaign Tools** (require JSON data files):
 - `namegen.py` - Name generation (needs `namesets/`)
@@ -43,7 +44,7 @@ See `docs/architecture.md` for detailed documentation of the data tool patterns.
 - `changelog.py` - Automatic changelog generation from session logs
 - `calendars/` - Modular calendar system for date conversion
 
-**Instant tools** (dice, tarot, oracle) remain fully standalone with no imports.
+**Instant tools** (dice, tarot, oracle, pool) remain fully standalone with no imports.
 
 **Data patterns** - Tools follow a read-anywhere, write-canonical pattern:
 - **Discovery**: Searches 7 locations, merges all found data (see `docs/architecture.md`)
@@ -63,6 +64,7 @@ Campaign data is NOT included in this repo. Tools expect JSON files in the appro
 - `references/nameset-guide.md` - Nameset format with weighted categories
 - `references/story-capture-guide.md` - Story collection structure
 - `references/oracle-guide.md` - Oracle types and usage patterns
+- `references/pool-guide.md` - Pool/deck management with state tracking
 - `references/campaign-state-guide.md` - Campaign state system and session logging
 
 ## Modifiers
