@@ -307,9 +307,9 @@ Session 01 produces raw material. After the session:
    campaign.py init "Campaign Name"
    ```
 
-3. **Archive or discard** `session-01-primer.md`
-   - The bootstrap content is now real data
-   - Setting and campaign primers remain
+3. **Update `claude.md` and archive `session-01-primer.md`**
+   - Remove the `session-01-primer.md` reference from `claude.md`. The bootstrap content is now real data.
+   - Setting and campaign primers remain.
 
 4. **Prepare for session 02** using:
    - `setting-primer.md` (permanent)
