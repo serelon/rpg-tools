@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Any
 
 
 # State directory for active pools (ephemeral)
-STATE_DIR = Path("/home/claude/tmp/pools")
+STATE_DIR = Path.home() / ".rpg-tools" / "pools"
 
 # Default settings for pools
 DEFAULT_SETTINGS = {
@@ -88,7 +88,10 @@ def expand_tokens(tokens: List[Any]) -> List[str]:
         if isinstance(item, str):
             expanded.append(item)
         elif isinstance(item, dict):
-            token = item.get("token", str(item))
+            token = item.get("token")
+            if token is None:
+                print(f"Warning: token item missing 'token' key: {item}", file=sys.stderr)
+                continue
             count = item.get("count", 1)
             expanded.extend([token] * count)
     return expanded

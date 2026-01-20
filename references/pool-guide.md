@@ -125,10 +125,10 @@ What happens when drawing from an empty pool:
 
 ### State Location
 
-Pool state is stored in `/home/claude/tmp/pools/`. This keeps state:
+Pool state is stored in `~/.rpg-tools/pools/`. This keeps state:
 - Separate from portable pool definitions
-- Easy to clear (delete the tmp directory)
-- Ephemeral across sessions
+- Easy to clear (delete the directory)
+- Cross-platform (works on any OS)
 
 ### Check Status
 
@@ -185,15 +185,16 @@ python scripts/pool.py reset playing-cards
 Tokens can be specified as:
 
 ```json
-// Object with count
 {"token": "red", "count": 5}
 
-// Object without count (defaults to 1)
 {"token": "red"}
 
-// Simple string (count 1)
 "red"
 ```
+
+- First example: Object with count (5 red tokens)
+- Second example: Object without count (defaults to 1)
+- Third example: Simple string (count 1)
 
 ---
 
