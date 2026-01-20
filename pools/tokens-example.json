@@ -1,0 +1,15 @@
+{
+  "id": "tokens-example",
+  "name": "Danger Tokens",
+  "description": "Example token pool with weighted distribution - draw until doom!",
+  "settings": {
+    "draw_mode": "random",
+    "auto_shuffle": "never",
+    "on_empty": "error"
+  },
+  "tokens": [
+    {"token": "safe", "count": 5},
+    {"token": "danger", "count": 3},
+    {"token": "doom", "count": 1}
+  ]
+}
