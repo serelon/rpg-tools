@@ -37,17 +37,116 @@ def discover_namesets(repo_root: Path):
 
 
 def parse_format(format_str: str) -> List[Dict[str, Any]]:
-    """Parse a format string into tokens."""
-    tokens = []
-    pattern = r'\{(\w+)\}|\[([^\]]+)\]|([^\{\[]+)'
+    """Parse a format string into tokens.
 
-    for match in re.finditer(pattern, format_str):
-        if match.group(1):  # Placeholder {category}
-            tokens.append({"type": "placeholder", "value": match.group(1)})
-        elif match.group(2):  # Optional section [text]
-            tokens.append({"type": "optional", "value": match.group(2)})
-        elif match.group(3):  # Literal text
-            tokens.append({"type": "literal", "value": match.group(3)})
+    Supports per-placeholder gender override: {category:gender}
+    Examples: {firstName:male}, {firstName:female}, {firstName}
+
+    Supports random pattern placeholders: {random:pattern}
+    Examples: {random:1-99} for range, {random:AAA} for pattern
+
+    Supports optional sections with weight: [ {epithet}:30%]
+    The :N% at the END of bracket content specifies inclusion probability.
+    Default weight is 100 (always include if content resolves).
+    Nested optional sections are supported: [{title}[ {epithet}]]
+    """
+    tokens = []
+    i = 0
+
+    while i < len(format_str):
+        char = format_str[i]
+
+        if char == '{':
+            # Find matching closing brace
+            end = format_str.find('}', i)
+            if end == -1:
+                # No closing brace, treat as literal
+                tokens.append({"type": "literal", "value": char})
+                i += 1
+                continue
+
+            content = format_str[i+1:end]
+
+            # Check for category:arg pattern
+            if ':' in content:
+                category, arg = content.split(':', 1)
+            else:
+                category, arg = content, None
+
+            if category == "random":
+                # Handle {random}, {random:}, or {random:pattern}
+                effective_arg = arg or ""
+                # Check if arg is a range (e.g., "1-99", "0-255")
+                range_match = re.match(r'^(\d+)-(\d+)$', effective_arg)
+                if range_match:
+                    min_val = int(range_match.group(1))
+                    max_val = int(range_match.group(2))
+                    # Swap if reversed to prevent randint crash
+                    if min_val > max_val:
+                        min_val, max_val = max_val, min_val
+                    tokens.append({
+                        "type": "random",
+                        "range": [min_val, max_val]
+                    })
+                else:
+                    # It's a pattern (e.g., "AAA", "000", "XXX", or empty)
+                    tokens.append({
+                        "type": "random",
+                        "pattern": effective_arg
+                    })
+            else:
+                tokens.append({
+                    "type": "placeholder",
+                    "value": category,
+                    "gender": arg  # None if no gender specified
+                })
+
+            i = end + 1
+
+        elif char == '[':
+            # Find matching closing bracket, accounting for nesting
+            depth = 1
+            start = i + 1
+            j = start
+            while j < len(format_str) and depth > 0:
+                if format_str[j] == '[':
+                    depth += 1
+                elif format_str[j] == ']':
+                    depth -= 1
+                j += 1
+
+            if depth != 0:
+                # Unmatched bracket, treat as literal
+                tokens.append({"type": "literal", "value": char})
+                i += 1
+                continue
+
+            content = format_str[start:j-1]
+            weight = 100  # Default: always include
+
+            # Check for weight suffix like :30% at end of content
+            weight_match = re.search(r':(\d+)%$', content)
+            if weight_match:
+                weight = int(weight_match.group(1))
+                content = content[:weight_match.start()]
+
+            # Parse the inner content as nested tokens
+            inner_tokens = parse_format(content)
+            tokens.append({
+                "type": "optional",
+                "content": inner_tokens,
+                "weight": weight
+            })
+
+            i = j
+
+        else:
+            # Literal text - collect until next special character
+            end = i
+            while end < len(format_str) and format_str[end] not in '{[':
+                end += 1
+            tokens.append({"type": "literal", "value": format_str[i:end]})
+            i = end
 
     return tokens
 
@@ -92,7 +191,11 @@ def select_weighted_source(sources: List[Dict]) -> Dict:
 
 
 def select_gender(gender_weights: Dict[str, int]) -> str:
-    """Select gender using weights."""
+    """Select gender using weights.
+
+    Supports arbitrary gender strings. The keys in gender_weights can be any
+    gender identifier (e.g., "male", "female", "neuter", "construct", "machine").
+    """
     total = sum(gender_weights.values())
     rand = random.random() * total
 
@@ -104,18 +207,63 @@ def select_gender(gender_weights: Dict[str, int]) -> str:
     return list(gender_weights.keys())[-1]
 
 
-def filter_by_gender(entries: List[Dict], gender: str) -> List[Dict]:
-    """Filter name entries by gender. Includes unisex and unspecified names."""
+def filter_by_gender(entries: List[Dict], gender: str, category: Optional[str] = None) -> List[Dict]:
+    """Filter name entries by gender. Includes unisex and unspecified names.
+
+    Supports arbitrary gender strings (e.g., "male", "female", "neuter", "construct").
+    Matching rules:
+    - Exact match: entry gender equals requested gender
+    - Unisex: entries with gender="unisex" match any requested gender
+    - Untagged: entries with no gender (None) match any requested gender
+
+    If filtering results in empty list, falls back to unfiltered with warning.
+    """
     filtered = [e for e in entries if e.get("gender") in {gender, None, "unisex"}]
-    return filtered if filtered else entries
+    if filtered:
+        return filtered
+    else:
+        if category:
+            print(f"Warning: {category} has no entries for gender '{gender}', using unfiltered", file=sys.stderr)
+        return entries
+
+
+def generate_pattern(pattern: str) -> str:
+    """Generate a random string from a pattern.
+
+    Pattern characters:
+    - A: random uppercase letter (A-Z)
+    - a: random lowercase letter (a-z)
+    - 0: random digit (0-9)
+    - X: random hex digit (0-9, A-F)
+    - Anything else: literal (preserved as-is)
+    """
+    char_map = {
+        'A': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'a': 'abcdefghijklmnopqrstuvwxyz',
+        '0': '0123456789',
+        'X': '0123456789ABCDEF',
+    }
+    result = []
+    for char in pattern:
+        char_set = char_map.get(char)
+        if char_set:
+            result.append(random.choice(char_set))
+        else:
+            result.append(char)
+    return ''.join(result)
+
+
+def generate_range(min_val: int, max_val: int) -> str:
+    """Generate a random integer in range and return as string."""
+    return str(random.randint(min_val, max_val))
 
 
 def generate_single_name(
     nameset: Dict,
-    format_str: str,
     gender: str
 ) -> str:
-    """Generate a single name from a source nameset."""
+    """Generate a single name from a source nameset using its own format and categories."""
+    format_str = nameset.get("format", "{firstName} {lastName}")
     categories = nameset.get("nameCategories", {})
 
     # Legacy support for old format
@@ -125,16 +273,8 @@ def generate_single_name(
             "lastName": nameset.get("lastNames", [])
         }
 
-    # Filter first names by gender
-    first_names = categories.get("firstName", [])
-    first_names = filter_by_gender(first_names, gender)
-
-    filtered_categories = {
-        "firstName": first_names,
-        "lastName": categories.get("lastName", [])
-    }
-
-    return build_name_from_format(format_str, filtered_categories)
+    # Pass gender to build_name_from_format for filtering at selection time
+    return build_name_from_format(format_str, categories, gender)
 
 
 def generate_from_aggregate(
@@ -148,7 +288,6 @@ def generate_from_aggregate(
     nameset = custom_namesets[nameset_id]
     sources = nameset.get("sources", [])
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
-    format_str = nameset.get("format", "{firstName} {lastName}")
 
     results = []
     used = set()
@@ -176,8 +315,8 @@ def generate_from_aggregate(
             # Select gender
             selected_gender = gender if gender else select_gender(gender_weights)
 
-            # Generate from source
-            name = generate_single_name(source_nameset, format_str, selected_gender)
+            # Generate from source using source's own format and categories
+            name = generate_single_name(source_nameset, selected_gender)
 
             if name.lower() not in used:
                 if return_source:
@@ -235,15 +374,13 @@ def generate_from_nameset_with_groups(
             first_names = group_data.get("firstNames", [])
             last_names = group_data.get("lastNames", [])
 
-            # Filter by gender
-            first_names = filter_by_gender(first_names, selected_gender)
-
             categories = {
                 "firstName": first_names,
                 "lastName": last_names
             }
 
-            name = build_name_from_format(format_str, categories)
+            # Pass gender to build_name_from_format for filtering at selection time
+            name = build_name_from_format(format_str, categories, selected_gender)
             if name.lower() not in used or count > len(first_names):
                 if return_group:
                     results.append((name, selected_group))
@@ -279,18 +416,14 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
             "lastName": nameset.get("lastNames", [])
         }
 
-    # Filter first names by gender if specified
-    if gender and "firstName" in categories:
-        categories = categories.copy()
-        categories["firstName"] = filter_by_gender(categories["firstName"], gender)
-
     names = []
     used = set()
 
     for _ in range(count):
         attempts = 0
         while attempts < 100:
-            name = build_name_from_format(format_str, categories)
+            # Pass gender to build_name_from_format for filtering at selection time
+            name = build_name_from_format(format_str, categories, gender)
             if name.lower() not in used or count > len(categories.get("firstName", [])):
                 names.append(name)
                 used.add(name.lower())
@@ -298,14 +431,26 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
             attempts += 1
         else:
             # Ran out of attempts
-            names.append(build_name_from_format(format_str, categories))
+            names.append(build_name_from_format(format_str, categories, gender))
 
     return names
 
 
-def build_name_from_format(format_str: str, categories: Dict[str, List[Dict]]) -> str:
-    """Build a name from format string and name categories."""
-    tokens = parse_format(format_str)
+def build_name_from_tokens(
+    tokens: List[Dict[str, Any]],
+    categories: Dict[str, List[Dict]],
+    gender: Optional[str] = None,
+    in_optional: bool = False
+) -> str:
+    """Build a name from parsed tokens and name categories.
+
+    Gender filtering priority:
+    1. Per-placeholder override: {firstName:male} forces male filtering
+    2. Character gender: passed as parameter, applies to placeholders without override
+    3. No filtering: if neither is specified
+
+    When in_optional is True, missing categories are silently skipped.
+    """
     result = []
 
     for token in tokens:
@@ -314,15 +459,49 @@ def build_name_from_format(format_str: str, categories: Dict[str, List[Dict]]) -
         elif token["type"] == "placeholder":
             category = token["value"]
             if category in categories and categories[category]:
-                entry = select_weighted(categories[category])
+                entries = categories[category]
+                # Determine effective gender: per-placeholder override takes precedence
+                effective_gender = token.get("gender") or gender
+                # Apply gender filtering if gender specified and category has gendered entries
+                if effective_gender and any(e.get("gender") for e in entries):
+                    entries = filter_by_gender(entries, effective_gender, category)
+                entry = select_weighted(entries)
                 result.append(entry["name"])
-            else:
+            elif not in_optional:
+                # Warn only for top-level missing categories, not optional content
                 print(f"Warning: Format references undefined or empty category '{category}'", file=sys.stderr)
+        elif token["type"] == "random":
+            if "range" in token:
+                result.append(generate_range(token["range"][0], token["range"][1]))
+            elif "pattern" in token:
+                result.append(generate_pattern(token["pattern"]))
         elif token["type"] == "optional":
-            # For now, just parse the optional section like normal
-            result.append(build_name_from_format(token["value"], categories))
+            weight = token.get("weight", 100)
+            # Roll against weight percentage
+            if random.random() * 100 < weight:
+                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True)
+                if inner_result.strip():  # Only include if non-empty
+                    result.append(inner_result)
 
-    return "".join(result).strip()
+    return "".join(result)
+
+
+def build_name_from_format(
+    format_str: str,
+    categories: Dict[str, List[Dict]],
+    gender: Optional[str] = None
+) -> str:
+    """Build a name from format string and name categories.
+
+    Gender filtering priority:
+    1. Per-placeholder override: {firstName:male} forces male filtering
+    2. Character gender: passed as parameter, applies to placeholders without override
+    3. No filtering: if neither is specified
+    """
+    tokens = parse_format(format_str)
+    result = build_name_from_tokens(tokens, categories, gender)
+    # Clean up whitespace: collapse multiple spaces and strip
+    return " ".join(result.split())
 
 
 def safe_print(text: str):
@@ -391,11 +570,18 @@ def list_groups(nameset_id: str):
                 src_ns = custom_namesets[source_id]
                 categories = src_ns.get("nameCategories", {})
                 first_names = categories.get("firstName", [])
-                male_count = len([n for n in first_names if n.get("gender") == "male"])
-                female_count = len([n for n in first_names if n.get("gender") == "female"])
                 last_count = len(categories.get("lastName", []))
+                # Count names by gender (supports arbitrary genders)
+                gender_counts = {}
+                for n in first_names:
+                    g = n.get("gender") or "untagged"
+                    gender_counts[g] = gender_counts.get(g, 0) + 1
                 print(f"\n  {label} ({pct:.1f}%) -> {source_id}")
-                print(f"    Names: {male_count}M / {female_count}F / {last_count}L")
+                if gender_counts:
+                    counts_str = " / ".join(f"{c}{g[0].upper()}" for g, c in sorted(gender_counts.items()))
+                    print(f"    Names: {counts_str} / {last_count}L")
+                else:
+                    print(f"    Names: {len(first_names)} first / {last_count} last")
             else:
                 print(f"\n  {label} ({pct:.1f}%) -> {source_id} [NOT LOADED]")
 
@@ -414,12 +600,20 @@ def list_groups(nameset_id: str):
     for group_id, group in sorted(groups.items()):
         weight = group.get("weight", 1)
         pct = (weight / total_weight) * 100
-        male_count = len([n for n in group.get("firstNames", []) if n.get("gender") == "male"])
-        female_count = len([n for n in group.get("firstNames", []) if n.get("gender") == "female"])
+        first_names = group.get("firstNames", [])
         last_count = len(group.get("lastNames", []))
+        # Count names by gender (supports arbitrary genders)
+        gender_counts = {}
+        for n in first_names:
+            g = n.get("gender") or "untagged"
+            gender_counts[g] = gender_counts.get(g, 0) + 1
 
         print(f"\n  {group_id} ({pct:.0f}%)")
-        print(f"    First names: {male_count}M / {female_count}F")
+        if gender_counts:
+            counts_str = " / ".join(f"{c}{g[0].upper()}" for g, c in sorted(gender_counts.items()))
+            print(f"    First names: {counts_str}")
+        else:
+            print(f"    First names: {len(first_names)}")
         print(f"    Last names: {last_count}")
 
 

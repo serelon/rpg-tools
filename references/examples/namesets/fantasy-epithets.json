@@ -1,0 +1,82 @@
+{
+  "id": "fantasy-epithets-example",
+  "name": "Fantasy Names with Optional Epithets",
+  "description": "Demonstrates optional sections with probability weights. Uses [ {epithet}:30%] syntax to give characters a 30% chance of having an earned title. The optional section only appears when the probability roll succeeds.",
+  "setting": "Fantasy",
+  "tags": ["fantasy", "epithets", "optional-sections", "probability", "example"],
+
+  "nameCategories": {
+    "firstName": [
+      {"name": "Aldric", "gender": "male", "frequency": 2},
+      {"name": "Cedric", "gender": "male", "frequency": 2},
+      {"name": "Edmund", "gender": "male"},
+      {"name": "Gareth", "gender": "male"},
+      {"name": "Roland", "gender": "male"},
+      {"name": "Tristan", "gender": "male"},
+      {"name": "Varen", "gender": "male"},
+      {"name": "Wulfric", "gender": "male"},
+      {"name": "Aelindra", "gender": "female", "frequency": 2},
+      {"name": "Brianna", "gender": "female", "frequency": 2},
+      {"name": "Cordelia", "gender": "female"},
+      {"name": "Elara", "gender": "female"},
+      {"name": "Gwendolyn", "gender": "female"},
+      {"name": "Isolde", "gender": "female"},
+      {"name": "Lysandra", "gender": "female"},
+      {"name": "Rowena", "gender": "female"}
+    ],
+    "epithet": [
+      {"name": "the Bold", "frequency": 3},
+      {"name": "the Wise", "frequency": 3},
+      {"name": "the Just", "frequency": 2},
+      {"name": "the Brave", "frequency": 2},
+      {"name": "Dragonslayer"},
+      {"name": "Shadowbane"},
+      {"name": "Ironhand"},
+      {"name": "the Wanderer"},
+      {"name": "Stormcaller"},
+      {"name": "the Healer"},
+      {"name": "Truthseeker"},
+      {"name": "the Scarred"}
+    ],
+    "lastName": [
+      {"name": "Ashford", "frequency": 2},
+      {"name": "Blackwood", "frequency": 2},
+      {"name": "Coldwell"},
+      {"name": "Dunmore"},
+      {"name": "Fairfax"},
+      {"name": "Goldleaf"},
+      {"name": "Highmore"},
+      {"name": "Ironwood"},
+      {"name": "Kingsley"},
+      {"name": "Ravencrest"}
+    ]
+  },
+
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName}[ {epithet}:30%] {lastName}",
+
+  "_notes": {
+    "feature_demonstrated": "Optional sections with probability weights using [ content:N%] syntax",
+    "how_it_works": [
+      "[ {epithet}:30%] wraps the epithet in an optional section",
+      "30% of generated names will include an epithet",
+      "70% will just be '{firstName} {lastName}'",
+      "Without a weight ([ {epithet}]), inclusion is 100% when content exists"
+    ],
+    "alternative_formats": {
+      "always_epithet": "{firstName} {epithet} {lastName}",
+      "optional_epithet_50": "{firstName}[ {epithet}:50%] {lastName}",
+      "optional_epithet_always": "{firstName}[ {epithet}] {lastName}",
+      "optional_both": "{firstName}[ {epithet}:30%][ of House {lastName}:70%]"
+    },
+    "design_notes": [
+      "Epithets represent earned titles - not everyone has one",
+      "30% feels natural for a mix of common folk and notable figures",
+      "Increase percentage for legendary characters, decrease for commoners"
+    ],
+    "usage": [
+      "python scripts/namegen.py full --nameset fantasy-epithets-example --count 10",
+      "# Expect roughly 3 out of 10 to have epithets"
+    ]
+  }
+}

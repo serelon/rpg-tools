@@ -1,0 +1,69 @@
+{
+  "id": "dwarven-patronymic-example",
+  "name": "Dwarven Patronymic Names",
+  "description": "Demonstrates per-placeholder gender override for patronymic naming. Each dwarf has their own name plus their father's name with -sson and mother's name with -sdottir. Uses {firstName:male} and {firstName:female} to select parent names independent of the child's gender.",
+  "setting": "Fantasy / Norse-inspired",
+  "tags": ["dwarven", "patronymic", "gender-override", "example"],
+
+  "nameCategories": {
+    "firstName": [
+      {"name": "Thorin", "gender": "male", "frequency": 3},
+      {"name": "Balin", "gender": "male", "frequency": 3},
+      {"name": "Dwalin", "gender": "male", "frequency": 2},
+      {"name": "Gimli", "gender": "male", "frequency": 3},
+      {"name": "Gloin", "gender": "male", "frequency": 2},
+      {"name": "Oin", "gender": "male"},
+      {"name": "Bifur", "gender": "male"},
+      {"name": "Bofur", "gender": "male"},
+      {"name": "Bombur", "gender": "male"},
+      {"name": "Fili", "gender": "male"},
+      {"name": "Kili", "gender": "male"},
+      {"name": "Nori", "gender": "male"},
+      {"name": "Dori", "gender": "male"},
+      {"name": "Ori", "gender": "male"},
+      {"name": "Thrain", "gender": "male"},
+      {"name": "Thror", "gender": "male"},
+      {"name": "Dis", "gender": "female", "frequency": 3},
+      {"name": "Hild", "gender": "female", "frequency": 3},
+      {"name": "Freya", "gender": "female", "frequency": 2},
+      {"name": "Sigrid", "gender": "female", "frequency": 2},
+      {"name": "Brunhild", "gender": "female"},
+      {"name": "Astrid", "gender": "female"},
+      {"name": "Helga", "gender": "female"},
+      {"name": "Ingrid", "gender": "female"},
+      {"name": "Thyra", "gender": "female"},
+      {"name": "Gudrun", "gender": "female"},
+      {"name": "Eira", "gender": "female"},
+      {"name": "Runa", "gender": "female"}
+    ],
+    "clan": [
+      {"name": "Ironforge", "frequency": 3},
+      {"name": "Stonehelm", "frequency": 3},
+      {"name": "Deepdelve", "frequency": 2},
+      {"name": "Goldbeard", "frequency": 2},
+      {"name": "Firebeard"},
+      {"name": "Broadbeam"},
+      {"name": "Blacklock"},
+      {"name": "Stiffbeard"}
+    ]
+  },
+
+  "genderWeights": {"male": 60, "female": 40},
+  "format": "{firstName} {firstName:male}sson {firstName:female}sdottir",
+
+  "_notes": {
+    "feature_demonstrated": "Per-placeholder gender override with {category:gender} syntax",
+    "how_it_works": [
+      "The child's firstName uses the global gender (rolled or --gender flag)",
+      "{firstName:male} ALWAYS selects from male names regardless of child's gender",
+      "{firstName:female} ALWAYS selects from female names regardless of child's gender",
+      "Result: 'Dis Thorinsson Hildsdottir' (female child of Thorin and Hild)"
+    ],
+    "alternative_formats": {
+      "father_only": "{firstName} {firstName:male}sson",
+      "mother_only": "{firstName} {firstName:female}sdottir",
+      "with_clan": "{firstName} {firstName:male}sson of Clan {clan}"
+    },
+    "usage": "python scripts/namegen.py full --nameset dwarven-patronymic-example --count 5"
+  }
+}
