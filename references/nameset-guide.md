@@ -313,6 +313,15 @@ Add a percentage weight to control inclusion probability:
 
 Without a weight suffix, optional sections are included whenever their content resolves (100% when content exists).
 
+**Nested optionals** are supported for complex conditional naming:
+
+```json
+"format": "{firstName}[{title}[ {epithet}]] {lastName}"
+// If both exist: "Marcus Lord the Wise Chen"
+// If only title: "Marcus Lord Chen"
+// If neither: "Marcus Chen"
+```
+
 ### Random Generation
 
 Generate random numbers and character patterns for designations, serial numbers, and procedural names.

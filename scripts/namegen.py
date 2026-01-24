@@ -73,9 +73,11 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
             else:
                 category, arg = content, None
 
-            if category == "random" and arg:
+            if category == "random":
+                # Handle {random}, {random:}, or {random:pattern}
+                effective_arg = arg or ""
                 # Check if arg is a range (e.g., "1-99", "0-255")
-                range_match = re.match(r'^(\d+)-(\d+)$', arg)
+                range_match = re.match(r'^(\d+)-(\d+)$', effective_arg)
                 if range_match:
                     min_val = int(range_match.group(1))
                     max_val = int(range_match.group(2))
@@ -87,10 +89,10 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
                         "range": [min_val, max_val]
                     })
                 else:
-                    # It's a pattern (e.g., "AAA", "000", "XXX")
+                    # It's a pattern (e.g., "AAA", "000", "XXX", or empty)
                     tokens.append({
                         "type": "random",
-                        "pattern": arg
+                        "pattern": effective_arg
                     })
             else:
                 tokens.append({
