@@ -163,13 +163,66 @@ Each entry in a category:
 
 ### Gender Weights
 
-Control the male/female distribution for the entire nameset:
+Control the gender distribution for the entire nameset:
 
 ```json
 "genderWeights": {"male": 75, "female": 25}
 ```
 
 Default is `{"male": 50, "female": 50}`. Can be overridden with `--gender male` or `--gender female`.
+
+#### Arbitrary Genders
+
+Gender weights can use **any gender identifiers**, not just male/female:
+
+```json
+// Fantasy creatures with three genders
+"genderWeights": {"male": 40, "female": 40, "neuter": 20}
+
+// Constructs/machines
+"genderWeights": {"military": 60, "civilian": 30, "prototype": 10}
+```
+
+Name entries can use matching gender tags:
+
+```json
+"firstName": [
+  {"name": "Krix", "gender": "neuter"},
+  {"name": "Unit-7", "gender": "military"},
+  {"name": "ARIA", "gender": "civilian"}
+]
+```
+
+When generating with `--gender neuter`, entries tagged as `"neuter"`, `"unisex"`, or untagged will be selected. This allows creative use of the gender system for any categorical filtering.
+
+#### Gender Cascade
+
+When a gender is selected (either via `--gender` flag or rolled from `genderWeights`), it applies to **ALL categories**, not just `firstName`.
+
+This enables gendered entries in any category:
+
+```json
+"nameCategories": {
+  "firstName": [
+    {"name": "Erik", "gender": "male"},
+    {"name": "Astrid", "gender": "female"}
+  ],
+  "title": [
+    {"name": "Lord", "gender": "male"},
+    {"name": "Lady", "gender": "female"},
+    {"name": "Ser", "gender": "unisex"}
+  ],
+  "suffix": [
+    {"name": "-son", "gender": "male"},
+    {"name": "-dottir", "gender": "female"}
+  ]
+},
+"format": "{title} {firstName} Storm{suffix}"
+// Male: "Lord Erik Stormson"
+// Female: "Lady Astrid Stormdottir"
+```
+
+Without gender tags, entries are selected regardless of the current gender.
 
 ### Frequency Weighting
 
@@ -218,6 +271,87 @@ Define any category name you need:
 },
 "format": "{firstName} {epithet}"
 // Output: "Keth the Swift"
+```
+
+### Per-Placeholder Gender Override
+
+Force a specific gender for individual placeholders using `{category:gender}` syntax:
+
+```json
+"format": "{firstName} {firstName:male}son"
+// If global gender is female: "Freya Bjornson" (female first, male patronym base)
+```
+
+This is essential for patronymic/matronymic naming systems where you need the parent's name to be a different gender than the child:
+
+```json
+// Dwarven patronymic: child's name + parent's name + suffix
+"format": "{firstName} {firstName:male}sson {firstName:female}sdottir"
+// Example: "Thorin Grimsson Hildisdottir" (child, father's name, mother's name)
+```
+
+The per-placeholder gender overrides the global `--gender` flag or rolled gender for that specific placeholder only.
+
+### Optional Sections
+
+Wrap content in square brackets to make it optional:
+
+```json
+"format": "{firstName}[ {epithet}] {lastName}"
+// If epithet exists: "Marcus the Brave Chen"
+// If epithet is missing/empty: "Marcus Chen"
+```
+
+Add a percentage weight to control inclusion probability:
+
+```json
+"format": "{firstName}[ {epithet}:30%] {lastName}"
+// 30% chance to include epithet even when available
+// Output: "Marcus Chen" (70% of the time)
+// Output: "Marcus the Brave Chen" (30% of the time)
+```
+
+Without a weight suffix, optional sections are included whenever their content resolves (100% when content exists).
+
+### Random Generation
+
+Generate random numbers and character patterns for designations, serial numbers, and procedural names.
+
+**Numeric ranges** - Random integer between min and max (inclusive):
+
+```json
+"format": "{prefix}-{random:1-999}"
+// Output: "XR-742"
+```
+
+**Character patterns** - Each pattern character generates a random value:
+
+| Pattern | Generates | Example |
+|---------|-----------|---------|
+| `A` | Uppercase letter (A-Z) | `AAA` -> `"KMZ"` |
+| `a` | Lowercase letter (a-z) | `aaa` -> `"qxm"` |
+| `0` | Digit (0-9) | `000` -> `"847"` |
+| `X` | Hex digit (0-9, A-F) | `XXXX` -> `"3A7F"` |
+| Other | Literal (preserved) | `A-0` -> `"K-7"` |
+
+Examples:
+
+```json
+// Robot designation
+"format": "{prefix}-{random:0000}"
+// Output: "MK-4728"
+
+// Ship registry
+"format": "{random:AAA}-{random:000}"
+// Output: "KMZ-847"
+
+// Hex identifier
+"format": "0x{random:XXXXXXXX}"
+// Output: "0x3A7F9C2E"
+
+// Mixed pattern
+"format": "{random:AA-000-aa}"
+// Output: "KM-742-qx"
 ```
 
 ### Multiple Formats
@@ -350,9 +484,19 @@ Names should be:
 
 See `references/examples/namesets/` for complete working examples:
 
-- **simple-western.json** - Basic first/last name structure
-- **aggregate-metropolitan.json** - Multi-source composition
+### Basic Examples
+
+- **simple-western.json** - Basic first/last name structure with gender tags and frequency weighting
+- **aggregate-example.json** - Multi-source composition from multiple namesets
 - **custom-categories.json** - Non-Western naming patterns (epithets, clans)
+
+### Advanced Feature Examples
+
+- **dwarven-patronymic.json** - Demonstrates per-placeholder gender override for patronymic/matronymic naming. Uses `{firstName:male}` and `{firstName:female}` to select parent names independent of child's gender.
+
+- **construct-designations.json** - Demonstrates random generation patterns for robots, constructs, and procedural designations. Shows `{random:0000}` numeric patterns and `{random:AAA}` letter patterns.
+
+- **fantasy-epithets.json** - Demonstrates optional sections with probability weights. Uses `[ {epithet}:30%]` syntax to occasionally include earned titles.
 
 ---
 

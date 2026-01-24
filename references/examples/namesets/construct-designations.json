@@ -1,0 +1,67 @@
+{
+  "id": "construct-designations-example",
+  "name": "Construct Designations",
+  "description": "Demonstrates random generation patterns for robots, constructs, and procedural naming. Shows numeric ranges {random:1-999}, letter patterns {random:AAA}, digit patterns {random:0000}, and hex patterns {random:XXXX}.",
+  "setting": "Sci-Fi / Cyberpunk",
+  "tags": ["construct", "robot", "random-patterns", "procedural", "example"],
+
+  "nameCategories": {
+    "prefix": [
+      {"name": "MK", "frequency": 3},
+      {"name": "XR", "frequency": 2},
+      {"name": "Unit", "frequency": 3},
+      {"name": "Model", "frequency": 2},
+      {"name": "Series"},
+      {"name": "Type"},
+      {"name": "Proto"},
+      {"name": "Gen"}
+    ],
+    "class": [
+      {"name": "Alpha", "gender": "military", "frequency": 2},
+      {"name": "Bravo", "gender": "military"},
+      {"name": "Charlie", "gender": "military"},
+      {"name": "Delta", "gender": "military"},
+      {"name": "Omicron", "gender": "civilian", "frequency": 2},
+      {"name": "Sigma", "gender": "civilian"},
+      {"name": "Lambda", "gender": "civilian"},
+      {"name": "Omega", "gender": "prototype"}
+    ],
+    "role": [
+      {"name": "Combat", "gender": "military"},
+      {"name": "Assault", "gender": "military"},
+      {"name": "Defense", "gender": "military"},
+      {"name": "Service", "gender": "civilian", "frequency": 3},
+      {"name": "Medical", "gender": "civilian", "frequency": 2},
+      {"name": "Domestic", "gender": "civilian"},
+      {"name": "Research", "gender": "prototype"},
+      {"name": "Experimental", "gender": "prototype"}
+    ]
+  },
+
+  "genderWeights": {"military": 40, "civilian": 50, "prototype": 10},
+  "format": "{prefix}-{random:0000}",
+
+  "_notes": {
+    "feature_demonstrated": "Random generation with {random:pattern} syntax",
+    "pattern_characters": {
+      "A": "Random uppercase letter (A-Z)",
+      "a": "Random lowercase letter (a-z)",
+      "0": "Random digit (0-9)",
+      "X": "Random hex digit (0-9, A-F)",
+      "other": "Literal character (preserved)"
+    },
+    "alternative_formats": {
+      "letter_prefix": "{random:AAA}-{random:000}",
+      "hex_id": "{prefix}-0x{random:XXXX}",
+      "with_class": "{class}-{random:00}",
+      "full_designation": "{role} {class} {prefix}-{random:0000}",
+      "serial_range": "{prefix}-{random:1-9999}"
+    },
+    "arbitrary_genders_note": "This example uses 'military', 'civilian', and 'prototype' as gender categories to demonstrate that any string can be used for categorical filtering, not just male/female.",
+    "usage": [
+      "python scripts/namegen.py full --nameset construct-designations-example --count 5",
+      "python scripts/namegen.py full --nameset construct-designations-example --gender military",
+      "python scripts/namegen.py full --nameset construct-designations-example --gender prototype"
+    ]
+  }
+}
