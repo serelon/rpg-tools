@@ -48,22 +48,43 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
     Supports optional sections with weight: [ {epithet}:30%]
     The :N% at the END of bracket content specifies inclusion probability.
     Default weight is 100 (always include if content resolves).
+    Nested optional sections are supported: [{title}[ {epithet}]]
     """
     tokens = []
-    pattern = r'\{(\w+)(?::([^}]+))?\}|\[([^\]]+)\]|([^\{\[]+)'
+    i = 0
 
-    for match in re.finditer(pattern, format_str):
-        if match.group(1):  # Placeholder {category} or {category:...}
-            category = match.group(1)
-            arg = match.group(2)  # Could be gender, range, or pattern
+    while i < len(format_str):
+        char = format_str[i]
+
+        if char == '{':
+            # Find matching closing brace
+            end = format_str.find('}', i)
+            if end == -1:
+                # No closing brace, treat as literal
+                tokens.append({"type": "literal", "value": char})
+                i += 1
+                continue
+
+            content = format_str[i+1:end]
+
+            # Check for category:arg pattern
+            if ':' in content:
+                category, arg = content.split(':', 1)
+            else:
+                category, arg = content, None
 
             if category == "random" and arg:
                 # Check if arg is a range (e.g., "1-99", "0-255")
                 range_match = re.match(r'^(\d+)-(\d+)$', arg)
                 if range_match:
+                    min_val = int(range_match.group(1))
+                    max_val = int(range_match.group(2))
+                    # Swap if reversed to prevent randint crash
+                    if min_val > max_val:
+                        min_val, max_val = max_val, min_val
                     tokens.append({
                         "type": "random",
-                        "range": [int(range_match.group(1)), int(range_match.group(2))]
+                        "range": [min_val, max_val]
                     })
                 else:
                     # It's a pattern (e.g., "AAA", "000", "XXX")
@@ -77,8 +98,28 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
                     "value": category,
                     "gender": arg  # None if no gender specified
                 })
-        elif match.group(3):  # Optional section [text]
-            content = match.group(3)
+
+            i = end + 1
+
+        elif char == '[':
+            # Find matching closing bracket, accounting for nesting
+            depth = 1
+            start = i + 1
+            j = start
+            while j < len(format_str) and depth > 0:
+                if format_str[j] == '[':
+                    depth += 1
+                elif format_str[j] == ']':
+                    depth -= 1
+                j += 1
+
+            if depth != 0:
+                # Unmatched bracket, treat as literal
+                tokens.append({"type": "literal", "value": char})
+                i += 1
+                continue
+
+            content = format_str[start:j-1]
             weight = 100  # Default: always include
 
             # Check for weight suffix like :30% at end of content
@@ -94,8 +135,16 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
                 "content": inner_tokens,
                 "weight": weight
             })
-        elif match.group(4):  # Literal text
-            tokens.append({"type": "literal", "value": match.group(4)})
+
+            i = j
+
+        else:
+            # Literal text - collect until next special character
+            end = i
+            while end < len(format_str) and format_str[end] not in '{[':
+                end += 1
+            tokens.append({"type": "literal", "value": format_str[i:end]})
+            i = end
 
     return tokens
 
