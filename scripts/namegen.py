@@ -237,16 +237,17 @@ def generate_pattern(pattern: str) -> str:
     - X: random hex digit (0-9, A-F)
     - Anything else: literal (preserved as-is)
     """
+    char_map = {
+        'A': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'a': 'abcdefghijklmnopqrstuvwxyz',
+        '0': '0123456789',
+        'X': '0123456789ABCDEF',
+    }
     result = []
     for char in pattern:
-        if char == 'A':
-            result.append(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
-        elif char == 'a':
-            result.append(random.choice('abcdefghijklmnopqrstuvwxyz'))
-        elif char == '0':
-            result.append(random.choice('0123456789'))
-        elif char == 'X':
-            result.append(random.choice('0123456789ABCDEF'))
+        char_set = char_map.get(char)
+        if char_set:
+            result.append(random.choice(char_set))
         else:
             result.append(char)
     return ''.join(result)
