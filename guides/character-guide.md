@@ -24,6 +24,10 @@ Create character JSON files for the incremental character loading system. Files 
     "personality": "How they act, contradictions, flaws, triggers",
     "background": "Only what's relevant - evocative > exhaustive",
     "motivations": "What they want and why",
+    "capabilities": "What they can do - skills, powers (summary), training",
+    "limitations": "What they can't do, weaknesses, constraints",
+    "equipment": "Key items they carry or use",
+    "relationships": {"character-id": "relationship description"},
     "voice_samples": [
       {"context": "situation/mood", "line": "dialogue"},
       {"context": "different situation", "line": "different dialogue"}
@@ -31,14 +35,16 @@ Create character JSON files for the incremental character loading system. Files 
   },
 
   "sections": {
-    "relationships": {},
     "powers": {},
-    "combat": {},
     "timeline": [],
     "secrets": ""
   }
 }
 ```
+
+**Key distinction:**
+- **full** = everything needed to write this character correctly
+- **sections** = specialized deep-dives loaded only when specifically relevant
 
 ## Workflow
 
@@ -71,6 +77,8 @@ Minor NPCs only need minimal profiles.
 
 ### Step 4: Extract Full Profile (if needed)
 
+The full profile contains everything needed to write this character correctly.
+
 **Voice Samples are CRITICAL** - This is the most important part.
 
 Think about this character specifically:
@@ -84,39 +92,37 @@ Create diverse voice samples:
 - Include internal monologue if character has introspective scenes
 - Each sample should be distinct, not variations of the same phrase
 
-Other full profile fields - adapt as needed:
+**Full profile fields:**
 - **appearance**: Physical details relevant for writing
 - **personality**: How they act, not just beliefs. Include contradictions.
 - **background**: Only what's story-relevant. Avoid exhaustive life history.
 - **motivations**: Short-term and long-term wants
+- **capabilities**: What they can do - skills, training, powers (summary). Include combat ability here if relevant.
+- **limitations**: What they can't do, weaknesses, constraints that shape their choices
+- **equipment**: Key items they carry or rely on
+- **relationships**: Key connections - format: `{"character-id": "brief description"}`
 
-### Step 5: Add Relevant Sections
+### Step 5: Add Sections (Appendixes)
 
-Choose sections based on character type:
+Sections are for specialized deep-dives loaded only when specifically needed. Most characters don't need any.
 
-**Powers/Abilities** (for characters with special abilities):
-- Description: What can they do?
-- Mechanics: How does it work? Triggers? Limits? Costs?
-- Applies to: magic, psychic, cybernetics, augments, supernatural, etc.
+**Powers/Abilities** (detailed mechanics only):
+- Full profile has the summary ("psychic who senses emotions")
+- Section has mechanics: triggers, limits, costs, progression
+- Only add if mechanics matter for play
 
-**Combat** (only for characters who fight):
-- Weapons, tactics, fighting style
-- Weaknesses, limitations
-- Skip entirely for non-combatants
-
-**Relationships**:
-- Key connections with brief context
-- Format: `"character_id": "relationship description"`
-
-**Timeline** (if history matters):
+**Timeline** (extended history):
 - Key events that shaped them
 - Format: `[{"era": "when", "event": "what happened"}]`
+- Only if history is complex and referenced
 
 **Secrets**:
 - What others don't know about them
+- GM-only information
 
-**Custom sections**:
-- Add whatever's relevant to THIS character
+**Campaign-specific**:
+- Service records, faction standings, mission logs
+- Data that's useful reference but not needed for writing
 
 ### Step 6: Save File
 
@@ -128,8 +134,8 @@ Save to `characters/{id}.json`
 - Exhaustive backstory - evocative > exhaustive
 - All voice samples in same emotional register - show range
 - Duplicating information between essence and full profile
-- Including combat section for non-combatants
-- Describing powers without mechanics
+- Putting capabilities/relationships in sections instead of full profile
+- Creating sections for things needed to write the character (those go in full)
 - More than 35 words in essence
 
 ## Example: Minimal-Only Character
@@ -168,6 +174,14 @@ Save to `characters/{id}.json`
     "personality": "Pragmatic survivor who pretends not to care but can't stop herself from caring. Deflects vulnerability with dark humor. Fierce protector, reluctant leader. Still sees Tam as the child she carried through smoke.",
     "background": "Parents killed by Empire during a raid. Raised Tam alone on the margins. Built the Still Here into something that keeps them alive. Never thought of herself as a hero until a dying ship changed everything.",
     "motivations": "Keep her crew alive. Keep Tam safe. Recently: save something the Empire broke, even if she doesn't understand why it matters so much.",
+    "capabilities": "Expert pilot and salvager. Reads ships like most people read faces. Latent psychic - senses emotions, hears 'songs' others can't. Heard the leviathan's dying song when no one else could. Scrappy fighter, prefers talking or running.",
+    "limitations": "No formal combat training. Psychic ability is unreliable - triggers under stress, no conscious control. Protective instincts override tactical thinking. Can't walk away from broken things.",
+    "equipment": "The Still Here (her ship). Salvage tools. A pistol she rarely draws.",
+    "relationships": {
+      "tam": "Younger sister. Love wrapped in protection wrapped in friction. Still sees the child, struggles with the adult.",
+      "ossian": "Trusted crew. Respects their strange faith. Doesn't understand it, doesn't need to.",
+      "rill": "Trusted crew. Stopped asking why they stayed. Grateful they did."
+    },
     "voice_samples": [
       {"context": "protective, warning", "line": "Touch her and I'll make sure they never find the pieces."},
       {"context": "tired gallows humor", "line": "Great. Another day, another death wish. Tam, start the engines."},
@@ -177,14 +191,9 @@ Save to `characters/{id}.json`
     ]
   },
   "sections": {
-    "relationships": {
-      "tam": "Younger sister. Love wrapped in protection wrapped in friction. Still sees the child, struggles with the adult.",
-      "ossian": "Trusted crew. Respects their strange faith. Doesn't understand it, doesn't need to.",
-      "rill": "Trusted crew. Stopped asking why they stayed. Grateful they did."
-    },
     "powers": {
-      "description": "Latent psychic abilities - can sense emotions, sometimes hears 'songs' others can't. Heard the leviathan's dying song when no one else could.",
-      "mechanics": "Unreliable. Triggers under stress or strong emotional presence. No conscious control. Stronger around living ships. Often manifests as 'gut feelings' she's learned to trust."
+      "description": "Latent psychic abilities - can sense emotions, sometimes hears 'songs' others can't.",
+      "mechanics": "Unreliable. Triggers under stress or strong emotional presence. No conscious control. Stronger around living ships. Often manifests as 'gut feelings' she's learned to trust. Growing stronger since contact with the leviathan."
     }
   }
 }
