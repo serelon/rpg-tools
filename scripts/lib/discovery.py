@@ -33,9 +33,10 @@ def discover_data(
         2. Parent directories: {parent}/{data_type}/
         3. campaigns/*/{data_type}/
         4. tools/data/{data_type}/
-        5. /mnt/user-data/uploads/{data_type}/
-        6. /mnt/user-data/uploads/{loose_pattern} (if provided)
-        7. /home/claude/*/{data_type}/
+        5. /mnt/skills/user/rpg-tools/tools/data/{data_type}/
+        6. /mnt/user-data/uploads/{data_type}/
+        7. /mnt/user-data/uploads/{loose_pattern} (if provided)
+        8. /home/claude/*/{data_type}/
     """
     if on_warning is None:
         def on_warning(msg: str) -> None:
@@ -57,32 +58,53 @@ def discover_data(
                 data_paths.extend(data_dir.glob(file_pattern))
                 break
 
-    # 3. Look in campaigns/*/{data_type}/
-    campaigns_dir = search_root / "campaigns"
-    if campaigns_dir.exists():
-        for campaign_dir in campaigns_dir.iterdir():
-            if campaign_dir.is_dir():
-                type_dir = campaign_dir / data_type
-                if type_dir.exists():
-                    data_paths.extend(type_dir.glob(file_pattern))
+    # 3. Look in campaigns/*/{data_type}/ (check search_root and ancestors)
+    campaigns_found = False
+    for root in [search_root] + list(search_root.parents):
+        campaigns_dir = root / "campaigns"
+        if campaigns_dir.exists():
+            campaigns_found = True
+            for campaign_dir in campaigns_dir.iterdir():
+                if campaign_dir.is_dir():
+                    type_dir = campaign_dir / data_type
+                    if type_dir.exists():
+                        data_paths.extend(type_dir.glob(file_pattern))
+            break
+    # Also check from cwd if different from search_root
+    if not campaigns_found:
+        cwd = Path.cwd()
+        for root in [cwd] + list(cwd.parents):
+            campaigns_dir = root / "campaigns"
+            if campaigns_dir.exists():
+                for campaign_dir in campaigns_dir.iterdir():
+                    if campaign_dir.is_dir():
+                        type_dir = campaign_dir / data_type
+                        if type_dir.exists():
+                            data_paths.extend(type_dir.glob(file_pattern))
+                break
 
     # 4. Look in tools/data/{data_type}/
     tools_data = search_root / "tools" / "data" / data_type
     if tools_data.exists():
         data_paths.extend(tools_data.glob(file_pattern))
 
-    # 5. Look in user uploads (Claude.ai environment)
+    # 5. Look in skill mount (Claude.ai skill environment)
+    skill_data = Path("/mnt/skills/user/rpg-tools/tools/data") / data_type
+    if skill_data.exists():
+        data_paths.extend(skill_data.glob(file_pattern))
+
+    # 6. Look in user uploads (Claude.ai environment)
     uploads_data = Path("/mnt/user-data/uploads") / data_type
     if uploads_data.exists():
         data_paths.extend(uploads_data.glob(file_pattern))
 
-    # 6. Check for loose files in uploads root
+    # 7. Check for loose files in uploads root
     if loose_pattern:
         uploads_root = Path("/mnt/user-data/uploads")
         if uploads_root.exists():
             data_paths.extend(uploads_root.glob(loose_pattern))
 
-    # 7. Look in /home/claude/*/{data_type}/ (extracted bundles)
+    # 8. Look in /home/claude/*/{data_type}/ (extracted bundles)
     home_claude = Path("/home/claude")
     if home_claude.exists():
         for subdir in home_claude.iterdir():
