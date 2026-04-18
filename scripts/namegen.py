@@ -340,6 +340,121 @@ def generate_single_name(
     return build_name_from_format(format_str, categories, gender, tag_filter=tag_filter)
 
 
+def build_aggregate_name_with_slots(
+    aggregate_id: str,
+    gender: Optional[str],
+    format_name: str = "default",
+    tag_filter: Optional[List[str]] = None,
+    source_label: Optional[str] = None
+) -> str:
+    """Generate a name from an aggregate using per-slot source policies.
+
+    Slot policies:
+    - inherit (default): use the anchor source for this slot
+    - independent: roll a fresh source for this slot
+    - mix with rate N (0..1): N probability of independent, else inherit
+    - forced with nameset "...": always pull from the named source
+
+    Optional/repeat tokens are not honoured here; they are silently skipped.
+    """
+    aggregate = custom_namesets[aggregate_id]
+    aggregate_namespace = aggregate_id.split(":", 1)[0]
+    sources = aggregate.get("sources", [])
+    slots = aggregate.get("slots", {})
+
+    # Pick anchor source (used for inherit-policy slots)
+    if source_label:
+        anchor_source_def = next((s for s in sources if s.get("label") == source_label), None)
+        if not anchor_source_def:
+            print(f"Error: Source label '{source_label}' not found in aggregate '{aggregate_id}'", file=sys.stderr)
+            sys.exit(1)
+    else:
+        anchor_source_def = select_weighted_source(sources)
+
+    template = get_format_template(aggregate, format_name)
+    tokens = parse_format(template)
+
+    def resolve_source(source_def):
+        """Resolve a source definition to its loaded nameset dict, or None if missing."""
+        if not source_def:
+            return None
+        ref = source_def.get("nameset")
+        if not ref:
+            return None
+        qualified = resolve_nameset_ref(ref, current_namespace=aggregate_namespace)
+        return custom_namesets.get(qualified) if qualified else None
+
+    anchor_nameset = resolve_source(anchor_source_def)
+
+    result = []
+    for token in tokens:
+        if token["type"] == "literal":
+            result.append(token["value"])
+        elif token["type"] == "placeholder":
+            category = token["value"]
+            slot_config = slots.get(category, {"policy": "inherit"})
+            policy = slot_config.get("policy", "inherit")
+
+            # Determine source nameset for this slot
+            chosen_nameset = None
+            if policy == "forced":
+                forced_ref = slot_config.get("nameset")
+                if forced_ref:
+                    qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
+                    chosen_nameset = custom_namesets.get(qualified) if qualified else None
+                if chosen_nameset is None:
+                    print(
+                        f"Warning: forced slot source '{forced_ref}' not found for slot '{category}', falling back to anchor",
+                        file=sys.stderr,
+                    )
+                    chosen_nameset = anchor_nameset
+            elif policy == "independent":
+                rolled_def = select_weighted_source(sources)
+                chosen_nameset = resolve_source(rolled_def)
+                if chosen_nameset is None:
+                    chosen_nameset = anchor_nameset
+            elif policy == "mix":
+                rate = slot_config.get("rate", 0.5)
+                if random.random() < rate:
+                    rolled_def = select_weighted_source(sources)
+                    chosen_nameset = resolve_source(rolled_def)
+                    if chosen_nameset is None:
+                        chosen_nameset = anchor_nameset
+                else:
+                    chosen_nameset = anchor_nameset
+            else:  # inherit (default)
+                chosen_nameset = anchor_nameset
+
+            # Pick from this source's category
+            if chosen_nameset is None:
+                continue
+            source_categories = chosen_nameset.get("nameCategories", {})
+            entries = source_categories.get(category, [])
+            if not entries and anchor_nameset is not None and anchor_nameset is not chosen_nameset:
+                # Fall back to anchor for this category
+                source_categories = anchor_nameset.get("nameCategories", {})
+                entries = source_categories.get(category, [])
+            if not entries:
+                continue
+
+            effective_gender = token.get("gender") or gender
+            if effective_gender and any(e.get("gender") for e in entries):
+                entries = filter_by_gender(entries, effective_gender, category)
+            entries = filter_by_tags(entries, tag_filter, category)
+            if not entries:
+                continue
+            entry = select_weighted(entries)
+            result.append(entry["name"])
+        elif token["type"] == "random":
+            if "range" in token:
+                result.append(generate_range(token["range"][0], token["range"][1]))
+            elif "pattern" in token:
+                result.append(generate_pattern(token["pattern"]))
+        # optional/repeat tokens not handled here (rare in aggregates) — skip silently
+
+    return " ".join("".join(result).split())
+
+
 def generate_from_aggregate(
     nameset_id: str,
     count: int = 1,
@@ -373,6 +488,28 @@ def generate_from_aggregate(
         name = ""
         label = "(unresolved)"
         while attempts < 100:
+            # Slot-aware path: aggregates declaring a 'slots' map use per-slot
+            # source resolution rather than picking one source for the whole name.
+            if "slots" in nameset:
+                selected_gender = gender if gender else select_gender(gender_weights)
+                name = build_aggregate_name_with_slots(
+                    resolved_id,
+                    selected_gender,
+                    format_name=format_name,
+                    tag_filter=tag_filter,
+                    source_label=source_label,
+                )
+                label = source_label or "(slot-aware)"
+                if name and name.lower() not in used:
+                    if return_source:
+                        results.append((name, label))
+                    else:
+                        results.append(name)
+                    used.add(name.lower())
+                    break
+                attempts += 1
+                continue
+
             # Select source by weight (or use forced source)
             if source_label:
                 selected = next((s for s in sources if s.get("label") == source_label), None)
