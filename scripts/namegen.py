@@ -5,7 +5,7 @@ import random
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 from lib import discover_data
 
@@ -926,43 +926,94 @@ def safe_print(text: str):
         print(text.encode('ascii', 'replace').decode('ascii'))
 
 
-def list_namesets(namespace_filter: Optional[str] = None, show_hidden: bool = False):
-    """List all available namesets, optionally filtered by namespace prefix.
+def list_namesets(
+    namespace_filter: Optional[str] = None,
+    show_hidden: bool = False,
+    verbose: bool = False,
+    tag_filter: Optional[List[str]] = None,
+    setting_filter: Optional[str] = None,
+    type_filter: Optional[str] = None
+):
+    """List available namesets, grouped by namespace, brief by default.
 
     Hidden namesets (with ``"hidden": true``) are excluded by default.
     Pass ``show_hidden=True`` to include them.
+
+    Filters:
+        namespace_filter -- only show namesets in this namespace.
+        tag_filter       -- list of tags; nameset must have at least one matching tag.
+        setting_filter   -- only show namesets whose ``setting`` field matches exactly.
+        type_filter      -- "aggregate", "grouped", "simple", or any literal ``type`` value.
+
+    Output:
+        Brief (default): one line per namespace with comma-separated bare IDs.
+        Verbose: per-nameset detail block with name/setting/description/type/sources/tags.
     """
     if not custom_namesets:
         print("No namesets found")
         return
 
-    items = sorted(custom_namesets.items())
-    if namespace_filter is not None:
-        items = [(k, v) for k, v in items if k.startswith(f"{namespace_filter}:")]
-    if not show_hidden:
-        items = [(k, v) for k, v in items if not v.get("hidden", False)]
+    # Group by namespace
+    by_ns: Dict[str, List[Tuple[str, Dict, str]]] = {}
+    for full_id, ns_data in custom_namesets.items():
+        ns, bare = full_id.split(":", 1)
+        by_ns.setdefault(ns, []).append((bare, ns_data, full_id))
 
-    print("Available namesets:")
-    for nameset_id, nameset in items:
-        name = nameset.get("name", nameset_id)
-        setting = nameset.get("setting", "")
-        desc = nameset.get("description", "")
-        ns_type = nameset.get("type", "")
-        has_groups = "nameGroups" in nameset
+    for ns in sorted(by_ns.keys()):
+        items = by_ns[ns]
 
-        print(f"\n  {nameset_id}")
-        safe_print(f"    Name: {name}")
-        if setting:
-            safe_print(f"    Setting: {setting}")
-        if desc:
-            safe_print(f"    Description: {desc}")
-        if ns_type == "aggregate":
-            sources = nameset.get("sources", [])
-            labels = [s.get("label", s["nameset"]) for s in sources]
-            print(f"    Type: aggregate ({len(sources)} sources)")
-            print(f"    Sources: {', '.join(labels)}")
-        elif has_groups:
-            print(f"    Groups: {', '.join(nameset['nameGroups'].keys())}")
+        # Apply filters
+        if namespace_filter is not None and ns != namespace_filter:
+            continue
+        if tag_filter:
+            items = [t for t in items if any(tag in t[1].get("tags", []) for tag in tag_filter)]
+        if setting_filter:
+            items = [t for t in items if t[1].get("setting") == setting_filter]
+        if type_filter:
+            def matches_type(t):
+                ns_data = t[1]
+                if type_filter == "aggregate":
+                    return ns_data.get("type") == "aggregate"
+                if type_filter == "grouped":
+                    return "nameGroups" in ns_data
+                if type_filter == "simple":
+                    return ns_data.get("type") != "aggregate" and "nameGroups" not in ns_data
+                return ns_data.get("type") == type_filter
+            items = [t for t in items if matches_type(t)]
+
+        visible = [t for t in items if not t[1].get("hidden", False)]
+        hidden = [t for t in items if t[1].get("hidden", False)]
+        shown = visible if not show_hidden else (visible + hidden)
+        if not shown:
+            continue
+
+        ns_label = ns if ns else "(root)"
+        if hidden and not show_hidden:
+            print(f"\n{ns_label} ({len(visible)} visible, {len(hidden)} hidden)")
+        else:
+            print(f"\n{ns_label} ({len(shown)})")
+
+        if verbose:
+            for bare, data, full_id in sorted(shown):
+                print(f"\n  {full_id}")
+                if data.get("name"):
+                    safe_print(f"    Name: {data['name']}")
+                if data.get("setting"):
+                    safe_print(f"    Setting: {data['setting']}")
+                if data.get("description"):
+                    safe_print(f"    Description: {data['description']}")
+                if data.get("type") == "aggregate":
+                    sources = data.get("sources", [])
+                    labels = [s.get("label", s.get("nameset", "?")) for s in sources]
+                    print(f"    Type: aggregate ({len(sources)} sources)")
+                    print(f"    Sources: {', '.join(labels)}")
+                elif "nameGroups" in data:
+                    print(f"    Groups: {', '.join(data['nameGroups'].keys())}")
+                if data.get("tags"):
+                    print(f"    Tags: {', '.join(data['tags'])}")
+        else:
+            ids = ", ".join(bare for bare, _, _ in sorted(shown))
+            print(f"  {ids}")
 
 
 def list_groups(nameset_id: str):
@@ -1068,9 +1119,14 @@ def main():
         print("                       Defaults to 'default'. Falls back to legacy 'format' field.")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
-        print("  list [--namespace NS] [--all]")
-        print("       List available namesets (optionally filtered by namespace)")
-        print("       --all           Include hidden namesets (excluded by default)")
+        print("  list [--namespace NS] [--all] [--verbose] [--tag TAG ...] [--setting NAME] [--type T]")
+        print("       List available namesets, grouped by namespace.")
+        print("       --namespace NS  Only show namesets in this namespace.")
+        print("       --all           Include hidden namesets (excluded by default).")
+        print("       --verbose       Show per-nameset detail (name/setting/desc/type/sources/tags).")
+        print("       --tag TAG       Only show namesets having this tag. Repeat for OR semantics.")
+        print("       --setting NAME  Only show namesets whose 'setting' field matches.")
+        print("       --type T        Filter by type: aggregate, grouped, simple, or any literal type value.")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
@@ -1083,8 +1139,12 @@ def main():
     show_group = False
     namespace_filter = None
     tag_filter: List[str] = []
+    list_tag_filter: List[str] = []
+    setting_filter: Optional[str] = None
+    type_filter: Optional[str] = None
     format_name = "default"
     show_hidden = False
+    verbose = False
 
     i = 2
     while i < len(sys.argv):
@@ -1106,6 +1166,15 @@ def main():
         elif sys.argv[i] == "--filter" and i + 1 < len(sys.argv):
             tag_filter.append(sys.argv[i + 1])
             i += 2
+        elif sys.argv[i] == "--tag" and i + 1 < len(sys.argv):
+            list_tag_filter.append(sys.argv[i + 1])
+            i += 2
+        elif sys.argv[i] == "--setting" and i + 1 < len(sys.argv):
+            setting_filter = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--type" and i + 1 < len(sys.argv):
+            type_filter = sys.argv[i + 1]
+            i += 2
         elif sys.argv[i] == "--format" and i + 1 < len(sys.argv):
             format_name = sys.argv[i + 1]
             i += 2
@@ -1114,6 +1183,9 @@ def main():
             i += 1
         elif sys.argv[i] == "--all":
             show_hidden = True
+            i += 1
+        elif sys.argv[i] == "--verbose":
+            verbose = True
             i += 1
         else:
             print(f"Unknown option: {sys.argv[i]}", file=sys.stderr)
@@ -1175,7 +1247,14 @@ def main():
         list_groups(nameset)
 
     elif command == "list":
-        list_namesets(namespace_filter=namespace_filter, show_hidden=show_hidden)
+        list_namesets(
+            namespace_filter=namespace_filter,
+            show_hidden=show_hidden,
+            verbose=verbose,
+            tag_filter=list_tag_filter if list_tag_filter else None,
+            setting_filter=setting_filter,
+            type_filter=type_filter,
+        )
 
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
