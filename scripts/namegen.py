@@ -345,7 +345,8 @@ def build_aggregate_name_with_slots(
     gender: Optional[str],
     format_name: str = "default",
     tag_filter: Optional[List[str]] = None,
-    source_label: Optional[str] = None
+    source_label: Optional[str] = None,
+    gender_weights: Optional[Dict[str, int]] = None
 ) -> str:
     """Generate a name from an aggregate using per-slot source policies.
 
@@ -354,6 +355,10 @@ def build_aggregate_name_with_slots(
     - independent: roll a fresh source for this slot
     - mix with rate N (0..1): N probability of independent, else inherit
     - forced with nameset "...": always pull from the named source
+
+    If `gender` is None and `gender_weights` is provided, the gender is
+    selected here (after anchor resolution) so the anchor's
+    `override.genderWeights` can bias the choice.
 
     Optional/repeat tokens are not honoured here; they are silently skipped.
     """
@@ -375,16 +380,25 @@ def build_aggregate_name_with_slots(
     tokens = parse_format(template)
 
     def resolve_source(source_def):
-        """Resolve a source definition to its loaded nameset dict, or None if missing."""
+        """Resolve a source definition to (nameset_dict, override_dict).
+
+        Returns (None, {}) if source_def is missing or unresolvable.
+        """
         if not source_def:
-            return None
+            return None, {}
         ref = source_def.get("nameset")
         if not ref:
-            return None
+            return None, {}
         qualified = resolve_nameset_ref(ref, current_namespace=aggregate_namespace)
-        return custom_namesets.get(qualified) if qualified else None
+        nameset = custom_namesets.get(qualified) if qualified else None
+        return nameset, source_def.get("override", {})
 
-    anchor_nameset = resolve_source(anchor_source_def)
+    anchor_nameset, anchor_override = resolve_source(anchor_source_def)
+
+    # Anchor's genderWeights override biases the (single) gender choice for this name.
+    if gender is None and gender_weights is not None:
+        effective_gw = anchor_override.get("genderWeights", gender_weights)
+        gender = select_gender(effective_gw)
 
     result = []
     for token in tokens:
@@ -395,35 +409,50 @@ def build_aggregate_name_with_slots(
             slot_config = slots.get(category, {"policy": "inherit"})
             policy = slot_config.get("policy", "inherit")
 
-            # Determine source nameset for this slot
+            # Determine source nameset for this slot, plus its override
             chosen_nameset = None
+            chosen_override = {}
             if policy == "forced":
                 forced_ref = slot_config.get("nameset")
-                if forced_ref:
-                    qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
-                    chosen_nameset = custom_namesets.get(qualified) if qualified else None
+                # Look up the matching source_def in the aggregate's sources (for override)
+                forced_def = next(
+                    (s for s in sources if s.get("nameset") == forced_ref),
+                    None,
+                )
+                if forced_def is not None:
+                    chosen_nameset, chosen_override = resolve_source(forced_def)
+                else:
+                    # Forced ref not in sources list - resolve directly without override
+                    if forced_ref:
+                        qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
+                        chosen_nameset = custom_namesets.get(qualified) if qualified else None
                 if chosen_nameset is None:
                     print(
                         f"Warning: forced slot source '{forced_ref}' not found for slot '{category}', falling back to anchor",
                         file=sys.stderr,
                     )
                     chosen_nameset = anchor_nameset
+                    chosen_override = anchor_override
             elif policy == "independent":
                 rolled_def = select_weighted_source(sources)
-                chosen_nameset = resolve_source(rolled_def)
+                chosen_nameset, chosen_override = resolve_source(rolled_def)
                 if chosen_nameset is None:
                     chosen_nameset = anchor_nameset
+                    chosen_override = anchor_override
             elif policy == "mix":
                 rate = slot_config.get("rate", 0.5)
                 if random.random() < rate:
                     rolled_def = select_weighted_source(sources)
-                    chosen_nameset = resolve_source(rolled_def)
+                    chosen_nameset, chosen_override = resolve_source(rolled_def)
                     if chosen_nameset is None:
                         chosen_nameset = anchor_nameset
+                        chosen_override = anchor_override
                 else:
                     chosen_nameset = anchor_nameset
+                    chosen_override = anchor_override
             else:  # inherit (default)
                 chosen_nameset = anchor_nameset
+                chosen_override = anchor_override
 
             # Pick from this source's category
             if chosen_nameset is None:
@@ -440,7 +469,11 @@ def build_aggregate_name_with_slots(
             effective_gender = token.get("gender") or gender
             if effective_gender and any(e.get("gender") for e in entries):
                 entries = filter_by_gender(entries, effective_gender, category)
-            entries = filter_by_tags(entries, tag_filter, category)
+            # Per-source filter override ANDs with user-provided tag_filter.
+            override_filter = chosen_override.get("filter", [])
+            effective_tag_filter = list(tag_filter or []) + list(override_filter)
+            if effective_tag_filter:
+                entries = filter_by_tags(entries, effective_tag_filter, category)
             if not entries:
                 continue
             entry = select_weighted(entries)
@@ -491,13 +524,15 @@ def generate_from_aggregate(
             # Slot-aware path: aggregates declaring a 'slots' map use per-slot
             # source resolution rather than picking one source for the whole name.
             if "slots" in nameset:
-                selected_gender = gender if gender else select_gender(gender_weights)
+                # Pass gender_weights through so the helper can apply the
+                # anchor's genderWeights override after picking the anchor.
                 name = build_aggregate_name_with_slots(
                     resolved_id,
-                    selected_gender,
+                    gender,
                     format_name=format_name,
                     tag_filter=tag_filter,
                     source_label=source_label,
+                    gender_weights=gender_weights,
                 )
                 label = source_label or "(slot-aware)"
                 if name and name.lower() not in used:
@@ -532,8 +567,21 @@ def generate_from_aggregate(
             source_nameset = custom_namesets[resolved_source]
             label = selected.get("label", source_nameset_ref)
 
-            # Select gender
-            selected_gender = gender if gender else select_gender(gender_weights)
+            # Per-source overrides: genderWeights biases gender selection
+            # for this source; filter ANDs with any user-provided tag_filter.
+            override = selected.get("override", {})
+            if "genderWeights" in override:
+                effective_gender_weights = override["genderWeights"]
+            else:
+                effective_gender_weights = gender_weights
+
+            if "filter" in override:
+                effective_tag_filter = list(tag_filter or []) + list(override["filter"])
+            else:
+                effective_tag_filter = tag_filter
+
+            # Select gender (using effective weights)
+            selected_gender = gender if gender else select_gender(effective_gender_weights)
 
             # Dispatch by source type: recurse for nested aggregates,
             # use grouped path for grouped sources, else leaf generator.
@@ -543,7 +591,7 @@ def generate_from_aggregate(
                     count=1,
                     gender=selected_gender,
                     format_name=format_name,
-                    tag_filter=tag_filter,
+                    tag_filter=effective_tag_filter,
                 )
                 name = sub[0] if sub else ""
             elif "nameGroups" in source_nameset:
@@ -552,12 +600,12 @@ def generate_from_aggregate(
                     count=1,
                     gender=selected_gender,
                     format_name=format_name,
-                    tag_filter=tag_filter,
+                    tag_filter=effective_tag_filter,
                 )
                 name = sub[0] if sub else ""
             else:
                 name = generate_single_name(
-                    source_nameset, selected_gender, tag_filter=tag_filter, format_name=format_name
+                    source_nameset, selected_gender, tag_filter=effective_tag_filter, format_name=format_name
                 )
 
             if name.lower() not in used:

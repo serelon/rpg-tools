@@ -53,6 +53,21 @@
         "firstName": {"policy": "inherit"},
         "lastName": {"policy": "forced", "nameset": "japanese-test"}
       }
+    },
+    {
+      "id": "override-test",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {
+          "nameset": "japanese-test",
+          "weight": 100,
+          "label": "ja-male-only",
+          "override": {
+            "genderWeights": {"male": 100, "female": 0}
+          }
+        }
+      ]
     }
   ]
 }
