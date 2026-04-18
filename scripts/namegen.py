@@ -555,14 +555,18 @@ def safe_print(text: str):
         print(text.encode('ascii', 'replace').decode('ascii'))
 
 
-def list_namesets():
-    """List all available namesets."""
+def list_namesets(namespace_filter: Optional[str] = None):
+    """List all available namesets, optionally filtered by namespace prefix."""
     if not custom_namesets:
         print("No namesets found")
         return
 
+    items = sorted(custom_namesets.items())
+    if namespace_filter is not None:
+        items = [(k, v) for k, v in items if k.startswith(f"{namespace_filter}:")]
+
     print("Available namesets:")
-    for nameset_id, nameset in sorted(custom_namesets.items()):
+    for nameset_id, nameset in items:
         name = nameset.get("name", nameset_id)
         setting = nameset.get("setting", "")
         desc = nameset.get("description", "")
@@ -683,8 +687,8 @@ def main():
         print("       Generate name(s) from nameset")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
-        print("  list")
-        print("       List available namesets")
+        print("  list [--namespace NS]")
+        print("       List available namesets (optionally filtered by namespace)")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
@@ -695,6 +699,7 @@ def main():
     group = None
     gender = None
     show_group = False
+    namespace_filter = None
 
     i = 2
     while i < len(sys.argv):
@@ -709,6 +714,9 @@ def main():
             i += 2
         elif sys.argv[i] == "--gender" and i + 1 < len(sys.argv):
             gender = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--namespace" and i + 1 < len(sys.argv):
+            namespace_filter = sys.argv[i + 1]
             i += 2
         elif sys.argv[i] == "--show-group":
             show_group = True
@@ -770,7 +778,7 @@ def main():
         list_groups(nameset)
 
     elif command == "list":
-        list_namesets()
+        list_namesets(namespace_filter=namespace_filter)
 
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
