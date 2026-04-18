@@ -14,6 +14,12 @@ from lib import discover_data
 custom_namesets = {}
 
 
+def _explain(msg: str, enabled: bool) -> None:
+    """Print an [explain] trace line to stderr when enabled. No-op otherwise."""
+    if enabled:
+        print(f"[explain] {msg}", file=sys.stderr)
+
+
 def discover_namesets(repo_root: Path):
     """Discover namesets from campaign folders, tools/data, root namesets/, and user uploads."""
     global custom_namesets
@@ -441,7 +447,8 @@ def build_aggregate_name_with_slots(
     format_name: str = "default",
     tag_filter: Optional[List[str]] = None,
     source_label: Optional[str] = None,
-    gender_weights: Optional[Dict[str, int]] = None
+    gender_weights: Optional[Dict[str, int]] = None,
+    explain: bool = False
 ) -> str:
     """Generate a name from an aggregate using per-slot source policies.
 
@@ -470,6 +477,12 @@ def build_aggregate_name_with_slots(
             sys.exit(1)
     else:
         anchor_source_def = select_weighted_source(sources)
+
+    if explain:
+        anchor_label = anchor_source_def.get("label", anchor_source_def.get("nameset", "?"))
+        anchor_weight = anchor_source_def.get("weight", 1)
+        total_weight = sum(s.get("weight", 1) for s in sources)
+        _explain(f"Anchor source pick: {anchor_label} (weight {anchor_weight}/{total_weight})", explain)
 
     template = get_format_template(aggregate, format_name)
     tokens = parse_format(template)
@@ -507,6 +520,7 @@ def build_aggregate_name_with_slots(
             # Determine source nameset for this slot, plus its override
             chosen_nameset = None
             chosen_override = {}
+            chosen_source_label = None
             if policy == "forced":
                 forced_ref = slot_config.get("nameset")
                 # Look up the matching source_def in the aggregate's sources (for override)
@@ -516,11 +530,13 @@ def build_aggregate_name_with_slots(
                 )
                 if forced_def is not None:
                     chosen_nameset, chosen_override = resolve_source(forced_def)
+                    chosen_source_label = forced_def.get("label", forced_ref)
                 else:
                     # Forced ref not in sources list - resolve directly without override
                     if forced_ref:
                         qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
                         chosen_nameset = custom_namesets.get(qualified) if qualified else None
+                        chosen_source_label = forced_ref
                 if chosen_nameset is None:
                     print(
                         f"Warning: forced slot source '{forced_ref}' not found for slot '{category}', falling back to anchor",
@@ -528,26 +544,35 @@ def build_aggregate_name_with_slots(
                     )
                     chosen_nameset = anchor_nameset
                     chosen_override = anchor_override
+                    chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
             elif policy == "independent":
                 rolled_def = select_weighted_source(sources)
                 chosen_nameset, chosen_override = resolve_source(rolled_def)
+                chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
                 if chosen_nameset is None:
                     chosen_nameset = anchor_nameset
                     chosen_override = anchor_override
+                    chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
             elif policy == "mix":
                 rate = slot_config.get("rate", 0.5)
                 if random.random() < rate:
                     rolled_def = select_weighted_source(sources)
                     chosen_nameset, chosen_override = resolve_source(rolled_def)
+                    chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
                     if chosen_nameset is None:
                         chosen_nameset = anchor_nameset
                         chosen_override = anchor_override
+                        chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
                 else:
                     chosen_nameset = anchor_nameset
                     chosen_override = anchor_override
+                    chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
             else:  # inherit (default)
                 chosen_nameset = anchor_nameset
                 chosen_override = anchor_override
+                chosen_source_label = anchor_source_def.get("label", "?")
+
+            _explain(f"Slot {category}: {policy} -> {chosen_source_label}", explain)
 
             # Pick from this source's category
             if chosen_nameset is None:
@@ -590,7 +615,8 @@ def generate_from_aggregate(
     gender: Optional[str] = None,
     return_source: bool = False,
     tag_filter: Optional[List[str]] = None,
-    format_name: str = "default"
+    format_name: str = "default",
+    explain: bool = False
 ) -> List:
     """Generate names from an aggregate nameset by selecting source, then generating.
 
@@ -607,6 +633,9 @@ def generate_from_aggregate(
     parent_namespace = resolved_id.split(":", 1)[0]
     sources = nameset.get("sources", [])
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
+
+    _explain(f"Nameset: {resolved_id} (aggregate, {len(sources)} sources)", explain)
+    _explain(f"Format: {format_name}", explain)
 
     results = []
     used = set()
@@ -628,6 +657,7 @@ def generate_from_aggregate(
                     tag_filter=tag_filter,
                     source_label=source_label,
                     gender_weights=gender_weights,
+                    explain=explain,
                 )
                 label = source_label or "(slot-aware)"
                 if name and name.lower() not in used:
@@ -662,6 +692,11 @@ def generate_from_aggregate(
             source_nameset = custom_namesets[resolved_source]
             label = selected.get("label", source_nameset_ref)
 
+            if explain:
+                total_w = sum(s.get("weight", 1) for s in sources)
+                this_w = selected.get("weight", 1)
+                _explain(f"Source pick: {label} (weight {this_w}/{total_w}) -> {resolved_source}", explain)
+
             # Per-source overrides: genderWeights biases gender selection
             # for this source; filter ANDs with any user-provided tag_filter.
             override = selected.get("override", {})
@@ -687,6 +722,7 @@ def generate_from_aggregate(
                     gender=selected_gender,
                     format_name=format_name,
                     tag_filter=effective_tag_filter,
+                    explain=explain,
                 )
                 name = sub[0] if sub else ""
             elif "nameGroups" in source_nameset:
@@ -696,6 +732,7 @@ def generate_from_aggregate(
                     gender=selected_gender,
                     format_name=format_name,
                     tag_filter=effective_tag_filter,
+                    explain=explain,
                 )
                 name = sub[0] if sub else ""
             else:
@@ -728,7 +765,8 @@ def generate_from_nameset_with_groups(
     gender: Optional[str] = None,
     return_group: bool = False,
     tag_filter: Optional[List[str]] = None,
-    format_name: str = "default"
+    format_name: str = "default",
+    explain: bool = False
 ) -> List:
     """Generate names from a nameset that uses nameGroups.
 
@@ -747,6 +785,9 @@ def generate_from_nameset_with_groups(
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
     format_str = get_format_template(nameset, format_name)
 
+    _explain(f"Nameset: {resolved} (grouped)", explain)
+    _explain(f"Format: {format_name} -> \"{format_str}\"", explain)
+
     results = []
     used = set()
 
@@ -758,6 +799,11 @@ def generate_from_nameset_with_groups(
             if selected_group not in groups:
                 print(f"Error: Group '{selected_group}' not found", file=sys.stderr)
                 sys.exit(1)
+
+            if explain:
+                total_w = sum(g.get("weight", 1) for g in groups.values())
+                this_w = groups[selected_group].get("weight", 1)
+                _explain(f"Group pick: {selected_group} (weight {this_w}/{total_w})", explain)
 
             group_data = groups[selected_group]
 
@@ -792,7 +838,7 @@ def generate_from_nameset_with_groups(
     return results
 
 
-def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None, tag_filter: Optional[List[str]] = None, format_name: str = "default") -> List[str]:
+def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None, tag_filter: Optional[List[str]] = None, format_name: str = "default", explain: bool = False) -> List[str]:
     """Generate names from a custom nameset.
 
     Accepts both bare IDs (resolved via root namespace fallback) and
@@ -807,6 +853,9 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
     nameset = custom_namesets[resolved]
     format_str = get_format_template(nameset, format_name)
     categories = nameset.get("nameCategories", {})
+
+    _explain(f"Nameset: {resolved} (simple)", explain)
+    _explain(f"Format: {format_name} -> \"{format_str}\"", explain)
 
     # Legacy support for old format
     if not categories and "firstNames" in nameset:
@@ -1180,12 +1229,14 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python namegen.py <command> [options]")
         print("\nCommands:")
-        print("  full --nameset NAME [--count N] [--group G] [--gender G] [--filter TAG ...] [--format NAME]")
+        print("  full --nameset NAME [--count N] [--group G] [--gender G] [--filter TAG ...] [--format NAME] [--explain]")
         print("       Generate name(s) from nameset")
         print("       --filter TAG    Restrict generation to entries with TAG.")
         print("                       Repeat for AND semantics (entries must have ALL tags).")
         print("       --format NAME   Use a named format variant from the nameset's 'formats' map.")
         print("                       Defaults to 'default'. Falls back to legacy 'format' field.")
+        print("       --explain       Print an assembly trace to stderr showing nameset, format,")
+        print("                       source/group picks, and per-slot policy decisions.")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
         print("  list [--namespace NS] [--all] [--verbose] [--tag TAG ...] [--setting NAME] [--type T]")
@@ -1217,6 +1268,7 @@ def main():
     format_name = "default"
     show_hidden = False
     verbose = False
+    explain = False
 
     i = 2
     while i < len(sys.argv):
@@ -1259,6 +1311,9 @@ def main():
         elif sys.argv[i] == "--verbose":
             verbose = True
             i += 1
+        elif sys.argv[i] == "--explain":
+            explain = True
+            i += 1
         else:
             print(f"Unknown option: {sys.argv[i]}", file=sys.stderr)
             sys.exit(1)
@@ -1290,7 +1345,7 @@ def main():
         ns = custom_namesets.get(nameset, {})
         if ns.get("type") == "aggregate":
             # Aggregate nameset - select from sources
-            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter, format_name=format_name)
+            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
             if show_group:
                 for name, src in results:
                     print(f"{name}|{src}")
@@ -1299,7 +1354,7 @@ def main():
                     print(name)
         elif "nameGroups" in ns:
             # Grouped nameset - select from groups
-            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter, format_name=format_name)
+            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
             if show_group:
                 for name, grp in results:
                     print(f"{name}|{grp}")
@@ -1308,7 +1363,7 @@ def main():
                     print(name)
         else:
             # Simple nameset
-            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter, format_name=format_name)
+            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
             for name in names:
                 print(name)
 
