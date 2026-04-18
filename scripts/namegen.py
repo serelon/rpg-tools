@@ -55,6 +55,31 @@ def resolve_nameset_ref(ref: str, current_namespace: str = "") -> Optional[str]:
     return None
 
 
+def get_format_template(nameset: Dict, format_name: str = "default") -> str:
+    """Resolve a nameset's named format to a template string.
+
+    Priority:
+    1. nameset['formats'][format_name] (object with 'template' or string shorthand)
+    2. nameset['formats']['default']
+    3. nameset['format'] (legacy single string)
+    4. Built-in default '{firstName} {lastName}'
+    """
+    formats = nameset.get("formats")
+    if formats:
+        entry = formats.get(format_name)
+        if entry is None and format_name != "default":
+            print(f"Warning: format '{format_name}' not defined, using 'default'", file=sys.stderr)
+            entry = formats.get("default")
+        if entry is None:
+            return "{firstName} {lastName}"
+        if isinstance(entry, str):
+            return entry
+        if isinstance(entry, dict):
+            return entry.get("template", "{firstName} {lastName}")
+    # Legacy fallback
+    return nameset.get("format", "{firstName} {lastName}")
+
+
 def parse_format(format_str: str) -> List[Dict[str, Any]]:
     """Parse a format string into tokens.
 
@@ -297,10 +322,11 @@ def generate_range(min_val: int, max_val: int) -> str:
 def generate_single_name(
     nameset: Dict,
     gender: str,
-    tag_filter: Optional[List[str]] = None
+    tag_filter: Optional[List[str]] = None,
+    format_name: str = "default"
 ) -> str:
     """Generate a single name from a source nameset using its own format and categories."""
-    format_str = nameset.get("format", "{firstName} {lastName}")
+    format_str = get_format_template(nameset, format_name)
     categories = nameset.get("nameCategories", {})
 
     # Legacy support for old format
@@ -320,7 +346,8 @@ def generate_from_aggregate(
     source_label: Optional[str] = None,
     gender: Optional[str] = None,
     return_source: bool = False,
-    tag_filter: Optional[List[str]] = None
+    tag_filter: Optional[List[str]] = None,
+    format_name: str = "default"
 ) -> List:
     """Generate names from an aggregate nameset by selecting source, then generating.
 
@@ -366,7 +393,7 @@ def generate_from_aggregate(
             selected_gender = gender if gender else select_gender(gender_weights)
 
             # Generate from source using source's own format and categories
-            name = generate_single_name(source_nameset, selected_gender, tag_filter=tag_filter)
+            name = generate_single_name(source_nameset, selected_gender, tag_filter=tag_filter, format_name=format_name)
 
             if name.lower() not in used:
                 if return_source:
@@ -392,7 +419,8 @@ def generate_from_nameset_with_groups(
     group: Optional[str] = None,
     gender: Optional[str] = None,
     return_group: bool = False,
-    tag_filter: Optional[List[str]] = None
+    tag_filter: Optional[List[str]] = None,
+    format_name: str = "default"
 ) -> List:
     """Generate names from a nameset that uses nameGroups.
 
@@ -409,7 +437,7 @@ def generate_from_nameset_with_groups(
     nameset = custom_namesets[resolved]
     groups = nameset.get("nameGroups", {})
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
-    format_str = nameset.get("format", "{firstName} {lastName}")
+    format_str = get_format_template(nameset, format_name)
 
     results = []
     used = set()
@@ -456,7 +484,7 @@ def generate_from_nameset_with_groups(
     return results
 
 
-def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None, tag_filter: Optional[List[str]] = None) -> List[str]:
+def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None, tag_filter: Optional[List[str]] = None, format_name: str = "default") -> List[str]:
     """Generate names from a custom nameset.
 
     Accepts both bare IDs (resolved via root namespace fallback) and
@@ -469,7 +497,7 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
         sys.exit(1)
 
     nameset = custom_namesets[resolved]
-    format_str = nameset.get("format", "{firstName} {lastName}")
+    format_str = get_format_template(nameset, format_name)
     categories = nameset.get("nameCategories", {})
 
     # Legacy support for old format
@@ -713,10 +741,12 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python namegen.py <command> [options]")
         print("\nCommands:")
-        print("  full --nameset NAME [--count N] [--group G] [--gender G] [--filter TAG ...]")
+        print("  full --nameset NAME [--count N] [--group G] [--gender G] [--filter TAG ...] [--format NAME]")
         print("       Generate name(s) from nameset")
         print("       --filter TAG    Restrict generation to entries with TAG.")
         print("                       Repeat for AND semantics (entries must have ALL tags).")
+        print("       --format NAME   Use a named format variant from the nameset's 'formats' map.")
+        print("                       Defaults to 'default'. Falls back to legacy 'format' field.")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
         print("  list [--namespace NS]")
@@ -733,6 +763,7 @@ def main():
     show_group = False
     namespace_filter = None
     tag_filter: List[str] = []
+    format_name = "default"
 
     i = 2
     while i < len(sys.argv):
@@ -753,6 +784,9 @@ def main():
             i += 2
         elif sys.argv[i] == "--filter" and i + 1 < len(sys.argv):
             tag_filter.append(sys.argv[i + 1])
+            i += 2
+        elif sys.argv[i] == "--format" and i + 1 < len(sys.argv):
+            format_name = sys.argv[i + 1]
             i += 2
         elif sys.argv[i] == "--show-group":
             show_group = True
@@ -788,7 +822,7 @@ def main():
         ns = custom_namesets.get(nameset, {})
         if ns.get("type") == "aggregate":
             # Aggregate nameset - select from sources
-            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter)
+            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter, format_name=format_name)
             if show_group:
                 for name, src in results:
                     print(f"{name}|{src}")
@@ -797,7 +831,7 @@ def main():
                     print(name)
         elif "nameGroups" in ns:
             # Grouped nameset - select from groups
-            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter)
+            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter, format_name=format_name)
             if show_group:
                 for name, grp in results:
                     print(f"{name}|{grp}")
@@ -806,7 +840,7 @@ def main():
                     print(name)
         else:
             # Simple nameset
-            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter)
+            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter, format_name=format_name)
             for name in names:
                 print(name)
 
