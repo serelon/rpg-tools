@@ -1,0 +1,22 @@
+{
+  "namespace": "test",
+  "namesets": [
+    {
+      "id": "mid-aggregate",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "alpha-leaf", "weight": 100, "label": "alpha"}
+      ]
+    },
+    {
+      "id": "top-aggregate",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "mid-aggregate", "weight": 50, "label": "mid"},
+        {"nameset": "beta-leaf", "weight": 50, "label": "beta"}
+      ]
+    }
+  ]
+}

@@ -383,8 +383,12 @@ def generate_from_aggregate(
             source_nameset_ref = selected["nameset"]
             resolved_source = resolve_nameset_ref(source_nameset_ref, current_namespace=parent_namespace)
             if resolved_source is None:
-                print(f"Error: Source nameset '{source_nameset_ref}' not found", file=sys.stderr)
-                sys.exit(1)
+                print(
+                    f"Warning: Source nameset '{source_nameset_ref}' not found in aggregate '{resolved_id}', skipping",
+                    file=sys.stderr,
+                )
+                attempts += 1
+                continue
 
             source_nameset = custom_namesets[resolved_source]
             label = selected.get("label", source_nameset_ref)
@@ -392,8 +396,30 @@ def generate_from_aggregate(
             # Select gender
             selected_gender = gender if gender else select_gender(gender_weights)
 
-            # Generate from source using source's own format and categories
-            name = generate_single_name(source_nameset, selected_gender, tag_filter=tag_filter, format_name=format_name)
+            # Dispatch by source type: recurse for nested aggregates,
+            # use grouped path for grouped sources, else leaf generator.
+            if source_nameset.get("type") == "aggregate":
+                sub = generate_from_aggregate(
+                    resolved_source,
+                    count=1,
+                    gender=selected_gender,
+                    format_name=format_name,
+                    tag_filter=tag_filter,
+                )
+                name = sub[0] if sub else ""
+            elif "nameGroups" in source_nameset:
+                sub = generate_from_nameset_with_groups(
+                    resolved_source,
+                    count=1,
+                    gender=selected_gender,
+                    format_name=format_name,
+                    tag_filter=tag_filter,
+                )
+                name = sub[0] if sub else ""
+            else:
+                name = generate_single_name(
+                    source_nameset, selected_gender, tag_filter=tag_filter, format_name=format_name
+                )
 
             if name.lower() not in used:
                 if return_source:

@@ -1,0 +1,21 @@
+{
+  "namespace": "other",
+  "namesets": [
+    {
+      "id": "external-leaf",
+      "nameCategories": {
+        "firstName": [{"name": "Ext"}],
+        "lastName": [{"name": "Outer"}]
+      }
+    },
+    {
+      "id": "cross-aggregate",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "external-leaf", "weight": 50, "label": "external-bare"},
+        {"nameset": "test:alpha-leaf", "weight": 50, "label": "test-qualified"}
+      ]
+    }
+  ]
+}
