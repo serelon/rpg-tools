@@ -1179,35 +1179,48 @@ def validate_all() -> Tuple[List[str], List[str]]:
             for source in nameset.get("sources", []):
                 ref = source.get("nameset")
                 if not ref:
-                    errors.append(f"{full_id} \u2014 aggregate source has no 'nameset' field")
+                    errors.append(f"{full_id} - aggregate source has no 'nameset' field")
                     continue
                 resolved = resolve_nameset_ref(ref, current_namespace=ns)
                 if not resolved:
-                    errors.append(f"{full_id} \u2014 source '{ref}' not found")
+                    errors.append(f"{full_id} - source '{ref}' not found")
 
-        # 2. Check formats reference defined categories (skip for aggregates \u2014 they pull cats from sources)
+        # 2. Check formats reference defined categories (skip for aggregates - they pull cats from sources).
+        # Categories vary by nameset shape:
+        #   - nameCategories: keys of that dict
+        #   - nameGroups: implicit {firstName, lastName} (categories built per-group at generation time)
         if nameset.get("type") != "aggregate":
-            categories = set(nameset.get("nameCategories", {}).keys())
-            formats = nameset.get("formats")
-            if formats:
-                for fname, fdef in formats.items():
+            if "nameGroups" in nameset:
+                categories = {"firstName", "lastName"}
+            else:
+                categories = set(nameset.get("nameCategories", {}).keys())
+
+            # Check both legacy `format` string and new `formats` map
+            templates_to_check = []
+            if "formats" in nameset:
+                for fname, fdef in nameset["formats"].items():
                     template = fdef if isinstance(fdef, str) else fdef.get("template", "")
-                    try:
-                        tokens = parse_format(template)
-                    except Exception as e:
-                        errors.append(f"{full_id} \u2014 format '{fname}' parse error: {e}")
-                        continue
-                    for tok in _flatten_tokens(tokens):
-                        if tok.get("type") == "placeholder":
-                            cat = tok["value"]
-                            if cat not in categories:
-                                warnings.append(
-                                    f"{full_id} \u2014 format '{fname}' references undefined category '{{{cat}}}'"
-                                )
+                    templates_to_check.append((fname, template))
+            elif "format" in nameset:
+                templates_to_check.append(("format", nameset["format"]))
+
+            for fname, template in templates_to_check:
+                try:
+                    tokens = parse_format(template)
+                except Exception as e:
+                    errors.append(f"{full_id} - format '{fname}' parse error: {e}")
+                    continue
+                for tok in _flatten_tokens(tokens):
+                    if tok.get("type") == "placeholder":
+                        cat = tok["value"]
+                        if cat not in categories:
+                            warnings.append(
+                                f"{full_id} - format '{fname}' references undefined category '{{{cat}}}'"
+                            )
 
         # 3. Legacy format field warning
         if "format" in nameset and "formats" not in nameset:
-            warnings.append(f"{full_id} \u2014 uses legacy 'format' field, suggest migration to 'formats' map")
+            warnings.append(f"{full_id} - uses legacy 'format' field, suggest migration to 'formats' map")
 
     print(f"\n{len(custom_namesets)} namesets validated, {len(errors)} errors, {len(warnings)} warnings")
     for e in errors:

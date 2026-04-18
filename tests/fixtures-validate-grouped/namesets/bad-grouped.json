@@ -1,0 +1,11 @@
+{
+  "id": "bad-grouped",
+  "format": "{firstName} {epithet}",
+  "nameGroups": {
+    "alpha": {
+      "weight": 100,
+      "firstNames": [{"name": "Test"}],
+      "lastNames": [{"name": "Test"}]
+    }
+  }
+}
