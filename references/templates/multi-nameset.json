@@ -1,0 +1,77 @@
+{
+  "_comment": "TEMPLATE: multi-nameset file. One JSON file may contain N namesets under a top-level 'namesets' array. Reduces filesystem churn when several closely-related namesets belong together (e.g. all the regional variants of one culture).",
+
+  "namespace": "metropolitan",
+  "_comment_namespace": "File-level namespace applies to every contained nameset that does not declare its own. Per-nameset 'namespace' overrides this.",
+
+  "namesets": [
+    {
+      "_comment": "Inherits the file-level 'metropolitan' namespace. Full key: 'metropolitan:russian'.",
+      "id": "russian",
+      "name": "Metropolitan Russian",
+      "description": "Late-imperial / early-Soviet urban Russian names.",
+      "tags": ["historical", "human"],
+      "genderWeights": {"male": 50, "female": 50},
+      "formats": {
+        "default": "{firstName} {patronymic} {lastName}",
+        "short": "{firstName} {lastName}"
+      },
+      "nameCategories": {
+        "firstName": [
+          {"name": "Anya",     "gender": "female"},
+          {"name": "Mikhail",  "gender": "male"},
+          {"name": "Yelena",   "gender": "female"},
+          {"name": "Pyotr",    "gender": "male"}
+        ],
+        "patronymic": [
+          {"name": "Mikhailovna", "gender": "female"},
+          {"name": "Petrovich",   "gender": "male"}
+        ],
+        "lastName": [
+          {"name": "Volkov"},
+          {"name": "Sokolova"},
+          {"name": "Antonov"}
+        ]
+      }
+    },
+    {
+      "_comment": "Sibling nameset, same file. Could be referenced from an aggregate as 'polish' (bare, resolves within metropolitan namespace) or 'metropolitan:polish' (qualified).",
+      "id": "polish",
+      "name": "Metropolitan Polish",
+      "description": "Interwar Warsaw / Krakow urban Polish names.",
+      "tags": ["historical", "human"],
+      "genderWeights": {"male": 50, "female": 50},
+      "formats": {"default": "{firstName} {lastName}"},
+      "nameCategories": {
+        "firstName": [
+          {"name": "Marek",   "gender": "male"},
+          {"name": "Halina",  "gender": "female"},
+          {"name": "Jakub",   "gender": "male"}
+        ],
+        "lastName": [
+          {"name": "Kowalski"},
+          {"name": "Nowak"},
+          {"name": "Wiśniewski"}
+        ]
+      }
+    },
+    {
+      "_comment": "Per-item 'namespace' OVERRIDES the file-level. This nameset lands at 'frontier:russian-emigre' instead of 'metropolitan:russian-emigre'. Useful when one file collects related variants that intentionally span namespaces.",
+      "namespace": "frontier",
+      "id": "russian-emigre",
+      "name": "Russian Émigré (Frontier)",
+      "description": "Russian-descended names of the colonial frontier — drift toward simpler patronymics and adopted local surnames.",
+      "tags": ["frontier", "human", "diaspora"],
+      "extends": "metropolitan:russian",
+      "_comment_extends": "Inherits everything from metropolitan:russian, then applies the overrides below. See extends.json for the full pattern.",
+      "nameCategories": {
+        "firstName": {
+          "add": [
+            {"name": "Tasha", "gender": "female", "tags": ["frontier-coined"]}
+          ],
+          "remove": ["Pyotr"]
+        }
+      }
+    }
+  ]
+}
