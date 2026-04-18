@@ -1,0 +1,15 @@
+{
+  "id": "tagged-test",
+  "nameCategories": {
+    "firstName": [
+      {"name": "Marcus", "gender": "male", "tags": ["patrician", "imperial"]},
+      {"name": "Brutus", "gender": "male", "tags": ["commoner"]},
+      {"name": "Lucia", "gender": "female", "tags": ["patrician"]}
+    ],
+    "lastName": [
+      {"name": "Aurelius", "tags": ["patrician"]},
+      {"name": "Plebius", "tags": ["commoner"]}
+    ]
+  },
+  "format": "{firstName} {lastName}"
+}

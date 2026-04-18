@@ -246,6 +246,23 @@ def filter_by_gender(entries: List[Dict], gender: str, category: Optional[str] =
         return entries
 
 
+def filter_by_tags(entries: List[Dict], tag_filter: Optional[List[str]], category: Optional[str] = None) -> List[Dict]:
+    """Keep only entries whose 'tags' include ALL listed filter tags. Untagged entries don't match.
+
+    If filter is empty/None, returns entries unchanged. If filter excludes everything,
+    warns and returns entries unfiltered.
+    """
+    if not tag_filter:
+        return entries
+    required = set(tag_filter)
+    filtered = [e for e in entries if required.issubset(set(e.get("tags", [])))]
+    if filtered:
+        return filtered
+    if category:
+        print(f"Warning: {category} has no entries matching tags {tag_filter}, using unfiltered", file=sys.stderr)
+    return entries
+
+
 def generate_pattern(pattern: str) -> str:
     """Generate a random string from a pattern.
 
@@ -279,7 +296,8 @@ def generate_range(min_val: int, max_val: int) -> str:
 
 def generate_single_name(
     nameset: Dict,
-    gender: str
+    gender: str,
+    tag_filter: Optional[List[str]] = None
 ) -> str:
     """Generate a single name from a source nameset using its own format and categories."""
     format_str = nameset.get("format", "{firstName} {lastName}")
@@ -293,7 +311,7 @@ def generate_single_name(
         }
 
     # Pass gender to build_name_from_format for filtering at selection time
-    return build_name_from_format(format_str, categories, gender)
+    return build_name_from_format(format_str, categories, gender, tag_filter=tag_filter)
 
 
 def generate_from_aggregate(
@@ -301,7 +319,8 @@ def generate_from_aggregate(
     count: int = 1,
     source_label: Optional[str] = None,
     gender: Optional[str] = None,
-    return_source: bool = False
+    return_source: bool = False,
+    tag_filter: Optional[List[str]] = None
 ) -> List:
     """Generate names from an aggregate nameset by selecting source, then generating.
 
@@ -347,7 +366,7 @@ def generate_from_aggregate(
             selected_gender = gender if gender else select_gender(gender_weights)
 
             # Generate from source using source's own format and categories
-            name = generate_single_name(source_nameset, selected_gender)
+            name = generate_single_name(source_nameset, selected_gender, tag_filter=tag_filter)
 
             if name.lower() not in used:
                 if return_source:
@@ -372,7 +391,8 @@ def generate_from_nameset_with_groups(
     count: int = 1,
     group: Optional[str] = None,
     gender: Optional[str] = None,
-    return_group: bool = False
+    return_group: bool = False,
+    tag_filter: Optional[List[str]] = None
 ) -> List:
     """Generate names from a nameset that uses nameGroups.
 
@@ -418,7 +438,7 @@ def generate_from_nameset_with_groups(
             }
 
             # Pass gender to build_name_from_format for filtering at selection time
-            name = build_name_from_format(format_str, categories, selected_gender)
+            name = build_name_from_format(format_str, categories, selected_gender, tag_filter=tag_filter)
             if name.lower() not in used or count > len(first_names):
                 if return_group:
                     results.append((name, selected_group))
@@ -436,7 +456,7 @@ def generate_from_nameset_with_groups(
     return results
 
 
-def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None) -> List[str]:
+def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None, tag_filter: Optional[List[str]] = None) -> List[str]:
     """Generate names from a custom nameset.
 
     Accepts both bare IDs (resolved via root namespace fallback) and
@@ -466,7 +486,7 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
         attempts = 0
         while attempts < 100:
             # Pass gender to build_name_from_format for filtering at selection time
-            name = build_name_from_format(format_str, categories, gender)
+            name = build_name_from_format(format_str, categories, gender, tag_filter=tag_filter)
             if name.lower() not in used or count > len(categories.get("firstName", [])):
                 names.append(name)
                 used.add(name.lower())
@@ -474,7 +494,7 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
             attempts += 1
         else:
             # Ran out of attempts
-            names.append(build_name_from_format(format_str, categories, gender))
+            names.append(build_name_from_format(format_str, categories, gender, tag_filter=tag_filter))
 
     return names
 
@@ -483,7 +503,8 @@ def build_name_from_tokens(
     tokens: List[Dict[str, Any]],
     categories: Dict[str, List[Dict]],
     gender: Optional[str] = None,
-    in_optional: bool = False
+    in_optional: bool = False,
+    tag_filter: Optional[List[str]] = None
 ) -> str:
     """Build a name from parsed tokens and name categories.
 
@@ -491,6 +512,10 @@ def build_name_from_tokens(
     1. Per-placeholder override: {firstName:male} forces male filtering
     2. Character gender: passed as parameter, applies to placeholders without override
     3. No filtering: if neither is specified
+
+    Tag filtering: when tag_filter is provided, only entries whose 'tags' include
+    ALL listed filter tags are eligible. If filtering excludes everything, falls
+    back to unfiltered with a warning.
 
     When in_optional is True, missing categories are silently skipped.
     """
@@ -508,6 +533,7 @@ def build_name_from_tokens(
                 # Apply gender filtering if gender specified and category has gendered entries
                 if effective_gender and any(e.get("gender") for e in entries):
                     entries = filter_by_gender(entries, effective_gender, category)
+                entries = filter_by_tags(entries, tag_filter, category)
                 entry = select_weighted(entries)
                 result.append(entry["name"])
             elif not in_optional:
@@ -522,7 +548,7 @@ def build_name_from_tokens(
             weight = token.get("weight", 100)
             # Roll against weight percentage
             if random.random() * 100 < weight:
-                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True)
+                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True, tag_filter=tag_filter)
                 if inner_result.strip():  # Only include if non-empty
                     result.append(inner_result)
 
@@ -532,7 +558,8 @@ def build_name_from_tokens(
 def build_name_from_format(
     format_str: str,
     categories: Dict[str, List[Dict]],
-    gender: Optional[str] = None
+    gender: Optional[str] = None,
+    tag_filter: Optional[List[str]] = None
 ) -> str:
     """Build a name from format string and name categories.
 
@@ -540,9 +567,12 @@ def build_name_from_format(
     1. Per-placeholder override: {firstName:male} forces male filtering
     2. Character gender: passed as parameter, applies to placeholders without override
     3. No filtering: if neither is specified
+
+    Tag filtering: when tag_filter is provided, only entries whose 'tags' include
+    ALL listed filter tags are eligible.
     """
     tokens = parse_format(format_str)
-    result = build_name_from_tokens(tokens, categories, gender)
+    result = build_name_from_tokens(tokens, categories, gender, tag_filter=tag_filter)
     # Clean up whitespace: collapse multiple spaces and strip
     return " ".join(result.split())
 
@@ -683,8 +713,10 @@ def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('--help', '-h'):
         print("Usage: python namegen.py <command> [options]")
         print("\nCommands:")
-        print("  full --nameset NAME [--count N] [--group G] [--gender G]")
+        print("  full --nameset NAME [--count N] [--group G] [--gender G] [--filter TAG ...]")
         print("       Generate name(s) from nameset")
+        print("       --filter TAG    Restrict generation to entries with TAG.")
+        print("                       Repeat for AND semantics (entries must have ALL tags).")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
         print("  list [--namespace NS]")
@@ -700,6 +732,7 @@ def main():
     gender = None
     show_group = False
     namespace_filter = None
+    tag_filter: List[str] = []
 
     i = 2
     while i < len(sys.argv):
@@ -717,6 +750,9 @@ def main():
             i += 2
         elif sys.argv[i] == "--namespace" and i + 1 < len(sys.argv):
             namespace_filter = sys.argv[i + 1]
+            i += 2
+        elif sys.argv[i] == "--filter" and i + 1 < len(sys.argv):
+            tag_filter.append(sys.argv[i + 1])
             i += 2
         elif sys.argv[i] == "--show-group":
             show_group = True
@@ -745,11 +781,14 @@ def main():
             sys.exit(1)
         nameset = resolved_nameset
 
+        # Normalize empty tag_filter list to None for downstream calls
+        effective_tag_filter = tag_filter if tag_filter else None
+
         # Check nameset type and generate accordingly
         ns = custom_namesets.get(nameset, {})
         if ns.get("type") == "aggregate":
             # Aggregate nameset - select from sources
-            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group)
+            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter)
             if show_group:
                 for name, src in results:
                     print(f"{name}|{src}")
@@ -758,7 +797,7 @@ def main():
                     print(name)
         elif "nameGroups" in ns:
             # Grouped nameset - select from groups
-            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group)
+            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter)
             if show_group:
                 for name, grp in results:
                     print(f"{name}|{grp}")
@@ -767,7 +806,7 @@ def main():
                     print(name)
         else:
             # Simple nameset
-            names = generate_from_nameset(nameset, count, gender)
+            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter)
             for name in names:
                 print(name)
 
