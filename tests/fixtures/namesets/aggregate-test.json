@@ -1,0 +1,10 @@
+{
+  "id": "aggregate-test",
+  "name": "Aggregate Test",
+  "type": "aggregate",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "sources": [
+    {"nameset": "simple-test", "weight": 100, "label": "simple"}
+  ]
+}

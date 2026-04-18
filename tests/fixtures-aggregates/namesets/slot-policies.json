@@ -1,0 +1,73 @@
+{
+  "namespace": "test",
+  "namesets": [
+    {
+      "id": "japanese-test",
+      "nameCategories": {
+        "firstName": [{"name": "Hiroshi", "gender": "male"}, {"name": "Yuki", "gender": "female"}],
+        "lastName": [{"name": "Yamamoto"}, {"name": "Tanaka"}]
+      }
+    },
+    {
+      "id": "german-test",
+      "nameCategories": {
+        "firstName": [{"name": "Hans", "gender": "male"}, {"name": "Greta", "gender": "female"}],
+        "lastName": [{"name": "Mueller"}, {"name": "Schmidt"}]
+      }
+    },
+    {
+      "id": "diaspora-test",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "german-test", "weight": 50, "label": "de"}
+      ],
+      "slots": {
+        "firstName": {"policy": "inherit"},
+        "lastName": {"policy": "mix", "rate": 0.5}
+      }
+    },
+    {
+      "id": "fully-mixed",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "german-test", "weight": 50, "label": "de"}
+      ],
+      "slots": {
+        "firstName": {"policy": "inherit"},
+        "lastName": {"policy": "independent"}
+      }
+    },
+    {
+      "id": "forced-last",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "german-test", "weight": 50, "label": "de"}
+      ],
+      "slots": {
+        "firstName": {"policy": "inherit"},
+        "lastName": {"policy": "forced", "nameset": "japanese-test"}
+      }
+    },
+    {
+      "id": "override-test",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {
+          "nameset": "japanese-test",
+          "weight": 100,
+          "label": "ja-male-only",
+          "override": {
+            "genderWeights": {"male": 100, "female": 0}
+          }
+        }
+      ]
+    }
+  ]
+}

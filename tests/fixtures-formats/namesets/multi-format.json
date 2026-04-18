@@ -1,0 +1,20 @@
+{
+  "id": "multi-format",
+  "nameCategories": {
+    "firstName": [{"name": "Valentina", "gender": "female"}],
+    "lastName": [{"name": "Celestine"}],
+    "title": [{"name": "Princess", "gender": "female"}],
+    "rank": [{"name": "Cadet"}]
+  },
+  "formats": {
+    "default": "{firstName} {lastName}",
+    "formal": {
+      "template": "{title} {firstName} {lastName}",
+      "when": "Court appearances"
+    },
+    "naval": {
+      "template": "{rank} {lastName}",
+      "when": "Aboard ship"
+    }
+  }
+}

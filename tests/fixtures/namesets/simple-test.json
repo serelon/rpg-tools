@@ -1,0 +1,16 @@
+{
+  "id": "simple-test",
+  "name": "Simple Test",
+  "nameCategories": {
+    "firstName": [
+      {"name": "Alice", "gender": "female"},
+      {"name": "Bob", "gender": "male"},
+      {"name": "Sam", "gender": "unisex"}
+    ],
+    "lastName": [
+      {"name": "Smith"},
+      {"name": "Jones"}
+    ]
+  },
+  "format": "{firstName} {lastName}"
+}

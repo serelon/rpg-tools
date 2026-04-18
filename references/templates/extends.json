@@ -1,0 +1,99 @@
+{
+  "_comment": "TEMPLATE: inheritance via 'extends'. A child nameset inherits everything from its parent (categories, formats, design, tags, gender weights, hidden flag) and then applies overrides. Per-category 'add'/'remove' surgically modifies a parent category without re-listing it.",
+
+  "namespace": "kemic",
+  "namesets": [
+    {
+      "_comment": "PARENT — the canonical Kemic gladiator nameset. Marked hidden because it is intended as an extension base, not a generation target on its own.",
+      "id": "gladiators",
+      "name": "Kemic Gladiators (base)",
+      "description": "Names of the arena fighters of Kem — drawn from the slave-quarters, freedmen, and provincial conscripts.",
+      "setting": "Blood & Spectacle",
+      "tags": ["arena", "slave-class", "human"],
+      "hidden": true,
+
+      "design": {
+        "phonology": "Short, percussive. Many names end in -us, -ax, or hard consonants.",
+        "etymology": "Stage names assigned by lanistas; original names rarely survive.",
+        "convention": "Single name in the arena; documented surname only in the ludus ledger."
+      },
+
+      "genderWeights": {"male": 80, "female": 20},
+      "formats": {
+        "default": "{firstName}",
+        "ledger": {
+          "template": "{firstName} {lastName}",
+          "when": "Ludus ledger entry, ownership documents."
+        }
+      },
+      "nameCategories": {
+        "firstName": [
+          {"name": "Drax",    "gender": "male",   "tags": ["common"]},
+          {"name": "Korvus",  "gender": "male",   "tags": ["common"]},
+          {"name": "Vespa",   "gender": "female", "tags": ["common"]},
+          {"name": "Tarn",    "gender": "male",   "tags": ["common"]}
+        ],
+        "lastName": [
+          {"name": "the Pit"},
+          {"name": "the Tall"},
+          {"name": "House Vorel"}
+        ]
+      }
+    },
+
+    {
+      "_comment": "CHILD — the noble subset. Extends the base, replaces a few low-class entries, switches to a more elaborate format.",
+      "id": "gladiators-noble",
+      "extends": "gladiators",
+      "name": "Kemic Gladiators (noble-blood)",
+      "description": "Disgraced patricians fighting under their own names — the rare exception to the slave-stage convention.",
+      "tags": ["arena", "patrician", "human"],
+      "_comment_tags_override": "Top-level fields like 'tags' replace the parent's value entirely when present in the child. To preserve parent tags, list them all again.",
+
+      "hidden": false,
+
+      "formats": {
+        "_comment": "Top-level 'formats' fully replaces the parent's formats map. Re-declare 'default' here.",
+        "default": "{title} {firstName} of {lastName}"
+      },
+
+      "_comment_nameCategories": "Surgical category edits. Each category may be a full list (replacement) OR an object with 'add'/'remove' (delta). Do not put '_comment' keys inside nameCategories itself — the merge loop would treat them as malformed categories.",
+      "nameCategories": {
+        "firstName": {
+          "add": [
+            {"name": "Aurelian",   "gender": "male",   "tags": ["patrician"]},
+            {"name": "Cassiodora", "gender": "female", "tags": ["patrician"]}
+          ],
+          "remove": ["Drax", "Tarn"]
+        },
+        "title": [
+          {"name": "Lord", "gender": "male"},
+          {"name": "Lady", "gender": "female"}
+        ]
+      }
+    },
+
+    {
+      "_comment": "GRANDCHILD — multi-level chain (gladiators → gladiators-noble → gladiators-noble-exiled). Resolution merges right-to-left: parent first, then each descendant in turn. No circular refs allowed; 'validate' flags cycles.",
+      "id": "gladiators-noble-exiled",
+      "extends": "gladiators-noble",
+      "name": "Kemic Gladiators (exiled patricians)",
+      "description": "Patricians stripped of citizenship; family name forbidden, replaced with a chosen byname.",
+
+      "formats": {
+        "default": "{firstName} {byname}"
+      },
+
+      "nameCategories": {
+        "byname": [
+          {"name": "the Forsworn"},
+          {"name": "Once-of-Kem"},
+          {"name": "Nameless-of-Vorel"}
+        ],
+        "firstName": {
+          "remove": ["Cassiodora"]
+        }
+      }
+    }
+  ]
+}

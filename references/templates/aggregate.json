@@ -1,0 +1,80 @@
+{
+  "_comment": "TEMPLATE: aggregate nameset. Aggregates compose names from multiple source namesets with per-source weights, optional per-source overrides, and per-slot mixing policies.",
+  "_validate_note": "On its own this template will trigger 'source not found' errors from the validate command — the source namesets ('east-asian-evolved', 'core:russian', etc.) are referenced for illustration. Replace them with real nameset IDs from your campaign. Missing sources at runtime degrade gracefully (warn + skip with reduced effective weight pool).",
+
+  "namespace": "longwatch",
+  "_comment_namespace": "Aggregates live in their own namespace; they reference sources by bare ID (resolved within current namespace, then root) or qualified 'namespace:id'.",
+
+  "id": "core-worlds",
+  "name": "Core Worlds Cosmopolitan",
+  "description": "The polyglot population of the inner systems. Mostly old Earth descent with heavy diaspora mixing.",
+  "setting": "The Long Watch",
+  "tags": ["spacefaring", "human", "cosmopolitan"],
+
+  "type": "aggregate",
+  "_comment_type": "Required for aggregates. Without it the loader treats the file as a leaf and the 'sources' array is ignored.",
+
+  "genderWeights": {"male": 50, "female": 50},
+
+  "_comment_formats": "Aggregates have their own formats; the format determines slot identifiers. Source namesets contribute the slot VALUES, not the format itself.",
+
+  "formats": {
+    "default": "{firstName} {lastName}",
+    "naval": {
+      "template": "{rank} {lastName}",
+      "when": "Aboard ship or in formal naval correspondence."
+    }
+  },
+
+  "sources": [
+    {
+      "_comment": "Plain source: weight controls relative probability; label is shown by --show-group and --explain.",
+      "nameset": "east-asian-evolved",
+      "weight": 30,
+      "label": "east-asian"
+    },
+    {
+      "_comment": "Cross-namespace reference: 'core:russian' is the bundled namespace's russian nameset. Per-source override biases gender and filters entries by tag.",
+      "nameset": "core:russian",
+      "weight": 15,
+      "label": "russian-military",
+      "override": {
+        "genderWeights": {"male": 70, "female": 30},
+        "filter": ["military"]
+      }
+    },
+    {
+      "_comment": "Nested aggregate: this source itself resolves to another aggregate, which then picks ITS own source. Generation recurses until a leaf is hit.",
+      "nameset": "frontier-aggregate",
+      "weight": 25,
+      "label": "frontier"
+    },
+    {
+      "nameset": "slavic-evolved",
+      "weight": 20,
+      "label": "slavic"
+    },
+    {
+      "_comment": "If the referenced nameset is missing, validate flags it as an error and runtime degrades gracefully (warn + skip with reduced effective weight pool).",
+      "nameset": "habitat-creole",
+      "weight": 10,
+      "label": "habitat"
+    }
+  ],
+
+  "slots": {
+    "_comment": "Per-slot source-selection policies. The first slot in the format string is the 'anchor' — it always rolls fresh. Other slots default to 'inherit' (same source as the anchor) for coherent names. Override here for diaspora effects.",
+
+    "firstName": {"policy": "inherit"},
+    "_comment_firstName": "First slot is the anchor; 'inherit' is the default for non-anchor slots and is a no-op for the anchor itself.",
+
+    "lastName": {"policy": "mix", "rate": 0.3},
+    "_comment_lastName": "Mix policy: 30% of the time roll independently from sources (cross-mix), 70% inherit the anchor source. Use this for diaspora-rate naming (e.g. Sanskrit first + Scarrow last).",
+
+    "middleName": {"policy": "independent"},
+    "_comment_middleName": "Independent: always roll fresh from sources, ignoring the anchor's choice.",
+
+    "rank": {"policy": "forced", "nameset": "core:naval-ranks"},
+    "_comment_rank": "Forced: always pull this slot from the named nameset, regardless of which source the anchor picked. Useful for cross-cutting axes (titles, ranks, honorifics) shared across all sources."
+  }
+}

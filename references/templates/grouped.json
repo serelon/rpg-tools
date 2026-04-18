@@ -1,0 +1,78 @@
+{
+  "_comment": "TEMPLATE: grouped nameset. Use 'nameGroups' when several sub-populations share format and structure but differ in content. Lighter than aggregates — no separate source files; everything lives in one file.",
+
+  "namespace": "emberfall",
+  "id": "kaldori-tribes",
+  "name": "Kaldori Tribes",
+  "description": "The three highland tribes of the Kaldori uplands. Same naming structure (given + clan-marker), different rosters.",
+  "setting": "Emberfall",
+  "tags": ["highland", "tribal", "human"],
+
+  "design": {
+    "phonology": "Heavy on liquid consonants (l, r) and long vowels. Stress on first syllable.",
+    "structure": "Single given name + 'of the' + clan totem.",
+    "convention": "Tribe affiliation is always spoken; refusing to speak it is a declaration of exile."
+  },
+
+  "genderWeights": {"male": 50, "female": 50},
+
+  "_comment_formats": "Grouped namesets currently expose only the firstName and lastName slots — drawn from each group's 'firstNames' / 'lastNames' arrays. If you need richer slot vocabulary (titles, clans, epithets), use a simple nameset with 'nameCategories' or model each tribe as a separate nameset and combine via an aggregate. Per-format documentation belongs on a sibling _comment_formats key here at the nameset level rather than inside the formats map (the validator iterates formats and would treat _comment as a malformed format entry).",
+  "_validate_note": "The 'validate' command currently warns 'undefined category {firstName}' for grouped namesets because it inspects nameCategories rather than nameGroups. Generation still works correctly — the warning is a known validator limitation.",
+
+  "formats": {
+    "default": "{firstName} of the {lastName}",
+    "short": {
+      "template": "{firstName}",
+      "when": "Within-tribe address; clan is implicit."
+    }
+  },
+
+  "_comment_nameGroups": "Each entry inside nameGroups must be a real group (with weight + firstNames + lastNames). Do NOT put '_comment' keys directly inside nameGroups — the loader iterates nameGroups.values() expecting dicts with 'weight' and would crash on a string. Per-group documentation can go on '_comment' keys INSIDE a group dict (those are unknown keys and ignored).",
+
+  "nameGroups": {
+    "stag-tribe": {
+      "weight": 50,
+      "_comment": "Largest tribe, southern uplands. Names tend toward earth and sky elements.",
+      "firstNames": [
+        {"name": "Aelin",   "gender": "female"},
+        {"name": "Roric",   "gender": "male"},
+        {"name": "Mearas",  "gender": "unisex"}
+      ],
+      "lastNames": [
+        {"name": "Stag"},
+        {"name": "Greenleaf"},
+        {"name": "Stormhorn"}
+      ]
+    },
+
+    "raven-tribe": {
+      "weight": 30,
+      "_comment": "Mid-sized northern tribe. Sharper, harder names.",
+      "firstNames": [
+        {"name": "Korr",    "gender": "male"},
+        {"name": "Vessa",   "gender": "female"},
+        {"name": "Drystan", "gender": "male"}
+      ],
+      "lastNames": [
+        {"name": "Raven"},
+        {"name": "Black-Wing"},
+        {"name": "Ash-Grove"}
+      ]
+    },
+
+    "river-tribe": {
+      "weight": 20,
+      "_comment": "Smallest tribe, lowlanders. Flowing two-syllable names.",
+      "firstNames": [
+        {"name": "Lirael",  "gender": "female"},
+        {"name": "Mavin",   "gender": "male"},
+        {"name": "Senna",   "gender": "unisex"}
+      ],
+      "lastNames": [
+        {"name": "River"},
+        {"name": "Ford-Kin"},
+        {"name": "Silvereel"}
+      ]
+    }
+  }
+}

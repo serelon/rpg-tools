@@ -1,0 +1,19 @@
+{
+  "namespace": "test",
+  "namesets": [
+    {
+      "id": "alpha-leaf",
+      "nameCategories": {
+        "firstName": [{"name": "Aleph"}],
+        "lastName": [{"name": "Anchor"}]
+      }
+    },
+    {
+      "id": "beta-leaf",
+      "nameCategories": {
+        "firstName": [{"name": "Bet"}],
+        "lastName": [{"name": "Beam"}]
+      }
+    }
+  ]
+}

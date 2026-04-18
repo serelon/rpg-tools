@@ -1,0 +1,12 @@
+{
+  "namespace": "test",
+  "id": "child",
+  "extends": "parent",
+  "design": {"convention": "Child convention"},
+  "nameCategories": {
+    "firstName": {
+      "add": [{"name": "Gamma", "gender": "male"}],
+      "remove": ["ToRemove"]
+    }
+  }
+}

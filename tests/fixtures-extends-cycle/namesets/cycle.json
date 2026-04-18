@@ -1,0 +1,7 @@
+{
+  "namespace": "test",
+  "namesets": [
+    {"id": "cycle-a", "extends": "cycle-b", "nameCategories": {"firstName": [{"name": "A"}]}},
+    {"id": "cycle-b", "extends": "cycle-a", "nameCategories": {"firstName": [{"name": "B"}]}}
+  ]
+}

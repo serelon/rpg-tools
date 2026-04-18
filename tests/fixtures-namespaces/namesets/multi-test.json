@@ -1,0 +1,39 @@
+{
+  "namespace": "test",
+  "namesets": [
+    {
+      "id": "alpha",
+      "nameCategories": {
+        "firstName": [{"name": "A"}],
+        "lastName": [{"name": "1"}]
+      }
+    },
+    {
+      "id": "beta",
+      "nameCategories": {
+        "firstName": [{"name": "B"}],
+        "lastName": [{"name": "2"}]
+      }
+    },
+    {
+      "namespace": "override",
+      "id": "gamma-override",
+      "nameCategories": {
+        "firstName": [{"name": "G"}],
+        "lastName": [{"name": "3"}]
+      }
+    },
+    {
+      "id": "delta-hidden",
+      "hidden": true,
+      "tags": ["internal"],
+      "design": {
+        "convention": "Used as aggregate base only"
+      },
+      "nameCategories": {
+        "firstName": [{"name": "D"}],
+        "lastName": [{"name": "4"}]
+      }
+    }
+  ]
+}

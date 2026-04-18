@@ -1,0 +1,74 @@
+{
+  "_comment": "TEMPLATE: simple leaf nameset. Copy to your campaign's namesets/ directory and adapt. JSON has no real comments, so '_comment' / '_comment_*' keys document fields. The loader ignores unknown keys.",
+
+  "namespace": "valdran",
+  "_comment_namespace": "Single-token organizational bucket (era, genre, species, campaign id). 'core' and campaign ids are reserved. Omit for the root '' namespace (v1-style discovery). Cross-references use 'namespace:id'.",
+
+  "id": "harbor-folk",
+  "_comment_id": "Unique within namespace. Lowercase, hyphens preferred. Full key becomes 'valdran:harbor-folk'.",
+
+  "name": "Harbor Folk of Valdran",
+  "description": "Working-class names from the docks and warehouses of the free port of Valdran.",
+  "setting": "The Valdran Coast",
+
+  "tags": ["coastal", "working-class", "human"],
+  "_comment_tags": "Nameset-level tags for cross-namespace filtering on the CLI: --tag coastal. Independent of namespace and per-entry tags.",
+
+  "hidden": false,
+  "_comment_hidden": "If true, omitted from default 'list' output (intended for aggregate-only base namesets). Show with --all.",
+
+  "design": {
+    "_comment": "Optional structured documentation. The tool does not USE this for generation; surfaced by 'validate', 'list --verbose', and '--explain'. Replaces the old habit of stuffing rules into long descriptions.",
+    "phonology": "Hard consonants (k, t, r), short vowels. Avoids dipthongs. Two syllables typical.",
+    "etymology": "First names contracted from old Valdric trade-cant; surnames from trades, ports of origin, or distinguishing marks.",
+    "structure": "Given + occupational/locational byname. No middle names.",
+    "convention": "Spoken given-first in casual settings, surname-first when reporting to harbor authorities."
+  },
+
+  "genderWeights": {"male": 45, "female": 45, "neuter": 10},
+  "_comment_genderWeights": "Arbitrary keys allowed (not just male/female). 'neuter' here covers Valdran's third-gender 'pelagic' tradition. Generation rolls one gender, then cascades it across all categories.",
+
+  "_comment_formats": "Map of named formats. 'default' is required. Each value is either a template string OR an object with 'template' + 'when'. CLI: --format formal. --format ? lists variants. Do not put a '_comment' key inside the formats map itself — the validator iterates it and would parse the comment as a template.",
+
+  "formats": {
+    "default": "{firstName} {lastName}",
+    "formal": {
+      "template": "{title} {firstName} {lastName} of {origin}",
+      "when": "Court business, harbor council, written correspondence."
+    },
+    "lineage": {
+      "template": "{firstName}{ ek-{firstName}}*1-3",
+      "when": "Family-rite recitation. Variable-depth chain repeats the inner group 1 to 3 times for each known ancestor."
+    }
+  },
+
+  "_comment_nameCategories": "Each entry below can carry per-entry 'tags' (filterable via --filter), 'gender' (cascade-aware), and 'frequency' (relative weight; default 1). Categories must be lists of entries — do NOT put '_comment' keys inside nameCategories itself, as the loader would treat them as malformed categories. Comments about a category go on a sibling '_comment_<categoryname>' key here at the nameset level.",
+
+  "nameCategories": {
+    "firstName": [
+      {"name": "Tessa",  "gender": "female",  "frequency": 8, "tags": ["common", "valdric"]},
+      {"name": "Bram",   "gender": "male",    "frequency": 8, "tags": ["common", "valdric"]},
+      {"name": "Kerrin", "gender": "neuter",  "frequency": 3, "tags": ["pelagic"]},
+      {"name": "Sora",   "gender": "female",  "frequency": 5, "tags": ["common"]},
+      {"name": "Halvar", "gender": "male",    "frequency": 4, "tags": ["common", "northern-port"]},
+      {"name": "Iska",   "gender": "unisex",  "frequency": 2, "tags": ["foreign-derived"]}
+    ],
+    "lastName": [
+      {"name": "Netmender",  "tags": ["trade"]},
+      {"name": "Saltcrest",  "tags": ["geographic"]},
+      {"name": "Vael",       "tags": ["valdric"]},
+      {"name": "Pier-Born",  "tags": ["dock"]},
+      {"name": "Quiet-Hand", "tags": ["epithet"]}
+    ],
+    "title": [
+      {"name": "Master",   "gender": "male"},
+      {"name": "Mistress", "gender": "female"},
+      {"name": "Pelagos",  "gender": "neuter"}
+    ],
+    "origin": [
+      {"name": "Old Quay"},
+      {"name": "the Salt Rows"},
+      {"name": "Brackwater"}
+    ]
+  }
+}

@@ -12,6 +12,7 @@ def discover_data(
     *,
     file_pattern: str = "*.json",
     loose_pattern: Optional[str] = None,
+    multi_collection_key: Optional[str] = None,
     on_warning: Optional[Callable[[str], None]] = None
 ) -> Dict[str, Dict[str, Any]]:
     """Discover and load JSON data files of a given type.
@@ -23,6 +24,13 @@ def discover_data(
         file_pattern: Glob pattern for files within the data directory.
         loose_pattern: Optional pattern for loose files in uploads root
                        (e.g., "*-stories.json").
+        multi_collection_key: Optional key name for multi-item file shape. When
+                              provided, files may be a dict with this key
+                              containing a list of items, plus an optional
+                              top-level ``namespace`` field. Returned dict is
+                              keyed by ``f"{namespace}:{id}"`` (qualified keys).
+                              When None, returned dict is keyed by bare IDs
+                              (legacy behavior; required for non-namegen tools).
         on_warning: Optional callback for warning messages. If None, prints to stderr.
 
     Returns:
@@ -121,15 +129,35 @@ def discover_data(
         try:
             with open(path, encoding='utf-8-sig') as f:
                 data = json.load(f)
-                # Normalize to list for uniform processing
-                items_to_process = data if isinstance(data, list) else [data]
+
+                # Determine file-level namespace and items-to-process
+                file_namespace = ""
+                if (
+                    multi_collection_key
+                    and isinstance(data, dict)
+                    and isinstance(data.get(multi_collection_key), list)
+                ):
+                    # Multi-collection file: explode into entries with file-level
+                    # namespace context
+                    file_namespace = data.get("namespace", "") or ""
+                    items_to_process = data[multi_collection_key]
+                else:
+                    # Legacy: list-of-items, or single-item dict
+                    items_to_process = data if isinstance(data, list) else [data]
+
                 for item in items_to_process:
-                    item_id = item.get("id", f"{path.stem}-{len(items)}")
-                    if item_id in items:
-                        on_warning(f"Warning: Duplicate ID '{item_id}' found in {path.name} "
-                                  f"(already loaded from {item_sources[item_id].name})")
-                    items[item_id] = item
-                    item_sources[item_id] = path
+                    bare_id = item.get("id", f"{path.stem}-{len(items)}")
+                    if multi_collection_key:
+                        # Per-item namespace overrides file-level namespace
+                        item_namespace = item.get("namespace", file_namespace) or ""
+                        item_key = f"{item_namespace}:{bare_id}"
+                    else:
+                        item_key = bare_id
+                    if item_key in items:
+                        on_warning(f"Warning: Duplicate ID '{item_key}' found in {path.name} "
+                                  f"(already loaded from {item_sources[item_key].name})")
+                    items[item_key] = item
+                    item_sources[item_key] = path
         except Exception as e:
             on_warning(f"Warning: Could not load {data_type} file {path}: {e}")
 

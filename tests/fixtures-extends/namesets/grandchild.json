@@ -1,0 +1,6 @@
+{
+  "namespace": "test",
+  "id": "grandchild",
+  "extends": "child",
+  "tags": ["specialized"]
+}
