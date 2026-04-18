@@ -1099,6 +1099,75 @@ def list_groups(nameset_id: str):
         print(f"    Last names: {last_count}")
 
 
+def _flatten_tokens(tokens):
+    """Recursively yield all tokens including those nested in optional and repeat groups."""
+    for t in tokens:
+        yield t
+        if t.get("type") == "optional":
+            yield from _flatten_tokens(t["content"])
+        elif t.get("type") == "repeat":
+            yield from _flatten_tokens(t["content"])
+
+
+def validate_all() -> Tuple[List[str], List[str]]:
+    """Validate all loaded namesets. Returns (errors, warnings) lists.
+    Also prints a summary to stdout.
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    known_namespaces = set()
+    for full_id in custom_namesets:
+        ns = full_id.split(":", 1)[0]
+        if ns:
+            known_namespaces.add(ns)
+
+    for full_id, nameset in custom_namesets.items():
+        ns = full_id.split(":", 1)[0]
+
+        # 1. Check aggregate sources resolve
+        if nameset.get("type") == "aggregate":
+            for source in nameset.get("sources", []):
+                ref = source.get("nameset")
+                if not ref:
+                    errors.append(f"{full_id} \u2014 aggregate source has no 'nameset' field")
+                    continue
+                resolved = resolve_nameset_ref(ref, current_namespace=ns)
+                if not resolved:
+                    errors.append(f"{full_id} \u2014 source '{ref}' not found")
+
+        # 2. Check formats reference defined categories (skip for aggregates \u2014 they pull cats from sources)
+        if nameset.get("type") != "aggregate":
+            categories = set(nameset.get("nameCategories", {}).keys())
+            formats = nameset.get("formats")
+            if formats:
+                for fname, fdef in formats.items():
+                    template = fdef if isinstance(fdef, str) else fdef.get("template", "")
+                    try:
+                        tokens = parse_format(template)
+                    except Exception as e:
+                        errors.append(f"{full_id} \u2014 format '{fname}' parse error: {e}")
+                        continue
+                    for tok in _flatten_tokens(tokens):
+                        if tok.get("type") == "placeholder":
+                            cat = tok["value"]
+                            if cat not in categories:
+                                warnings.append(
+                                    f"{full_id} \u2014 format '{fname}' references undefined category '{{{cat}}}'"
+                                )
+
+        # 3. Legacy format field warning
+        if "format" in nameset and "formats" not in nameset:
+            warnings.append(f"{full_id} \u2014 uses legacy 'format' field, suggest migration to 'formats' map")
+
+    print(f"\n{len(custom_namesets)} namesets validated, {len(errors)} errors, {len(warnings)} warnings")
+    for e in errors:
+        print(f"E {e}")
+    for w in warnings:
+        print(f"W {w}")
+    return errors, warnings
+
+
 def main():
     # Find repo root (look for .git or assume parent of tools/)
     script_dir = Path(__file__).parent
@@ -1127,6 +1196,9 @@ def main():
         print("       --tag TAG       Only show namesets having this tag. Repeat for OR semantics.")
         print("       --setting NAME  Only show namesets whose 'setting' field matches.")
         print("       --type T        Filter by type: aggregate, grouped, simple, or any literal type value.")
+        print("  validate")
+        print("       Lint all loaded namesets. Reports errors (broken aggregate refs, undefined")
+        print("       format placeholders) and warnings (legacy 'format' field).")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
@@ -1255,6 +1327,9 @@ def main():
             setting_filter=setting_filter,
             type_filter=type_filter,
         )
+
+    elif command == "validate":
+        validate_all()
 
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
