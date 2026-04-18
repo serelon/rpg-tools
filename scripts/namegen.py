@@ -370,6 +370,8 @@ def generate_from_aggregate(
 
     for _ in range(count):
         attempts = 0
+        name = ""
+        label = "(unresolved)"
         while attempts < 100:
             # Select source by weight (or use forced source)
             if source_label:

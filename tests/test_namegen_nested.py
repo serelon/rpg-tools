@@ -74,17 +74,45 @@ class TestCrossNamespaceAggregate(unittest.TestCase):
 
 
 class TestAggregateRobustness(unittest.TestCase):
-    """Graceful degradation: missing source nameset should warn-and-skip, not crash."""
+    """Graceful degradation: missing source warns and skips, all-missing fails cleanly."""
 
     @classmethod
     def setUpClass(cls):
         fixtures_root = Path(__file__).parent / "fixtures-aggregates"
         namegen.discover_namesets(fixtures_root)
 
+    def setUp(self):
+        random.seed(42)
+
     def test_missing_source_does_not_crash(self):
-        # broken-aggregate (created in next task) - skip if not present
-        if "test:broken-aggregate" not in namegen.custom_namesets:
-            self.skipTest("broken-aggregate fixture not yet created (Task 4.2)")
+        # broken-aggregate has one valid source (alpha-leaf) and one broken
+        # All produced names should come from the valid source
+        for _ in range(20):
+            names = namegen.generate_from_aggregate("test:broken-aggregate", count=1)
+            self.assertEqual(len(names), 1)
+            self.assertIn("Aleph", names[0])
+
+    def test_missing_source_warns_to_stderr(self):
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            namegen.generate_from_aggregate("test:broken-aggregate", count=5)
+        # At least some calls will pick the ghost source and warn
+        self.assertIn("nonexistent-source", buf.getvalue())
+        self.assertIn("not found", buf.getvalue())
+
+    def test_all_sources_missing_returns_empty_or_handles_gracefully(self):
+        # No source resolves; should not raise UnboundLocalError
+        # Acceptable behavior: empty list, or list with empty strings, or warn and return [].
+        # The test just checks: no crash.
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            try:
+                names = namegen.generate_from_aggregate("test:all-missing-aggregate", count=2)
+            except UnboundLocalError:
+                self.fail("generate_from_aggregate should handle all-missing sources without UnboundLocalError")
+            # All-missing is a degenerate case; document whatever the result is
+            # but assert it didn't crash.
+        self.assertIn("not found", buf.getvalue())
 
 
 if __name__ == "__main__":

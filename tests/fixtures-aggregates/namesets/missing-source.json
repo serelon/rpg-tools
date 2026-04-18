@@ -1,0 +1,10 @@
+{
+  "namespace": "test",
+  "id": "broken-aggregate",
+  "type": "aggregate",
+  "formats": {"default": "{firstName} {lastName}"},
+  "sources": [
+    {"nameset": "alpha-leaf", "weight": 100, "label": "alpha"},
+    {"nameset": "nonexistent-source", "weight": 100, "label": "ghost"}
+  ]
+}

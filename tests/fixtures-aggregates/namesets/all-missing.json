@@ -1,0 +1,10 @@
+{
+  "namespace": "test",
+  "id": "all-missing-aggregate",
+  "type": "aggregate",
+  "formats": {"default": "{firstName} {lastName}"},
+  "sources": [
+    {"nameset": "ghost-a", "weight": 50, "label": "a"},
+    {"nameset": "ghost-b", "weight": 50, "label": "b"}
+  ]
+}
