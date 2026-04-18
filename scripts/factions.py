@@ -721,9 +721,23 @@ def find_faction_references(faction_id: str, search_root: Path) -> Dict[str, int
                 print(f"Warning: Could not parse {path} for faction references: {e}", file=sys.stderr)
         return count
 
-    log_refs = _count_refs(
-        search_root / "campaign" / "logs",
-        lambda item: item.get("factions", {}).keys() if isinstance(item.get("factions"), dict) else []
+    def _count_log_refs(log_path: Path, extractor) -> int:
+        """Count entries in campaign/log.json that reference faction_lower (case-insensitive)."""
+        if not log_path.exists():
+            return 0
+        try:
+            with open(log_path, encoding='utf-8-sig') as f:
+                entries = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not parse {log_path} for faction references: {e}", file=sys.stderr)
+            return 0
+        if not isinstance(entries, list):
+            return 0
+        return sum(1 for entry in entries if any(c.lower() == faction_lower for c in extractor(entry)))
+
+    log_refs = _count_log_refs(
+        search_root / "campaign" / "log.json",
+        lambda entry: entry.get("factions", {}).keys() if isinstance(entry.get("factions"), dict) else []
     )
 
     mem_refs = _count_refs(
