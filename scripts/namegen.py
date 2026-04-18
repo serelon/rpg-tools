@@ -36,6 +36,9 @@ def discover_namesets(repo_root: Path):
     else:
         print(f"Loaded {len(custom_namesets)} namesets", file=sys.stderr)
 
+    # Resolve extends inheritance after all namesets are loaded
+    resolve_all_extends()
+
 
 def resolve_nameset_ref(ref: str, current_namespace: str = "") -> Optional[str]:
     """Resolve a nameset reference to a fully-qualified key.
@@ -53,6 +56,73 @@ def resolve_nameset_ref(ref: str, current_namespace: str = "") -> Optional[str]:
     if candidate in custom_namesets:
         return candidate
     return None
+
+
+def resolve_extends_chain(qualified_id: str, seen: Optional[set] = None) -> Dict:
+    """Walk the extends chain and produce a fully-merged nameset.
+
+    Modifies custom_namesets[qualified_id] in place. Idempotent.
+    Raises ValueError on circular extends or missing parent.
+    """
+    if seen is None:
+        seen = set()
+    if qualified_id in seen:
+        raise ValueError(f"Circular extends detected: {qualified_id} in chain {seen}")
+    if qualified_id not in custom_namesets:
+        raise ValueError(f"Cannot resolve extends: {qualified_id} not found")
+
+    nameset = custom_namesets[qualified_id]
+    if "_extends_resolved" in nameset:
+        return nameset
+    if "extends" not in nameset:
+        nameset["_extends_resolved"] = True
+        return nameset
+
+    parent_ref = nameset["extends"]
+    namespace = qualified_id.split(":", 1)[0]
+    parent_qualified = resolve_nameset_ref(parent_ref, current_namespace=namespace)
+    if parent_qualified is None:
+        raise ValueError(f"Parent nameset '{parent_ref}' not found for {qualified_id}")
+
+    seen.add(qualified_id)
+    parent = resolve_extends_chain(parent_qualified, seen)
+    seen.remove(qualified_id)
+
+    # Build merged: start from parent, override with child's fields, merge categories specially
+    merged = dict(parent)
+    merged.pop("_extends_resolved", None)
+
+    for key, value in nameset.items():
+        if key == "extends":
+            continue
+        if key == "nameCategories":
+            merged_cats = dict(parent.get("nameCategories", {}))
+            for cat, child_def in value.items():
+                if isinstance(child_def, dict) and ("add" in child_def or "remove" in child_def):
+                    base_entries = list(merged_cats.get(cat, []))
+                    remove_set = set(child_def.get("remove", []))
+                    base_entries = [e for e in base_entries if e["name"] not in remove_set]
+                    base_entries.extend(child_def.get("add", []))
+                    merged_cats[cat] = base_entries
+                else:
+                    # Full replacement when child specifies a list directly
+                    merged_cats[cat] = child_def
+            merged["nameCategories"] = merged_cats
+        else:
+            merged[key] = value
+
+    merged["_extends_resolved"] = True
+    custom_namesets[qualified_id] = merged
+    return merged
+
+
+def resolve_all_extends():
+    """Resolve all extends chains. Call after discovery."""
+    for qid in list(custom_namesets.keys()):
+        try:
+            resolve_extends_chain(qid)
+        except ValueError as e:
+            print(f"Error resolving extends for {qid}: {e}", file=sys.stderr)
 
 
 def get_format_template(nameset: Dict, format_name: str = "default") -> str:

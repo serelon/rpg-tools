@@ -1,0 +1,17 @@
+{
+  "namespace": "test",
+  "id": "parent",
+  "design": {"convention": "Base convention"},
+  "tags": ["base"],
+  "nameCategories": {
+    "firstName": [
+      {"name": "Alpha", "gender": "male"},
+      {"name": "Beta", "gender": "female"},
+      {"name": "ToRemove", "gender": "unisex"}
+    ],
+    "lastName": [
+      {"name": "Original"}
+    ]
+  },
+  "formats": {"default": "{firstName} {lastName}"}
+}
