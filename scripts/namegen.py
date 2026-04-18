@@ -171,16 +171,41 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
         char = format_str[i]
 
         if char == '{':
-            # Find matching closing brace
-            end = format_str.find('}', i)
-            if end == -1:
-                # No closing brace, treat as literal
+            # Find matching closing brace, accounting for nesting
+            depth = 1
+            start = i + 1
+            j = start
+            while j < len(format_str) and depth > 0:
+                if format_str[j] == '{':
+                    depth += 1
+                elif format_str[j] == '}':
+                    depth -= 1
+                j += 1
+
+            if depth != 0:
+                # Unmatched, treat as literal
                 tokens.append({"type": "literal", "value": char})
                 i += 1
                 continue
 
-            content = format_str[i+1:end]
+            # j is one past the matching closing brace
+            content = format_str[start:j-1]
 
+            # Check for chain quantifier *N-M after the }
+            chain_match = re.match(r'\*(\d+)-(\d+)', format_str[j:])
+            if chain_match:
+                # Chain group - parse inner content recursively (may contain placeholders)
+                inner_tokens = parse_format(content)
+                tokens.append({
+                    "type": "repeat",
+                    "min": int(chain_match.group(1)),
+                    "max": int(chain_match.group(2)),
+                    "content": inner_tokens
+                })
+                i = j + chain_match.end()
+                continue
+
+            # Not a chain - treat content as a single placeholder (or random)
             # Check for category:arg pattern
             if ':' in content:
                 category, arg = content.split(':', 1)
@@ -215,7 +240,7 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
                     "gender": arg  # None if no gender specified
                 })
 
-            i = end + 1
+            i = j
 
         elif char == '[':
             # Find matching closing bracket, accounting for nesting
@@ -862,6 +887,11 @@ def build_name_from_tokens(
                 inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True, tag_filter=tag_filter)
                 if inner_result.strip():  # Only include if non-empty
                     result.append(inner_result)
+        elif token["type"] == "repeat":
+            repeats = random.randint(token["min"], token["max"])
+            for _ in range(repeats):
+                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True, tag_filter=tag_filter)
+                result.append(inner_result)
 
     return "".join(result)
 
