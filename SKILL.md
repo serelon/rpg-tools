@@ -88,14 +88,21 @@ Settings (in pool JSON): `draw_mode` (pop_top/pop_bottom/random), `auto_shuffle`
 
 ### Name Generation
 
-See **[nameset-guide.md](references/nameset-guide.md)** for creating namesets.
+See **[nameset-guide.md](references/nameset-guide.md)** for creating namesets. Templates in **[references/templates/](references/templates/)**.
 
 ```bash
-python scripts/namegen.py list                          # Available namesets
-python scripts/namegen.py full --nameset NAME           # Generate name
+python scripts/namegen.py list                          # Brief list, grouped by namespace
+python scripts/namegen.py list --verbose                # Full detail
+python scripts/namegen.py list --namespace NS --type aggregate --tag TAG
+python scripts/namegen.py full --nameset NAME           # Generate name (bare or namespace:id)
 python scripts/namegen.py full --nameset NAME --count 5 --gender female
+python scripts/namegen.py full --nameset NAME --format formal --filter patrician
+python scripts/namegen.py full --nameset NAME --explain # Show assembly trace
 python scripts/namegen.py groups --nameset NAME         # List groups/sources
+python scripts/namegen.py validate                      # Lint all namesets
 ```
+
+Namesets support: namespaces (`namespace:id`), multi-nameset files, named format variants (`formats.formal`, `formats.naval`), per-entry tags for filtering, design metadata blocks, inheritance via `extends`, hidden flag for aggregate-only base namesets, advanced aggregates (nested, slot policies for cross-mix/diaspora, per-source overrides). All v1 namesets work unchanged.
 
 ### Characters
 
