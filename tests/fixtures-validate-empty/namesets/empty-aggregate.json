@@ -1,0 +1,6 @@
+{
+  "id": "empty-aggregate",
+  "type": "aggregate",
+  "formats": {"default": "{firstName} {lastName}"},
+  "sources": []
+}

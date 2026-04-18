@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Name generation tool for solo RPG games. Uses namesets only."""
 
+import difflib
 import random
 import re
 import sys
@@ -1165,18 +1166,21 @@ def validate_all() -> Tuple[List[str], List[str]]:
     errors: List[str] = []
     warnings: List[str] = []
 
-    known_namespaces = set()
+    # Build namespace -> nameset count for typo detection
+    ns_counts: Dict[str, int] = {}
     for full_id in custom_namesets:
         ns = full_id.split(":", 1)[0]
-        if ns:
-            known_namespaces.add(ns)
+        ns_counts[ns] = ns_counts.get(ns, 0) + 1
 
     for full_id, nameset in custom_namesets.items():
         ns = full_id.split(":", 1)[0]
 
-        # 1. Check aggregate sources resolve
+        # 1. Check aggregate sources resolve, and that the aggregate has any
         if nameset.get("type") == "aggregate":
-            for source in nameset.get("sources", []):
+            sources = nameset.get("sources", [])
+            if not sources:
+                errors.append(f"{full_id} - aggregate has no sources")
+            for source in sources:
                 ref = source.get("nameset")
                 if not ref:
                     errors.append(f"{full_id} - aggregate source has no 'nameset' field")
@@ -1185,7 +1189,15 @@ def validate_all() -> Tuple[List[str], List[str]]:
                 if not resolved:
                     errors.append(f"{full_id} - source '{ref}' not found")
 
-        # 2. Check formats reference defined categories (skip for aggregates - they pull cats from sources).
+        # 2. Check that grouped namesets actually have groups, and simple namesets have categories
+        if nameset.get("type") != "aggregate":
+            if "nameGroups" in nameset:
+                if not nameset["nameGroups"]:
+                    errors.append(f"{full_id} - grouped nameset has empty nameGroups")
+            elif not nameset.get("nameCategories"):
+                errors.append(f"{full_id} - nameset has no nameCategories or nameGroups")
+
+        # 3. Check formats reference defined categories (skip for aggregates - they pull cats from sources).
         # Categories vary by nameset shape:
         #   - nameCategories: keys of that dict
         #   - nameGroups: implicit {firstName, lastName} (categories built per-group at generation time)
@@ -1218,9 +1230,27 @@ def validate_all() -> Tuple[List[str], List[str]]:
                                 f"{full_id} - format '{fname}' references undefined category '{{{cat}}}'"
                             )
 
-        # 3. Legacy format field warning
+        # 4. Legacy format field warning
         if "format" in nameset and "formats" not in nameset:
             warnings.append(f"{full_id} - uses legacy 'format' field, suggest migration to 'formats' map")
+
+    # 5. Namespace typo detection: warn when two namespaces are fuzzy-similar.
+    # Common pattern: a typo creates a near-duplicate namespace with 1 entry,
+    # while the canonical namespace has many.
+    real_namespaces = [n for n in ns_counts if n]
+    seen_pairs: set = set()
+    for ns_name in real_namespaces:
+        others = [n for n in real_namespaces if n != ns_name]
+        for match in difflib.get_close_matches(ns_name, others, n=3, cutoff=0.8):
+            pair = tuple(sorted([ns_name, match]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+            a, b = pair
+            warnings.append(
+                f"namespaces '{a}' ({ns_counts[a]}) and '{b}' ({ns_counts[b]}) "
+                f"look similar - possible typo?"
+            )
 
     print(f"\n{len(custom_namesets)} namesets validated, {len(errors)} errors, {len(warnings)} warnings")
     for e in errors:
@@ -1358,7 +1388,13 @@ def main():
         ns = custom_namesets.get(nameset, {})
         if ns.get("type") == "aggregate":
             # Aggregate nameset - select from sources
-            results = generate_from_aggregate(nameset, count, group, gender, return_source=show_group, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
+            results = generate_from_aggregate(
+                nameset, count, group, gender,
+                return_source=show_group,
+                tag_filter=effective_tag_filter,
+                format_name=format_name,
+                explain=explain,
+            )
             if show_group:
                 for name, src in results:
                     print(f"{name}|{src}")
@@ -1367,7 +1403,13 @@ def main():
                     print(name)
         elif "nameGroups" in ns:
             # Grouped nameset - select from groups
-            results = generate_from_nameset_with_groups(nameset, count, group, gender, return_group=show_group, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
+            results = generate_from_nameset_with_groups(
+                nameset, count, group, gender,
+                return_group=show_group,
+                tag_filter=effective_tag_filter,
+                format_name=format_name,
+                explain=explain,
+            )
             if show_group:
                 for name, grp in results:
                     print(f"{name}|{grp}")
@@ -1376,7 +1418,12 @@ def main():
                     print(name)
         else:
             # Simple nameset
-            names = generate_from_nameset(nameset, count, gender, tag_filter=effective_tag_filter, format_name=format_name, explain=explain)
+            names = generate_from_nameset(
+                nameset, count, gender,
+                tag_filter=effective_tag_filter,
+                format_name=format_name,
+                explain=explain,
+            )
             for name in names:
                 print(name)
 

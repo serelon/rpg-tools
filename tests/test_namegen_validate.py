@@ -62,6 +62,47 @@ class TestValidate(unittest.TestCase):
         self.assertTrue(bad_warnings,
                         f"Expected warning about undefined 'epithet' in grouped nameset: {warnings}")
 
+    def test_empty_aggregate_sources_error(self):
+        fixtures_root = Path(__file__).parent / "fixtures-validate-empty"
+        namegen.discover_namesets(fixtures_root)
+        out_buf = io.StringIO()
+        with redirect_stdout(out_buf):
+            errors, warnings = namegen.validate_all()
+        self.assertTrue(any("empty-aggregate" in e and "no sources" in e for e in errors),
+                        f"Expected empty-sources error: {errors}")
+
+    def test_empty_nameGroups_error(self):
+        fixtures_root = Path(__file__).parent / "fixtures-validate-empty"
+        namegen.discover_namesets(fixtures_root)
+        out_buf = io.StringIO()
+        with redirect_stdout(out_buf):
+            errors, warnings = namegen.validate_all()
+        self.assertTrue(any("empty-grouped" in e and "empty nameGroups" in e for e in errors),
+                        f"Expected empty-nameGroups error: {errors}")
+
+    def test_no_categories_error(self):
+        fixtures_root = Path(__file__).parent / "fixtures-validate-empty"
+        namegen.discover_namesets(fixtures_root)
+        out_buf = io.StringIO()
+        with redirect_stdout(out_buf):
+            errors, warnings = namegen.validate_all()
+        self.assertTrue(any("empty-simple" in e and "no nameCategories" in e for e in errors),
+                        f"Expected no-nameCategories error: {errors}")
+
+    def test_namespace_typo_warning(self):
+        fixtures_root = Path(__file__).parent / "fixtures-validate-typo"
+        namegen.discover_namesets(fixtures_root)
+        out_buf = io.StringIO()
+        with redirect_stdout(out_buf):
+            errors, warnings = namegen.validate_all()
+        typo_warnings = [w for w in warnings if "look similar" in w]
+        self.assertTrue(typo_warnings,
+                        f"Expected namespace typo warning: {warnings}")
+        self.assertTrue(
+            any("metropolitan" in w and "metropoliton" in w for w in typo_warnings),
+            f"Expected pair mentioning metropolitan/metropoliton: {typo_warnings}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

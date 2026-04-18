@@ -1,0 +1,5 @@
+{
+  "id": "empty-grouped",
+  "format": "{firstName} {lastName}",
+  "nameGroups": {}
+}
