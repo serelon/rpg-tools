@@ -613,8 +613,12 @@ def safe_print(text: str):
         print(text.encode('ascii', 'replace').decode('ascii'))
 
 
-def list_namesets(namespace_filter: Optional[str] = None):
-    """List all available namesets, optionally filtered by namespace prefix."""
+def list_namesets(namespace_filter: Optional[str] = None, show_hidden: bool = False):
+    """List all available namesets, optionally filtered by namespace prefix.
+
+    Hidden namesets (with ``"hidden": true``) are excluded by default.
+    Pass ``show_hidden=True`` to include them.
+    """
     if not custom_namesets:
         print("No namesets found")
         return
@@ -622,6 +626,8 @@ def list_namesets(namespace_filter: Optional[str] = None):
     items = sorted(custom_namesets.items())
     if namespace_filter is not None:
         items = [(k, v) for k, v in items if k.startswith(f"{namespace_filter}:")]
+    if not show_hidden:
+        items = [(k, v) for k, v in items if not v.get("hidden", False)]
 
     print("Available namesets:")
     for nameset_id, nameset in items:
@@ -749,8 +755,9 @@ def main():
         print("                       Defaults to 'default'. Falls back to legacy 'format' field.")
         print("  groups --nameset NAME")
         print("       List groups in a nameset")
-        print("  list [--namespace NS]")
+        print("  list [--namespace NS] [--all]")
         print("       List available namesets (optionally filtered by namespace)")
+        print("       --all           Include hidden namesets (excluded by default)")
         sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ('--help', '-h') else 1)
 
     command = sys.argv[1]
@@ -764,6 +771,7 @@ def main():
     namespace_filter = None
     tag_filter: List[str] = []
     format_name = "default"
+    show_hidden = False
 
     i = 2
     while i < len(sys.argv):
@@ -790,6 +798,9 @@ def main():
             i += 2
         elif sys.argv[i] == "--show-group":
             show_group = True
+            i += 1
+        elif sys.argv[i] == "--all":
+            show_hidden = True
             i += 1
         else:
             print(f"Unknown option: {sys.argv[i]}", file=sys.stderr)
@@ -851,7 +862,7 @@ def main():
         list_groups(nameset)
 
     elif command == "list":
-        list_namesets(namespace_filter=namespace_filter)
+        list_namesets(namespace_filter=namespace_filter, show_hidden=show_hidden)
 
     else:
         print(f"Unknown command: {command}", file=sys.stderr)
