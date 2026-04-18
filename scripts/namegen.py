@@ -27,6 +27,7 @@ def discover_namesets(repo_root: Path):
         "namesets",
         repo_root,
         loose_pattern="*-names.json",
+        multi_collection_key="namesets",
         on_warning=on_warning
     )
 
@@ -34,6 +35,24 @@ def discover_namesets(repo_root: Path):
         print("Warning: No namesets found", file=sys.stderr)
     else:
         print(f"Loaded {len(custom_namesets)} namesets", file=sys.stderr)
+
+
+def resolve_nameset_ref(ref: str, current_namespace: str = "") -> Optional[str]:
+    """Resolve a nameset reference to a fully-qualified key.
+
+    Rules:
+    - If ref contains ':', it's already qualified - return if exists, else None.
+    - If ref is bare, try current_namespace first, then root ('').
+    """
+    if ':' in ref:
+        return ref if ref in custom_namesets else None
+    candidate = f"{current_namespace}:{ref}"
+    if candidate in custom_namesets:
+        return candidate
+    candidate = f":{ref}"
+    if candidate in custom_namesets:
+        return candidate
+    return None
 
 
 def parse_format(format_str: str) -> List[Dict[str, Any]]:
@@ -284,8 +303,19 @@ def generate_from_aggregate(
     gender: Optional[str] = None,
     return_source: bool = False
 ) -> List:
-    """Generate names from an aggregate nameset by selecting source, then generating."""
-    nameset = custom_namesets[nameset_id]
+    """Generate names from an aggregate nameset by selecting source, then generating.
+
+    Accepts both bare IDs (resolved via root namespace fallback) and
+    fully-qualified ``namespace:id`` keys. Source nameset references inside
+    the aggregate are resolved relative to the aggregate's own namespace,
+    falling back to root.
+    """
+    resolved_id = resolve_nameset_ref(nameset_id)
+    if resolved_id is None:
+        print(f"Error: Nameset '{nameset_id}' not found", file=sys.stderr)
+        sys.exit(1)
+    nameset = custom_namesets[resolved_id]
+    parent_namespace = resolved_id.split(":", 1)[0]
     sources = nameset.get("sources", [])
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
 
@@ -304,13 +334,14 @@ def generate_from_aggregate(
             else:
                 selected = select_weighted_source(sources)
 
-            source_nameset_id = selected["nameset"]
-            if source_nameset_id not in custom_namesets:
-                print(f"Error: Source nameset '{source_nameset_id}' not found", file=sys.stderr)
+            source_nameset_ref = selected["nameset"]
+            resolved_source = resolve_nameset_ref(source_nameset_ref, current_namespace=parent_namespace)
+            if resolved_source is None:
+                print(f"Error: Source nameset '{source_nameset_ref}' not found", file=sys.stderr)
                 sys.exit(1)
 
-            source_nameset = custom_namesets[source_nameset_id]
-            label = selected.get("label", source_nameset_id)
+            source_nameset = custom_namesets[resolved_source]
+            label = selected.get("label", source_nameset_ref)
 
             # Select gender
             selected_gender = gender if gender else select_gender(gender_weights)
@@ -347,8 +378,15 @@ def generate_from_nameset_with_groups(
 
     If return_group is True, returns list of (name, group) tuples.
     Otherwise returns list of names.
+
+    Accepts both bare IDs (resolved via root namespace fallback) and
+    fully-qualified ``namespace:id`` keys.
     """
-    nameset = custom_namesets[nameset_id]
+    resolved = resolve_nameset_ref(nameset_id)
+    if resolved is None:
+        print(f"Error: Nameset '{nameset_id}' not found", file=sys.stderr)
+        sys.exit(1)
+    nameset = custom_namesets[resolved]
     groups = nameset.get("nameGroups", {})
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
     format_str = nameset.get("format", "{firstName} {lastName}")
@@ -399,13 +437,18 @@ def generate_from_nameset_with_groups(
 
 
 def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str] = None) -> List[str]:
-    """Generate names from a custom nameset."""
-    if nameset_id not in custom_namesets:
+    """Generate names from a custom nameset.
+
+    Accepts both bare IDs (resolved via root namespace fallback) and
+    fully-qualified ``namespace:id`` keys.
+    """
+    resolved = resolve_nameset_ref(nameset_id)
+    if resolved is None:
         print(f"Error: Nameset '{nameset_id}' not found", file=sys.stderr)
         print(f"Available namesets: {', '.join(sorted(custom_namesets.keys()))}", file=sys.stderr)
         sys.exit(1)
 
-    nameset = custom_namesets[nameset_id]
+    nameset = custom_namesets[resolved]
     format_str = nameset.get("format", "{firstName} {lastName}")
     categories = nameset.get("nameCategories", {})
 
@@ -542,32 +585,39 @@ def list_namesets():
 
 
 def list_groups(nameset_id: str):
-    """List groups/sources in a nameset."""
-    if nameset_id not in custom_namesets:
+    """List groups/sources in a nameset.
+
+    Accepts both bare IDs (resolved via root namespace fallback) and
+    fully-qualified ``namespace:id`` keys.
+    """
+    resolved = resolve_nameset_ref(nameset_id)
+    if resolved is None:
         print(f"Error: Nameset '{nameset_id}' not found", file=sys.stderr)
         sys.exit(1)
 
-    nameset = custom_namesets[nameset_id]
+    nameset = custom_namesets[resolved]
+    parent_namespace = resolved.split(":", 1)[0]
 
     # Handle aggregate namesets
     if nameset.get("type") == "aggregate":
         sources = nameset.get("sources", [])
         if not sources:
-            print(f"Nameset '{nameset_id}' has no sources")
+            print(f"Nameset '{resolved}' has no sources")
             return
 
-        print(f"Sources in '{nameset_id}' (aggregate):")
+        print(f"Sources in '{resolved}' (aggregate):")
         total_weight = sum(s.get("weight", 1) for s in sources)
 
         for source in sorted(sources, key=lambda s: s.get("weight", 1), reverse=True):
             weight = source.get("weight", 1)
             pct = (weight / total_weight) * 100
             label = source.get("label", source["nameset"])
-            source_id = source["nameset"]
+            source_ref = source["nameset"]
+            source_resolved = resolve_nameset_ref(source_ref, current_namespace=parent_namespace)
 
             # Check if source exists and get counts
-            if source_id in custom_namesets:
-                src_ns = custom_namesets[source_id]
+            if source_resolved is not None:
+                src_ns = custom_namesets[source_resolved]
                 categories = src_ns.get("nameCategories", {})
                 first_names = categories.get("firstName", [])
                 last_count = len(categories.get("lastName", []))
@@ -576,14 +626,14 @@ def list_groups(nameset_id: str):
                 for n in first_names:
                     g = n.get("gender") or "untagged"
                     gender_counts[g] = gender_counts.get(g, 0) + 1
-                print(f"\n  {label} ({pct:.1f}%) -> {source_id}")
+                print(f"\n  {label} ({pct:.1f}%) -> {source_resolved}")
                 if gender_counts:
                     counts_str = " / ".join(f"{c}{g[0].upper()}" for g, c in sorted(gender_counts.items()))
                     print(f"    Names: {counts_str} / {last_count}L")
                 else:
                     print(f"    Names: {len(first_names)} first / {last_count} last")
             else:
-                print(f"\n  {label} ({pct:.1f}%) -> {source_id} [NOT LOADED]")
+                print(f"\n  {label} ({pct:.1f}%) -> {source_ref} [NOT LOADED]")
 
         return
 
@@ -591,10 +641,10 @@ def list_groups(nameset_id: str):
     groups = nameset.get("nameGroups", {})
 
     if not groups:
-        print(f"Nameset '{nameset_id}' does not use groups")
+        print(f"Nameset '{resolved}' does not use groups")
         return
 
-    print(f"Groups in '{nameset_id}':")
+    print(f"Groups in '{resolved}':")
     total_weight = sum(g.get("weight", 1) for g in groups.values())
 
     for group_id, group in sorted(groups.items()):
@@ -678,6 +728,14 @@ def main():
             print("Error: --nameset is required", file=sys.stderr)
             print("Use 'python namegen.py list' to see available namesets", file=sys.stderr)
             sys.exit(1)
+
+        # Resolve bare or qualified nameset reference
+        resolved_nameset = resolve_nameset_ref(nameset)
+        if resolved_nameset is None:
+            print(f"Error: Nameset '{nameset}' not found", file=sys.stderr)
+            print(f"Available namesets: {', '.join(sorted(custom_namesets.keys()))}", file=sys.stderr)
+            sys.exit(1)
+        nameset = resolved_nameset
 
         # Check nameset type and generate accordingly
         ns = custom_namesets.get(nameset, {})

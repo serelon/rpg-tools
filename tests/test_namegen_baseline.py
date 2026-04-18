@@ -19,17 +19,17 @@ class NamegenBaseline(unittest.TestCase):
         random.seed(42)  # Deterministic generation
 
     def test_simple_nameset_loads(self):
-        self.assertIn("simple-test", namegen.custom_namesets)
+        self.assertIn(":simple-test", namegen.custom_namesets)
 
     def test_aggregate_nameset_loads(self):
-        self.assertIn("aggregate-test", namegen.custom_namesets)
+        self.assertIn(":aggregate-test", namegen.custom_namesets)
         self.assertEqual(
-            namegen.custom_namesets["aggregate-test"].get("type"), "aggregate"
+            namegen.custom_namesets[":aggregate-test"].get("type"), "aggregate"
         )
 
     def test_grouped_nameset_loads(self):
-        self.assertIn("grouped-test", namegen.custom_namesets)
-        self.assertIn("nameGroups", namegen.custom_namesets["grouped-test"])
+        self.assertIn(":grouped-test", namegen.custom_namesets)
+        self.assertIn("nameGroups", namegen.custom_namesets[":grouped-test"])
 
     def test_simple_generation_produces_two_words(self):
         names = namegen.generate_from_nameset("simple-test", count=1)

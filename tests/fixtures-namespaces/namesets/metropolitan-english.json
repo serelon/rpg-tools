@@ -1,0 +1,8 @@
+{
+  "namespace": "metropolitan",
+  "id": "english",
+  "nameCategories": {
+    "firstName": [{"name": "James", "gender": "male"}],
+    "lastName": [{"name": "Smith"}]
+  }
+}
