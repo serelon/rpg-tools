@@ -1,0 +1,18 @@
+{
+  "id": "grouped-test",
+  "name": "Grouped Test",
+  "genderWeights": {"male": 50, "female": 50},
+  "format": "{firstName} {lastName}",
+  "nameGroups": {
+    "alpha": {
+      "weight": 50,
+      "firstNames": [{"name": "Anna", "gender": "female"}],
+      "lastNames": [{"name": "Aldridge"}]
+    },
+    "beta": {
+      "weight": 50,
+      "firstNames": [{"name": "Bram", "gender": "male"}],
+      "lastNames": [{"name": "Beaumont"}]
+    }
+  }
+}
