@@ -86,3 +86,10 @@ Flow: `feature/xyz` → `develop` → `stable`
 - Always create a feature branch before implementing changes from plan mode.
 - When creating PRs that fix issues, include "Closes #N" in the PR body to auto-close on merge.
 - After merging, verify related issues are closed. If not auto-closed, close them manually with a comment referencing the PR.
+
+## Deferred / Tech Debt
+
+### Nameset schema
+
+- **Nested namespaces** — Current resolver enforces exactly two segments (`namespace:id`, single colon). In practice, campaigns like Emberfall would benefit from nesting (`emberfall:caldworth:humans`, `emberfall:velundhar:*`) to represent sub-settings within a campaign scope. Supporting this would require: multi-segment key format, resolver walking up the hierarchy for bare-ref fallback, and guide/docs reflow. Non-trivial. Until then, sub-settings fold into campaign namespace with tags for disambiguation.
+- **Nameset-guide examples** — The "Setting" row in the Recommended Namespace Taxonomy table (`references/nameset-guide.md`) uses `valdran`, `caldworth`, `solramis` as examples of "specific worlds shared across campaigns." In practice these are all scoped *inside* a single campaign namespace — the "shared across campaigns" criterion isn't the real use case. Either drop the examples, replace with genuinely-shared examples (if any exist), or restructure the tier to reflect how settings actually get scoped.
