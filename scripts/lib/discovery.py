@@ -6,6 +6,30 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 
 
+#: Subfolder names excluded from recursive discovery. ``archive/`` is the
+#: established convention for shelving data without deleting it (e.g.
+#: ``memories/archive/sophie-arc/``); dot- and underscore-prefixed folders
+#: are treated as hidden/scratch.
+_EXCLUDED_DIR_NAMES = {"archive"}
+
+
+def _dir_files(data_dir: Path, file_pattern: str) -> List[Path]:
+    """Collect data files under a data-type directory, recursively.
+
+    Subfolders are organizational (e.g. ``characters/ice-age/``,
+    ``characters/crew/``) and their contents load as first-class data.
+    Folders named ``archive`` (or prefixed with ``.``/``_``) are skipped.
+    """
+    results: List[Path] = []
+    for p in sorted(data_dir.rglob(file_pattern)):
+        parts = p.relative_to(data_dir).parts[:-1]
+        if any(part in _EXCLUDED_DIR_NAMES or part.startswith((".", "_"))
+               for part in parts):
+            continue
+        results.append(p)
+    return results
+
+
 def discover_data(
     data_type: str,
     search_root: Path,
@@ -56,14 +80,14 @@ def discover_data(
     # 1. Look in {data_type}/ relative to search root
     data_dir = search_root / data_type
     if data_dir.exists():
-        data_paths.extend(data_dir.glob(file_pattern))
+        data_paths.extend(_dir_files(data_dir, file_pattern))
 
     # 2. Check parent directories if nothing found yet
     if not data_paths:
         for parent in [search_root.parent, search_root.parent.parent]:
             data_dir = parent / data_type
             if data_dir.exists():
-                data_paths.extend(data_dir.glob(file_pattern))
+                data_paths.extend(_dir_files(data_dir, file_pattern))
                 break
 
     # 3. Look in campaigns/*/{data_type}/ (check search_root and ancestors)
@@ -76,7 +100,7 @@ def discover_data(
                 if campaign_dir.is_dir():
                     type_dir = campaign_dir / data_type
                     if type_dir.exists():
-                        data_paths.extend(type_dir.glob(file_pattern))
+                        data_paths.extend(_dir_files(type_dir, file_pattern))
             break
     # Also check from cwd if different from search_root
     if not campaigns_found:
@@ -88,23 +112,23 @@ def discover_data(
                     if campaign_dir.is_dir():
                         type_dir = campaign_dir / data_type
                         if type_dir.exists():
-                            data_paths.extend(type_dir.glob(file_pattern))
+                            data_paths.extend(_dir_files(type_dir, file_pattern))
                 break
 
     # 4. Look in tools/data/{data_type}/
     tools_data = search_root / "tools" / "data" / data_type
     if tools_data.exists():
-        data_paths.extend(tools_data.glob(file_pattern))
+        data_paths.extend(_dir_files(tools_data, file_pattern))
 
     # 5. Look in skill mount (Claude.ai skill environment)
     skill_data = Path("/mnt/skills/user/rpg-tools/tools/data") / data_type
     if skill_data.exists():
-        data_paths.extend(skill_data.glob(file_pattern))
+        data_paths.extend(_dir_files(skill_data, file_pattern))
 
     # 6. Look in user uploads (Claude.ai environment)
     uploads_data = Path("/mnt/user-data/uploads") / data_type
     if uploads_data.exists():
-        data_paths.extend(uploads_data.glob(file_pattern))
+        data_paths.extend(_dir_files(uploads_data, file_pattern))
 
     # 7. Check for loose files in uploads root
     if loose_pattern:
@@ -119,7 +143,19 @@ def discover_data(
             if subdir.is_dir():
                 type_dir = subdir / data_type
                 if type_dir.exists():
-                    data_paths.extend(type_dir.glob(file_pattern))
+                    data_paths.extend(_dir_files(type_dir, file_pattern))
+
+    # De-duplicate discovered paths: the same file is often found via more
+    # than one search step (e.g. cwd inside a campaign + the campaigns/* scan),
+    # which previously produced spurious "duplicate ID" warnings against itself.
+    seen_paths = set()
+    unique_paths: List[Path] = []
+    for path in data_paths:
+        key = path.resolve()
+        if key not in seen_paths:
+            seen_paths.add(key)
+            unique_paths.append(path)
+    data_paths = unique_paths
 
     # Track sources for duplicate detection
     item_sources: Dict[str, Path] = {}

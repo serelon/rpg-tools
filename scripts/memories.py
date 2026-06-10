@@ -45,7 +45,10 @@ def validate_connections() -> None:
                     break
 
         if chars_dir.exists():
-            for path in chars_dir.glob("*.json"):
+            for path in chars_dir.rglob("*.json"):
+                rel_parts = path.relative_to(chars_dir).parts[:-1]
+                if any(p == "archive" or p.startswith((".", "_")) for p in rel_parts):
+                    continue
                 try:
                     with open(path, encoding='utf-8-sig') as f:
                         char = json.load(f)
@@ -63,7 +66,10 @@ def validate_connections() -> None:
                     break
 
         if locs_dir.exists():
-            for path in locs_dir.glob("*.json"):
+            for path in locs_dir.rglob("*.json"):
+                rel_parts = path.relative_to(locs_dir).parts[:-1]
+                if any(p == "archive" or p.startswith((".", "_")) for p in rel_parts):
+                    continue
                 try:
                     with open(path, encoding='utf-8-sig') as f:
                         data = json.load(f)
