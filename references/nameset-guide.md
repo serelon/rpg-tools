@@ -555,15 +555,25 @@ Aggregates compose names from multiple source namesets with weighted selection. 
 }
 ```
 
-How it works:
+There are **two aggregate modes**, selected by whether the aggregate declares a `slots` map:
+
+**Source-picking mode (no `slots`)** — the default. Used for composing *different naming styles*:
+
+1. Tool picks one source by weight.
+2. Generates the **entire name from that source**, using **the source's own format and categories**.
+3. The aggregate's `format`/`formats` is *not* applied — each source renders in its own structural style.
+
+This is the mode to use when your sources are structurally different (single-word vs `{title} {name} of {x} and {y}` vs CamelCase handle): each leaf keeps its own format, and the aggregate just weights between them. (When the aggregate is asked for a non-`default` format name via `--format X`, that name is passed down and the source renders with *its* `formats.X`, falling back to its `formats.default`.)
+
+**Slot-aware mode (has `slots`)** — used for *diaspora mixing* within one shared structure:
 
 1. Tool picks a source by weight (the **anchor** source).
 2. For each format slot, applies the slot policy (default `inherit` for non-anchor slots) to pick a source.
 3. Generates the slot value from that source's categories.
-4. Combines using the aggregate's format.
+4. Combines using **the aggregate's** format. (Here, and only here, the sources' own formats are bypassed — sources supply slot *values*, not structure.)
 
-`--group <label>` forces a specific anchor source.
-`--show-group` prints the anchor label alongside the result.
+`--group <label>` forces a specific source (source-picking) or anchor source (slot-aware).
+`--show-group` prints the source/anchor label alongside the result.
 
 ### Per-source overrides
 
@@ -635,7 +645,7 @@ If a source nameset is missing at generation time, the tool warns and skips it (
 
 ### Format variants on aggregates
 
-`--format naval` selects the aggregate's `formats.naval` template. Slots in the variant pull values from sources per the slot policies. The source's *own* formats are not used when the source is being consumed as an aggregate source.
+`--format naval` selects the aggregate's `formats.naval` template. **This applies only in slot-aware mode** (an aggregate with a `slots` map): slots in the variant pull values from sources per the slot policies, and the sources' own formats are bypassed. In source-picking mode (no `slots`), the aggregate has no governing format of its own — the `--format` name is passed *down* to the chosen source, which renders with its own `formats.<name>` (falling back to its `formats.default`). See [the two aggregate modes](#simple-aggregate).
 
 ---
 
