@@ -711,6 +711,11 @@ def generate_from_aggregate(
             else:
                 effective_tag_filter = tag_filter
 
+            # Per-source format override forces a specific named format on this
+            # source (e.g. assigning different name-shapes to repeated sources of
+            # the same leaf). Falls back to the format requested of the aggregate.
+            effective_format = override.get("format", format_name)
+
             # Select gender (using effective weights)
             selected_gender = gender if gender else select_gender(effective_gender_weights)
 
@@ -721,7 +726,7 @@ def generate_from_aggregate(
                     resolved_source,
                     count=1,
                     gender=selected_gender,
-                    format_name=format_name,
+                    format_name=effective_format,
                     tag_filter=effective_tag_filter,
                     explain=explain,
                 )
@@ -731,14 +736,14 @@ def generate_from_aggregate(
                     resolved_source,
                     count=1,
                     gender=selected_gender,
-                    format_name=format_name,
+                    format_name=effective_format,
                     tag_filter=effective_tag_filter,
                     explain=explain,
                 )
                 name = sub[0] if sub else ""
             else:
                 name = generate_single_name(
-                    source_nameset, selected_gender, tag_filter=effective_tag_filter, format_name=format_name
+                    source_nameset, selected_gender, tag_filter=effective_tag_filter, format_name=effective_format
                 )
 
             if name.lower() not in used:
