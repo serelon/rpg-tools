@@ -442,6 +442,25 @@ def generate_single_name(
     return build_name_from_format(format_str, categories, gender, tag_filter=tag_filter)
 
 
+def get_name_categories(nameset: dict) -> dict:
+    """Return a nameset's nameCategories, normalizing legacy v1 namesets.
+
+    v1 namesets carry top-level firstNames/lastNames arrays instead of a
+    nameCategories map. The leaf and grouped generators convert these inline;
+    this helper exposes the same conversion to the slot-aware aggregate path,
+    so a `forced` slot can pull e.g. {lastName} from a v1 people nameset.
+    """
+    categories = nameset.get("nameCategories")
+    if categories:
+        return categories
+    if "firstNames" in nameset or "lastNames" in nameset:
+        return {
+            "firstName": nameset.get("firstNames", []),
+            "lastName": nameset.get("lastNames", []),
+        }
+    return {}
+
+
 def build_aggregate_name_with_slots(
     aggregate_id: str,
     gender: Optional[str],
@@ -578,11 +597,11 @@ def build_aggregate_name_with_slots(
             # Pick from this source's category
             if chosen_nameset is None:
                 continue
-            source_categories = chosen_nameset.get("nameCategories", {})
+            source_categories = get_name_categories(chosen_nameset)
             entries = source_categories.get(category, [])
             if not entries and anchor_nameset is not None and anchor_nameset is not chosen_nameset:
                 # Fall back to anchor for this category
-                source_categories = anchor_nameset.get("nameCategories", {})
+                source_categories = get_name_categories(anchor_nameset)
                 entries = source_categories.get(category, [])
             if not entries:
                 continue
@@ -711,6 +730,11 @@ def generate_from_aggregate(
             else:
                 effective_tag_filter = tag_filter
 
+            # Per-source format override forces a specific named format on this
+            # source (e.g. assigning different name-shapes to repeated sources of
+            # the same leaf). Falls back to the format requested of the aggregate.
+            effective_format = override.get("format", format_name)
+
             # Select gender (using effective weights)
             selected_gender = gender if gender else select_gender(effective_gender_weights)
 
@@ -721,7 +745,7 @@ def generate_from_aggregate(
                     resolved_source,
                     count=1,
                     gender=selected_gender,
-                    format_name=format_name,
+                    format_name=effective_format,
                     tag_filter=effective_tag_filter,
                     explain=explain,
                 )
@@ -731,14 +755,14 @@ def generate_from_aggregate(
                     resolved_source,
                     count=1,
                     gender=selected_gender,
-                    format_name=format_name,
+                    format_name=effective_format,
                     tag_filter=effective_tag_filter,
                     explain=explain,
                 )
                 name = sub[0] if sub else ""
             else:
                 name = generate_single_name(
-                    source_nameset, selected_gender, tag_filter=effective_tag_filter, format_name=format_name
+                    source_nameset, selected_gender, tag_filter=effective_tag_filter, format_name=effective_format
                 )
 
             if name.lower() not in used:
