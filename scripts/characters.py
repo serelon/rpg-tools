@@ -133,11 +133,15 @@ def format_full(char: Dict) -> str:
             else:
                 lines.append(f"- \"{sample}\"")
 
-    # Handle any additional fields in full
+    # Handle any additional fields in full (e.g. transformation, combat, powers)
     known_fields = {"appearance", "personality", "background", "motivations", "voice_samples"}
     for key, value in full.items():
         if key not in known_fields:
-            lines.append(f"\n## {key.replace('_', ' ').title()}\n{value}")
+            lines.append(f"\n## {key.replace('_', ' ').title()}")
+            if isinstance(value, (dict, list)):
+                lines.extend(format_value(value))
+            else:
+                lines.append(str(value))
 
     return "\n".join(lines)
 

@@ -109,11 +109,15 @@ Choose sections based on character type:
 - Description: What can they do?
 - Mechanics: How does it work? Triggers? Limits? Costs?
 - Applies to: magic, psychic, cybernetics, augments, supernatural, etc.
+- **Place inside `full`, not `sections`** — fight-relevant blocks (powers, combat,
+  transformation) must come along when a GM loads `--depth full` for a combat or
+  transformed scene; extra keys in `full` are rendered automatically.
 
 **Combat** (only for characters who fight):
 - Weapons, tactics, fighting style
 - Weaknesses, limitations
 - Skip entirely for non-combatants
+- **Place inside `full`, not `sections`** (same rule as powers)
 
 **Relationships**:
 - Key connections with brief context
