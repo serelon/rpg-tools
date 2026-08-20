@@ -26,6 +26,11 @@ Create character JSON files for the incremental character loading system. Files 
 
   "minimal": {
     "role": "Their role/position",
+    "demographics": {
+      "dob": "1998-06-02 (setting-calendar date; see DOB policy below)",
+      "gender": "female",
+      "pronouns": "she/her"
+    },
     "essence": "35 words max. Core personality, key background, distinguishing trait.",
     "voice": "One quote that captures their speaking style."
   },
@@ -35,21 +40,67 @@ Create character JSON files for the incremental character loading system. Files 
     "personality": "How they act, contradictions, flaws, triggers",
     "background": "Only what's relevant - evocative > exhaustive",
     "motivations": "What they want and why",
+    "internal_conflict": "The tension they live inside — what pulls against what",
+    "fatal_flaw": "The built-in failure mode; how this character breaks or is broken",
     "voice_samples": [
       {"context": "situation/mood", "line": "dialogue"},
       {"context": "different situation", "line": "different dialogue"}
-    ]
+    ],
+    "powers": {},
+    "combat": {},
+    "relationships": {}
   },
 
   "sections": {
-    "relationships": {},
-    "powers": {},
-    "combat": {},
     "timeline": [],
     "secrets": ""
   }
 }
 ```
+
+## Schema Rules
+
+**The schema is a floor, not a ceiling.** The example keys are the minimum shape; `minimal`,
+`full`, and `sections` are all extensible. When converting a character from another
+format (markdown profile, session capture), **every source block must be mapped to a home**
+— invent a key rather than drop content that lacks an obvious one. Flattening to the
+example's literal keys is the anti-pattern that loses data.
+
+**Demographics (mandatory in `minimal`):** `dob`, `gender`, `pronouns`. Campaign-conventional
+extras (ethnicity, origin) are welcome.
+
+- **DOB policy:** mandatory whenever the campaign's calendar is *anchored* — invent the exact
+  number if it was never recorded. Deferrable only while the calendar itself is deferred or
+  unanchored (then record what is known relatively, e.g. age). Precision is to the day unless
+  the setting itself counts coarser (season-counting cultures record what they would actually
+  record).
+- Record DOB, not age — an age is a snapshot that rots; a date never does.
+
+**Psych trio (mandatory in `full` for protagonists and major characters):**
+`motivations` / `internal_conflict` / `fatal_flaw`. These must be *articulated as fields*,
+not left implicit in the personality prose — forced articulation is what keeps them alive
+through migrations.
+
+**Personas (`full.personas`, optional shape):** for characters who are genuinely more than
+one person to the world — secret identities, functional persona systems, masks with their
+own voices. One entry per persona: `who`, `when`, `speech`, `tells`, `voice_samples`.
+Appearance, register, and even personality may vary per persona; the top-level `appearance`
+and `personality` then describe the whole and the seams. When personas carry the voice,
+file voice samples per persona rather than in the top-level `voice_samples`.
+
+**Powers are mechanics; exemplars are prose.** A power/form entry must be
+*adjudication-complete on its own*: what it does, limits, costs, triggers, what it can't do.
+A GM must be able to run a scene from the profile alone. Links to exemplar memories
+(`"exemplar": "exemplar-id"`) supply *how it reads on the page* — craft reference,
+never load-bearing canon. A missing exemplar degrades prose quality, never correctness.
+
+**Constructs and companions get their own character file** (specs in their `full` block),
+with a `creator` field and cross-links in `relationships` on both sides — never embedded
+as a block inside their owner's profile.
+
+**Campaign-level schema additions:** a campaign may declare additional required fields
+(e.g. a power-classification notation) in its own CLAUDE.md or schema note. Captures and
+migrations in that campaign must follow the campaign's declared additions.
 
 ## Workflow
 
@@ -68,6 +119,7 @@ Create the minimal profile first:
 - **faction/subfaction**: Group they belong to (links to faction tracker - see [Creating Factions](faction-guide.md))
 - **tags**: Relevant labels (protagonist, antagonist, psychic, military, etc.)
 - **role**: Their position or function (max 10 words)
+- **demographics**: dob, gender, pronouns (mandatory — see Schema Rules for the DOB policy)
 - **essence**: 35 words MAX. Distill to core personality + key background + distinguishing trait
 - **voice**: One quote that reveals character, not just exposition
 
@@ -100,6 +152,10 @@ Other full profile fields - adapt as needed:
 - **personality**: How they act, not just beliefs. Include contradictions.
 - **background**: Only what's story-relevant. Avoid exhaustive life history.
 - **motivations**: Short-term and long-term wants
+- **internal_conflict** / **fatal_flaw**: Mandatory for protagonists and major characters
+  (see Schema Rules) — articulate them as fields, don't bury them in personality prose
+- **personas**: If the character is more than one person to the world, use the
+  `full.personas` shape from Schema Rules
 
 ### Step 5: Add Relevant Sections
 
@@ -145,7 +201,14 @@ Save to `characters/{id}.json`
 - Duplicating information between essence and full profile
 - Including combat section for non-combatants
 - Describing powers without mechanics
+- Power entries that are aesthetic captions instead of rules — each must be
+  adjudication-complete without its exemplar
 - More than 35 words in essence
+- Flattening a source profile to the example's literal keys during conversion —
+  every source block gets a home
+- Recording age instead of date of birth
+- Embedding a construct/companion inside its owner's profile instead of linking
+  to its own file
 
 ## Example: Minimal-Only Character
 
