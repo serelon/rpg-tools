@@ -18,10 +18,14 @@ def _dir_files(data_dir: Path, file_pattern: str) -> List[Path]:
 
     Subfolders are organizational (e.g. ``characters/ice-age/``,
     ``characters/crew/``) and their contents load as first-class data.
-    Folders named ``archive`` (or prefixed with ``.``/``_``) are skipped.
+    Folders named ``archive`` (or prefixed with ``.``/``_``) are skipped,
+    as are ``.``/``_``-prefixed files (sidecar metadata such as a cluster's
+    ``_cluster.json`` bundle module lives beside the data without loading).
     """
     results: List[Path] = []
     for p in sorted(data_dir.rglob(file_pattern)):
+        if p.name.startswith((".", "_")):
+            continue
         parts = p.relative_to(data_dir).parts[:-1]
         if any(part in _EXCLUDED_DIR_NAMES or part.startswith((".", "_"))
                for part in parts):
