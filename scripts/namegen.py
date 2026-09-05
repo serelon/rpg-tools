@@ -297,6 +297,55 @@ def parse_format(format_str: str) -> List[Dict[str, Any]]:
     return tokens
 
 
+def _render_tokens(
+    tokens: List[Dict[str, Any]],
+    resolve_placeholder,
+    in_optional: bool = False,
+) -> Tuple[str, bool]:
+    """Render parsed format tokens using a caller-supplied placeholder resolver.
+
+    ``resolve_placeholder(token, in_optional)`` returns the text for a
+    placeholder token, or ``None`` when the category can't be satisfied.
+
+    Returns ``(text, ok)``. ``ok`` is False when any placeholder *at this
+    level* failed to resolve. An optional section is included only when its
+    own placeholders all resolved — so ``[ af {station}]`` drops the whole
+    section (particle included) when there is no station, instead of leaking
+    a dangling literal. A failed nested optional never fails its parent.
+    """
+    result = []
+    ok = True
+
+    for token in tokens:
+        ttype = token["type"]
+        if ttype == "literal":
+            result.append(token["value"])
+        elif ttype == "placeholder":
+            text = resolve_placeholder(token, in_optional)
+            if text is None:
+                ok = False
+            else:
+                result.append(text)
+        elif ttype == "random":
+            if "range" in token:
+                result.append(generate_range(token["range"][0], token["range"][1]))
+            elif "pattern" in token:
+                result.append(generate_pattern(token["pattern"]))
+        elif ttype == "optional":
+            weight = token.get("weight", 100)
+            if random.random() * 100 < weight:
+                inner_text, inner_ok = _render_tokens(token["content"], resolve_placeholder, in_optional=True)
+                if inner_ok and inner_text.strip():
+                    result.append(inner_text)
+        elif ttype == "repeat":
+            repeats = random.randint(token["min"], token["max"])
+            for _ in range(repeats):
+                inner_text, _inner_ok = _render_tokens(token["content"], resolve_placeholder, in_optional=True)
+                result.append(inner_text)
+
+    return "".join(result), ok
+
+
 def select_weighted(entries: List[Dict]) -> Dict:
     """Select an entry using frequency weighting."""
     total_frequency = sum(entry.get("frequency", 1) for entry in entries)
@@ -485,7 +534,8 @@ def build_aggregate_name_with_slots(
     selected here (after anchor resolution) so the anchor's
     `override.genderWeights` can bias the choice.
 
-    Optional/repeat tokens are not honoured here; they are silently skipped.
+    Optional sections work as in simple namesets: ``[ af {station}]`` is
+    dropped whole when the resolved source has no ``station`` category.
     """
     aggregate = custom_namesets[aggregate_id]
     aggregate_namespace = aggregate_id.split(":", 1)[0]
@@ -531,44 +581,51 @@ def build_aggregate_name_with_slots(
         effective_gw = anchor_override.get("genderWeights", gender_weights)
         gender = select_gender(effective_gw)
 
-    result = []
-    for token in tokens:
-        if token["type"] == "literal":
-            result.append(token["value"])
-        elif token["type"] == "placeholder":
-            category = token["value"]
-            slot_config = slots.get(category, {"policy": "inherit"})
-            policy = slot_config.get("policy", "inherit")
+    def resolve_slot(token, _in_optional):
+        """Resolve one placeholder via its slot policy; None if unsatisfiable."""
+        category = token["value"]
+        slot_config = slots.get(category, {"policy": "inherit"})
+        policy = slot_config.get("policy", "inherit")
 
-            # Determine source nameset for this slot, plus its override
-            chosen_nameset = None
-            chosen_override = {}
-            chosen_source_label = None
-            if policy == "forced":
-                forced_ref = slot_config.get("nameset")
-                # Look up the matching source_def in the aggregate's sources (for override)
-                forced_def = next(
-                    (s for s in sources if s.get("nameset") == forced_ref),
-                    None,
+        # Determine source nameset for this slot, plus its override
+        chosen_nameset = None
+        chosen_override = {}
+        chosen_source_label = None
+        if policy == "forced":
+            forced_ref = slot_config.get("nameset")
+            # Look up the matching source_def in the aggregate's sources (for override)
+            forced_def = next(
+                (s for s in sources if s.get("nameset") == forced_ref),
+                None,
+            )
+            if forced_def is not None:
+                chosen_nameset, chosen_override = resolve_source(forced_def)
+                chosen_source_label = forced_def.get("label", forced_ref)
+            else:
+                # Forced ref not in sources list - resolve directly without override
+                if forced_ref:
+                    qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
+                    chosen_nameset = custom_namesets.get(qualified) if qualified else None
+                    chosen_source_label = forced_ref
+            if chosen_nameset is None:
+                print(
+                    f"Warning: forced slot source '{forced_ref}' not found for slot '{category}', falling back to anchor",
+                    file=sys.stderr,
                 )
-                if forced_def is not None:
-                    chosen_nameset, chosen_override = resolve_source(forced_def)
-                    chosen_source_label = forced_def.get("label", forced_ref)
-                else:
-                    # Forced ref not in sources list - resolve directly without override
-                    if forced_ref:
-                        qualified = resolve_nameset_ref(forced_ref, current_namespace=aggregate_namespace)
-                        chosen_nameset = custom_namesets.get(qualified) if qualified else None
-                        chosen_source_label = forced_ref
-                if chosen_nameset is None:
-                    print(
-                        f"Warning: forced slot source '{forced_ref}' not found for slot '{category}', falling back to anchor",
-                        file=sys.stderr,
-                    )
-                    chosen_nameset = anchor_nameset
-                    chosen_override = anchor_override
-                    chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
-            elif policy == "independent":
+                chosen_nameset = anchor_nameset
+                chosen_override = anchor_override
+                chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
+        elif policy == "independent":
+            rolled_def = select_weighted_source(sources)
+            chosen_nameset, chosen_override = resolve_source(rolled_def)
+            chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
+            if chosen_nameset is None:
+                chosen_nameset = anchor_nameset
+                chosen_override = anchor_override
+                chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
+        elif policy == "mix":
+            rate = slot_config.get("rate", 0.5)
+            if random.random() < rate:
                 rolled_def = select_weighted_source(sources)
                 chosen_nameset, chosen_override = resolve_source(rolled_def)
                 chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
@@ -576,78 +633,62 @@ def build_aggregate_name_with_slots(
                     chosen_nameset = anchor_nameset
                     chosen_override = anchor_override
                     chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
-            elif policy == "mix":
-                rate = slot_config.get("rate", 0.5)
-                if random.random() < rate:
-                    rolled_def = select_weighted_source(sources)
-                    chosen_nameset, chosen_override = resolve_source(rolled_def)
-                    chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
-                    if chosen_nameset is None:
-                        chosen_nameset = anchor_nameset
-                        chosen_override = anchor_override
-                        chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
-                else:
-                    chosen_nameset = anchor_nameset
-                    chosen_override = anchor_override
-                    chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
-            elif policy == "pool":
-                # Slot-private source list: with probability `rate` draw from the
-                # pool (weighted, never anchor-eligible), else inherit the anchor.
-                # Lets a lastName-only leaf feed a slot without ever being picked
-                # as anchor, and lets one slot mix at a different rate than another.
-                rate = slot_config.get("rate", 1.0)
-                pool = slot_config.get("sources", [])
-                if pool and random.random() < rate:
-                    rolled_def = select_weighted_source(pool)
-                    chosen_nameset, chosen_override = resolve_source(rolled_def)
-                    chosen_source_label = "pool:" + rolled_def.get("label", rolled_def.get("nameset", "?"))
-                    if chosen_nameset is None:
-                        chosen_nameset = anchor_nameset
-                        chosen_override = anchor_override
-                        chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
-                else:
-                    chosen_nameset = anchor_nameset
-                    chosen_override = anchor_override
-                    chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
-            else:  # inherit (default)
+            else:
                 chosen_nameset = anchor_nameset
                 chosen_override = anchor_override
-                chosen_source_label = anchor_source_def.get("label", "?")
+                chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
+        elif policy == "pool":
+            # Slot-private source list: with probability `rate` draw from the
+            # pool (weighted, never anchor-eligible), else inherit the anchor.
+            # Lets a lastName-only leaf feed a slot without ever being picked
+            # as anchor, and lets one slot mix at a different rate than another.
+            rate = slot_config.get("rate", 1.0)
+            pool = slot_config.get("sources", [])
+            if pool and random.random() < rate:
+                rolled_def = select_weighted_source(pool)
+                chosen_nameset, chosen_override = resolve_source(rolled_def)
+                chosen_source_label = "pool:" + rolled_def.get("label", rolled_def.get("nameset", "?"))
+                if chosen_nameset is None:
+                    chosen_nameset = anchor_nameset
+                    chosen_override = anchor_override
+                    chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
+            else:
+                chosen_nameset = anchor_nameset
+                chosen_override = anchor_override
+                chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
+        else:  # inherit (default)
+            chosen_nameset = anchor_nameset
+            chosen_override = anchor_override
+            chosen_source_label = anchor_source_def.get("label", "?")
 
-            _explain(f"Slot {category}: {policy} -> {chosen_source_label}", explain)
+        _explain(f"Slot {category}: {policy} -> {chosen_source_label}", explain)
 
-            # Pick from this source's category
-            if chosen_nameset is None:
-                continue
-            source_categories = get_name_categories(chosen_nameset)
+        # Pick from this source's category
+        if chosen_nameset is None:
+            return None
+        source_categories = get_name_categories(chosen_nameset)
+        entries = source_categories.get(category, [])
+        if not entries and anchor_nameset is not None and anchor_nameset is not chosen_nameset:
+            # Fall back to anchor for this category
+            source_categories = get_name_categories(anchor_nameset)
             entries = source_categories.get(category, [])
-            if not entries and anchor_nameset is not None and anchor_nameset is not chosen_nameset:
-                # Fall back to anchor for this category
-                source_categories = get_name_categories(anchor_nameset)
-                entries = source_categories.get(category, [])
-            if not entries:
-                continue
+        if not entries:
+            return None
 
-            effective_gender = token.get("gender") or gender
-            if effective_gender and any(e.get("gender") for e in entries):
-                entries = filter_by_gender(entries, effective_gender, category)
-            # Per-source filter override ANDs with user-provided tag_filter.
-            override_filter = chosen_override.get("filter", [])
-            effective_tag_filter = list(tag_filter or []) + list(override_filter)
-            if effective_tag_filter:
-                entries = filter_by_tags(entries, effective_tag_filter, category)
-            if not entries:
-                continue
-            entry = select_weighted(entries)
-            result.append(entry["name"])
-        elif token["type"] == "random":
-            if "range" in token:
-                result.append(generate_range(token["range"][0], token["range"][1]))
-            elif "pattern" in token:
-                result.append(generate_pattern(token["pattern"]))
-        # optional/repeat tokens not handled here (rare in aggregates) — skip silently
+        effective_gender = token.get("gender") or gender
+        if effective_gender and any(e.get("gender") for e in entries):
+            entries = filter_by_gender(entries, effective_gender, category)
+        # Per-source filter override ANDs with user-provided tag_filter.
+        override_filter = chosen_override.get("filter", [])
+        effective_tag_filter = list(tag_filter or []) + list(override_filter)
+        if effective_tag_filter:
+            entries = filter_by_tags(entries, effective_tag_filter, category)
+        if not entries:
+            return None
+        return select_weighted(entries)["name"]
 
-    return " ".join("".join(result).split())
+    text, _ok = _render_tokens(tokens, resolve_slot)
+    return " ".join(text.split())
 
 
 def generate_from_aggregate(
@@ -969,47 +1010,28 @@ def build_name_from_tokens(
     ALL listed filter tags are eligible. If filtering excludes everything, falls
     back to unfiltered with a warning.
 
-    When in_optional is True, missing categories are silently skipped.
+    When in_optional is True, missing categories are silently skipped, and the
+    enclosing optional section is dropped whole (see ``_render_tokens``).
     """
-    result = []
 
-    for token in tokens:
-        if token["type"] == "literal":
-            result.append(token["value"])
-        elif token["type"] == "placeholder":
-            category = token["value"]
-            if category in categories and categories[category]:
-                entries = categories[category]
-                # Determine effective gender: per-placeholder override takes precedence
-                effective_gender = token.get("gender") or gender
-                # Apply gender filtering if gender specified and category has gendered entries
-                if effective_gender and any(e.get("gender") for e in entries):
-                    entries = filter_by_gender(entries, effective_gender, category)
-                entries = filter_by_tags(entries, tag_filter, category)
-                entry = select_weighted(entries)
-                result.append(entry["name"])
-            elif not in_optional:
-                # Warn only for top-level missing categories, not optional content
-                print(f"Warning: Format references undefined or empty category '{category}'", file=sys.stderr)
-        elif token["type"] == "random":
-            if "range" in token:
-                result.append(generate_range(token["range"][0], token["range"][1]))
-            elif "pattern" in token:
-                result.append(generate_pattern(token["pattern"]))
-        elif token["type"] == "optional":
-            weight = token.get("weight", 100)
-            # Roll against weight percentage
-            if random.random() * 100 < weight:
-                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True, tag_filter=tag_filter)
-                if inner_result.strip():  # Only include if non-empty
-                    result.append(inner_result)
-        elif token["type"] == "repeat":
-            repeats = random.randint(token["min"], token["max"])
-            for _ in range(repeats):
-                inner_result = build_name_from_tokens(token["content"], categories, gender, in_optional=True, tag_filter=tag_filter)
-                result.append(inner_result)
+    def resolve(token, inner_optional):
+        category = token["value"]
+        if category in categories and categories[category]:
+            entries = categories[category]
+            # Determine effective gender: per-placeholder override takes precedence
+            effective_gender = token.get("gender") or gender
+            # Apply gender filtering if gender specified and category has gendered entries
+            if effective_gender and any(e.get("gender") for e in entries):
+                entries = filter_by_gender(entries, effective_gender, category)
+            entries = filter_by_tags(entries, tag_filter, category)
+            return select_weighted(entries)["name"]
+        if not inner_optional:
+            # Warn only for top-level missing categories, not optional content
+            print(f"Warning: Format references undefined or empty category '{category}'", file=sys.stderr)
+        return None
 
-    return "".join(result)
+    text, _ok = _render_tokens(tokens, resolve, in_optional=in_optional)
+    return text
 
 
 def build_name_from_format(

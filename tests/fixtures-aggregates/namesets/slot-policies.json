@@ -107,6 +107,26 @@
       }
     },
     {
+      "id": "station-test",
+      "hidden": true,
+      "nameCategories": {
+        "firstName": [{"name": "Kalle"}],
+        "lastName": [{"name": "Rask"}],
+        "station": [{"name": "Kalix"}, {"name": "Torne"}]
+      },
+      "formats": {"default": "{firstName} {lastName}"}
+    },
+    {
+      "id": "optional-particle",
+      "type": "aggregate",
+      "formats": {"default": "{firstName}[ af {station}]"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "station-test", "weight": 50, "label": "st"}
+      ],
+      "slots": {"station": {"policy": "inherit"}}
+    },
+    {
       "id": "override-test",
       "type": "aggregate",
       "formats": {"default": "{firstName} {lastName}"},

@@ -23,6 +23,14 @@ class TestFormatVariants(unittest.TestCase):
         names = namegen.generate_from_nameset("multi-format", count=1, format_name="naval")
         self.assertEqual(names[0], "Cadet Celestine")
 
+    def test_optional_section_with_literal_drops_whole_when_unresolved(self):
+        # An empty category inside "[ af {station}]" must drop the particle too,
+        # not leak "Regina af".
+        names = namegen.generate_from_nameset("optional-particle", count=1, format_name="station")
+        self.assertEqual(names[0], "Regina")
+        names = namegen.generate_from_nameset("optional-particle", count=1, format_name="inscription")
+        self.assertEqual(names[0], "Regina Awad")
+
     def test_unknown_format_warns_and_uses_default(self):
         # Should not crash
         names = namegen.generate_from_nameset("multi-format", count=1, format_name="nonexistent")

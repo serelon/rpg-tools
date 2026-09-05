@@ -497,6 +497,8 @@ Add a percentage weight to control inclusion probability when the content is ava
 
 Without a weight, optional sections are included whenever their content resolves (effectively 100%).
 
+A section is dropped **whole** if any placeholder inside it fails to resolve — literals included. So `{firstName}[ af {station}]` renders as just the given name when there is no station, never as `"Regina af"`. This is the right way to attach particles, honorifics and connectives to a category that some sources lack. Optional sections work identically in aggregates: a slot that resolves to a source without the category drops the section.
+
 Nested optionals work:
 
 ```json

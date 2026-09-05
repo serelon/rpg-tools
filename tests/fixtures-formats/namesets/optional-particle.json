@@ -1,0 +1,13 @@
+{
+  "id": "optional-particle",
+  "nameCategories": {
+    "firstName": [{"name": "Regina"}],
+    "lastName": [{"name": "Awad"}],
+    "station": []
+  },
+  "formats": {
+    "default": "{firstName} {lastName}",
+    "station": "{firstName}[ af {station}]",
+    "inscription": "{firstName} {lastName}[ af {station}]"
+  }
+}

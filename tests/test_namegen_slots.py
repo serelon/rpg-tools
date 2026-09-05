@@ -95,6 +95,23 @@ class TestSlotPolicies(unittest.TestCase):
         self.assertGreater(pooled, 30, f"expected pooled surnames at rate 0.5, got {pooled}")
         self.assertGreater(inherited, 30, f"expected inherited surnames at rate 0.5, got {inherited}")
 
+    def test_optional_section_drops_particle_when_slot_unsatisfiable(self):
+        # "{firstName}[ af {station}]": ja source has no station -> bare given name,
+        # station-test has one -> "Kalle af Kalix". Never a dangling " af".
+        with_station = 0
+        without = 0
+        for _ in range(100):
+            name = namegen.generate_from_aggregate("test:optional-particle", count=1)[0]
+            self.assertFalse(name.endswith("af"), f"dangling particle: {name!r}")
+            if " af " in name:
+                self.assertIn(name.split(" af ")[1], {"Kalix", "Torne"})
+                with_station += 1
+            else:
+                self.assertIn(name, JA_FIRST)
+                without += 1
+        self.assertGreater(with_station, 0)
+        self.assertGreater(without, 0)
+
     def test_validate_flags_missing_pool_source(self):
         errors, _warnings = namegen.validate_all()
         self.assertTrue(
