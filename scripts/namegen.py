@@ -477,6 +477,9 @@ def build_aggregate_name_with_slots(
     - independent: roll a fresh source for this slot
     - mix with rate N (0..1): N probability of independent, else inherit
     - forced with nameset "...": always pull from the named source
+    - pool with sources [...] and rate N (default 1.0): N probability of
+      drawing from the slot's own weighted source list, else inherit.
+      Pool sources are never anchor-eligible.
 
     If `gender` is None and `gender_weights` is provided, the gender is
     selected here (after anchor resolution) so the anchor's
@@ -579,6 +582,25 @@ def build_aggregate_name_with_slots(
                     rolled_def = select_weighted_source(sources)
                     chosen_nameset, chosen_override = resolve_source(rolled_def)
                     chosen_source_label = rolled_def.get("label", rolled_def.get("nameset", "?"))
+                    if chosen_nameset is None:
+                        chosen_nameset = anchor_nameset
+                        chosen_override = anchor_override
+                        chosen_source_label = anchor_source_def.get("label", "?") + " (fallback)"
+                else:
+                    chosen_nameset = anchor_nameset
+                    chosen_override = anchor_override
+                    chosen_source_label = anchor_source_def.get("label", "?") + " (inherit)"
+            elif policy == "pool":
+                # Slot-private source list: with probability `rate` draw from the
+                # pool (weighted, never anchor-eligible), else inherit the anchor.
+                # Lets a lastName-only leaf feed a slot without ever being picked
+                # as anchor, and lets one slot mix at a different rate than another.
+                rate = slot_config.get("rate", 1.0)
+                pool = slot_config.get("sources", [])
+                if pool and random.random() < rate:
+                    rolled_def = select_weighted_source(pool)
+                    chosen_nameset, chosen_override = resolve_source(rolled_def)
+                    chosen_source_label = "pool:" + rolled_def.get("label", rolled_def.get("nameset", "?"))
                     if chosen_nameset is None:
                         chosen_nameset = anchor_nameset
                         chosen_override = anchor_override
@@ -890,6 +912,20 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
         }
 
     gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
+
+    # A tag filter can leave only one gender's entries in the anchor category
+    # (e.g. --filter patrician --filter imperial matching a single male name).
+    # Restrict the gender roll to the genders actually present in the filtered
+    # pool so the cascade never forces a fallback to unfiltered entries.
+    if gender is None and tag_filter:
+        anchor_entries = categories.get("firstName") or next(iter(categories.values()), [])
+        required = set(tag_filter)
+        matching = [e for e in anchor_entries if required.issubset(set(e.get("tags", [])))]
+        present = {e.get("gender") for e in matching}
+        if matching and not (None in present or "unisex" in present):
+            restricted = {g: w for g, w in gender_weights.items() if g in present}
+            if restricted:
+                gender_weights = restricted
 
     names = []
     used = set()
@@ -1218,6 +1254,30 @@ def validate_all() -> Tuple[List[str], List[str]]:
                 resolved = resolve_nameset_ref(ref, current_namespace=ns)
                 if not resolved:
                     errors.append(f"{full_id} - source '{ref}' not found")
+
+            # 1b. Pool-policy slots carry their own source lists: refs must
+            # resolve (error) and should actually hold the slot's category
+            # (warning) — otherwise every roll silently falls back to anchor.
+            for slot_name, slot_cfg in nameset.get("slots", {}).items():
+                if not isinstance(slot_cfg, dict) or slot_cfg.get("policy") != "pool":
+                    continue
+                pool = slot_cfg.get("sources", [])
+                if not pool:
+                    errors.append(f"{full_id} - slot '{slot_name}' has policy 'pool' but no sources")
+                for psrc in pool:
+                    pref = psrc.get("nameset") if isinstance(psrc, dict) else None
+                    if not pref:
+                        errors.append(f"{full_id} - slot '{slot_name}' pool source has no 'nameset' field")
+                        continue
+                    presolved = resolve_nameset_ref(pref, current_namespace=ns)
+                    if not presolved:
+                        errors.append(f"{full_id} - slot '{slot_name}' pool source '{pref}' not found")
+                        continue
+                    pcats = get_name_categories(custom_namesets.get(presolved, {}))
+                    if slot_name not in pcats or not pcats.get(slot_name):
+                        warnings.append(
+                            f"{full_id} - slot '{slot_name}' pool source '{pref}' has no '{slot_name}' entries"
+                        )
 
         # 2. Check that grouped namesets actually have groups, and simple namesets have categories
         if nameset.get("type") != "aggregate":

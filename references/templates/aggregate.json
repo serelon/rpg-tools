@@ -75,6 +75,16 @@
     "_comment_middleName": "Independent: always roll fresh from sources, ignoring the anchor's choice.",
 
     "rank": {"policy": "forced", "nameset": "core:naval-ranks"},
-    "_comment_rank": "Forced: always pull this slot from the named nameset, regardless of which source the anchor picked. Useful for cross-cutting axes (titles, ranks, honorifics) shared across all sources."
+    "_comment_rank": "Forced: always pull this slot from the named nameset, regardless of which source the anchor picked. Useful for cross-cutting axes (titles, ranks, honorifics) shared across all sources.",
+
+    "epithet": {
+      "policy": "pool",
+      "rate": 0.3,
+      "sources": [
+        {"nameset": "habitat-creole", "weight": 2, "label": "habitat"},
+        {"nameset": "core:russian", "weight": 1, "label": "russian", "override": {"filter": ["military"]}}
+      ]
+    },
+    "_comment_epithet": "Pool: this slot has its OWN weighted source list. With probability `rate` (default 1.0) draw from the pool; otherwise inherit the anchor. Pool sources are never anchor-eligible, so a leaf holding only this category is safe here. `override.filter` on a pool source applies to this slot alone."
   }
 }

@@ -376,6 +376,7 @@ Per-slot policies governing which source supplies each format placeholder:
 | `independent` | Roll fresh from sources for this slot, ignoring the anchor. Cross-mix every time. |
 | `mix` (with `rate: N`) | N (0.0–1.0) probability of `independent`, otherwise `inherit`. Diaspora rate. |
 | `forced` (with `nameset: "..."`) | Always pull this slot from the named nameset. Useful for cross-cutting axes (titles, ranks). |
+| `pool` (with `sources: [...]`, optional `rate: N`) | N (default 1.0) probability of drawing from the slot's **own** weighted source list, otherwise `inherit`. Pool sources are never anchor-eligible, so a surname-only leaf can feed one slot safely. |
 
 The first slot in the format string is the **anchor** — it always rolls fresh from `sources`.
 
@@ -614,8 +615,37 @@ The `slots` map controls per-slot source selection:
 | `independent` | Roll fresh from `sources` for this slot. | Always cross-mix this slot. |
 | `mix` (`rate: N`) | N probability of independent, else inherit. | Diaspora-rate naming (e.g. "Sanskrit first + Scarrow last 30% of the time"). |
 | `forced` (`nameset: "..."`) | Always pull from the named nameset. | Cross-cutting axes — titles, ranks, honorifics shared across all sources. |
+| `pool` (`sources: [...]`, `rate: N`) | With probability N (default 1.0) draw from the slot's own weighted source list; else inherit the anchor. | One slot mixing at a different rate than another (surnames 30% foreign, given names 0%); feeding a slot from a leaf that has *only* that category. |
 
 The first slot mentioned in the active format string is the **anchor**. It always rolls fresh from `sources`; setting an explicit policy on it is a no-op.
+
+### Pool slots
+
+`mix` re-rolls among the aggregate's top-level `sources`, so every source has to be able to supply *every* slot — a source that lacks `firstName` would, when it lands as anchor, yield a name with no given name. `pool` gives one slot a private source list instead:
+
+```json
+"sources": [
+  {"nameset": "swedish-parish", "weight": 60, "label": "swedish"},
+  {"nameset": "finnish-parish", "weight": 40, "label": "finnish"}
+],
+"slots": {
+  "lastName": {
+    "policy": "pool",
+    "rate": 0.3,
+    "sources": [
+      {"nameset": "line-surnames",  "weight": 2, "label": "line"},
+      {"nameset": "names-arabic",   "weight": 5, "label": "diaspora", "override": {"filter": ["common"]}}
+    ]
+  }
+}
+```
+
+- The anchor still comes from `sources` and supplies the given name (and, via `inherit`, any other slot not listed).
+- With probability `rate` the slot draws from its pool by weight; otherwise it inherits the anchor, so `rate` reads as "fraction of this slot that is *not* the anchor's own." Default `rate` is `1.0` (always pool).
+- Pool entries take the same fields as top-level sources (`nameset`, `weight`, `label`, `override.filter`); the filter applies to this slot only, which is the clean way to say "soldier-tagged surnames but any given name."
+- Pool sources are never anchor-eligible, so a hidden leaf holding only `lastName` is a valid pool source.
+- `validate` errors on unresolvable pool refs and warns when a pool source has no entries for the slot's category (a silent fall-back-to-anchor otherwise).
+- `--explain` shows the pool pick as `pool:<label>`.
 
 ### Nested aggregates
 
