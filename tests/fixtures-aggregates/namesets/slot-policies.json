@@ -55,6 +55,58 @@
       }
     },
     {
+      "id": "surname-only-test",
+      "hidden": true,
+      "formats": {"default": "{lastName}"},
+      "nameCategories": {
+        "lastName": [{"name": "Rask"}, {"name": "Modig"}]
+      }
+    },
+    {
+      "id": "pool-last",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "german-test", "weight": 50, "label": "de"}
+      ],
+      "slots": {
+        "lastName": {
+          "policy": "pool",
+          "rate": 1.0,
+          "sources": [{"nameset": "surname-only-test", "weight": 1, "label": "soldier"}]
+        }
+      }
+    },
+    {
+      "id": "pool-last-half",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [
+        {"nameset": "japanese-test", "weight": 50, "label": "ja"},
+        {"nameset": "german-test", "weight": 50, "label": "de"}
+      ],
+      "slots": {
+        "lastName": {
+          "policy": "pool",
+          "rate": 0.5,
+          "sources": [{"nameset": "surname-only-test", "weight": 1, "label": "soldier"}]
+        }
+      }
+    },
+    {
+      "id": "pool-missing",
+      "type": "aggregate",
+      "formats": {"default": "{firstName} {lastName}"},
+      "sources": [{"nameset": "japanese-test", "weight": 50, "label": "ja"}],
+      "slots": {
+        "lastName": {
+          "policy": "pool",
+          "sources": [{"nameset": "nope-test", "weight": 1}]
+        }
+      }
+    },
+    {
       "id": "override-test",
       "type": "aggregate",
       "formats": {"default": "{firstName} {lastName}"},
