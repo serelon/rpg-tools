@@ -889,14 +889,20 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
             "lastName": nameset.get("lastNames", [])
         }
 
+    gender_weights = nameset.get("genderWeights", {"male": 50, "female": 50})
+
     names = []
     used = set()
 
     for _ in range(count):
+        # Roll one gender per name (unless forced) so it cascades across every
+        # gendered category — otherwise a female firstName could pair with a
+        # male patronym. Matches the grouped and aggregate paths.
+        selected_gender = gender if gender else select_gender(gender_weights)
         attempts = 0
         while attempts < 100:
             # Pass gender to build_name_from_format for filtering at selection time
-            name = build_name_from_format(format_str, categories, gender, tag_filter=tag_filter)
+            name = build_name_from_format(format_str, categories, selected_gender, tag_filter=tag_filter)
             if name.lower() not in used or count > len(categories.get("firstName", [])):
                 names.append(name)
                 used.add(name.lower())
@@ -904,7 +910,7 @@ def generate_from_nameset(nameset_id: str, count: int = 1, gender: Optional[str]
             attempts += 1
         else:
             # Ran out of attempts
-            names.append(build_name_from_format(format_str, categories, gender, tag_filter=tag_filter))
+            names.append(build_name_from_format(format_str, categories, selected_gender, tag_filter=tag_filter))
 
     return names
 
