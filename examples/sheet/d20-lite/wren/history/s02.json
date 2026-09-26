@@ -1,0 +1,33 @@
+{
+  "source": "s02",
+  "events": [
+    {
+      "date": "412-09",
+      "when": "the guild hall, first autumn rain",
+      "source": "s02",
+      "effects": [
+        {"set": "patron", "to": {"ref": "lamplighters-guild", "name": "The Lamplighters' Guild"}},
+        {"add": "training", "by": 2}
+      ]
+    },
+    {
+      "date": "412-09",
+      "seq": 2,
+      "source": "s02",
+      "effects": [
+        {"add": "bond.strength", "by": 1},
+        {"add": "training", "by": -2}
+      ],
+      "note": "The ferryman takes her in again after the flood."
+    },
+    {
+      "date": "412-10",
+      "when": "setting out on the north road",
+      "source": "s02",
+      "effects": [
+        {"gain": "list.gear", "id": "anvil", "entry": {"name": "Guild anvil (delivery)", "weight": 70, "qty": 1}},
+        {"start": "journey", "id": "north-road", "name": "The north road"}
+      ]
+    }
+  ]
+}

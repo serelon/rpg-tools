@@ -1,0 +1,44 @@
+{
+  "id": "d20-lite",
+  "groups": {
+    "identity": {"name": "Identity", "order": 10, "sections": {
+      "core": {"order": 10, "fields": [
+        {"key": "heritage", "kind": "choice", "options": {"catalog": "heritage"}},
+        {"key": "level", "kind": "derived"},
+        {"key": "prof", "kind": "derived"},
+        {"key": "xp", "kind": "scalar"},
+        {"key": "patron", "kind": "relation", "show": "present"},
+        {"key": "bond", "kind": "fixed", "show": "present"}
+      ]}
+    }},
+    "abilities": {"name": "Abilities", "order": 20, "sections": {
+      "scores": {"order": 10, "class": "ability", "show": "all"},
+      "mods": {"name": "Modifiers", "order": 20, "fields": [
+        {"key": "mod_might", "kind": "derived"},
+        {"key": "mod_grace", "kind": "derived"},
+        {"key": "mod_grit", "kind": "derived"},
+        {"key": "mod_wit", "kind": "derived"},
+        {"key": "mod_sense", "kind": "derived"},
+        {"key": "mod_charm", "kind": "derived"}
+      ]}
+    }},
+    "skills": {"name": "Skills", "order": 30, "sections": {
+      "skills": {"class": "skill", "show": "all"}
+    }},
+    "feats": {"name": "Feats", "order": 40, "sections": {
+      "feats": {"list": "feats"}
+    }},
+    "gear": {"name": "Gear", "order": 50, "sections": {
+      "gear": {"order": 10, "list": "gear"},
+      "burden": {"name": "Burden", "order": 20, "fields": [
+        {"key": "load", "kind": "derived"},
+        {"key": "capacity", "kind": "derived"},
+        {"key": "training", "kind": "pool"},
+        {"kind": "track", "name": "Wounds", "levels": ["Grazed", "Hurt", "Down"]}
+      ]}
+    }},
+    "journeys": {"name": "Journeys", "order": 60, "sections": {
+      "journeys": {"spans": "*"}
+    }}
+  }
+}

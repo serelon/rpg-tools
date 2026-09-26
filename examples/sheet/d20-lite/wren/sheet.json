@@ -1,0 +1,9 @@
+{
+  "id": "wren",
+  "name": "Wren Tallow",
+  "rules": "../rules.json",
+  "shape": "../shape.json",
+  "catalog": "../catalog.json",
+  "history": ["history/creation.json", "history/s*.json"],
+  "meta": {"concept": "Toy example: a reedfolk courier"}
+}

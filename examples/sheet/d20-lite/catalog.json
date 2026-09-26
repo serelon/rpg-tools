@@ -1,0 +1,18 @@
+{
+  "heritage": {
+    "hillfolk": {"name": "Hillfolk", "text": "Raised on terraced slopes; sure of foot, slow to trust."},
+    "reedfolk": {"name": "Reedfolk", "text": "Raised among marsh channels; quiet movers, quick swimmers."}
+  },
+  "skill": {
+    "climb": {"name": "Climb", "ability": "might"},
+    "sneak": {"name": "Sneak", "ability": "grace"},
+    "lore": {"name": "Lore", "ability": "wit"},
+    "notice": {"name": "Notice", "ability": "sense"},
+    "persuade": {"name": "Persuade", "ability": "charm"},
+    "endure": {"name": "Endure", "ability": "grit"}
+  },
+  "feat": {
+    "quick_step": {"name": "Quick Step", "text": "Moves first when a scuffle starts."},
+    "iron_gut": {"name": "Iron Gut", "text": "Shrugs off spoiled food and weak poisons."}
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "d20-lite",
+  "name": "d20-lite (toy example pack)",
+  "currency": "training",
+  "classes": {
+    "ability": {"name": "Abilities", "min": 3, "max": 20, "base": 8},
+    "skill": {
+      "name": "Skills",
+      "type": "enum",
+      "values": ["none", "proficient", "expert"],
+      "catalog": "skill",
+      "cost": {"raise": "target"},
+      "per_trait": {"bonus": "(ability[catalog('skill', id).ability] - 10) // 2 + prof * index"}
+    }
+  },
+  "traits": {
+    "ability.might": {"name": "Might"},
+    "ability.grace": {"name": "Grace"},
+    "ability.grit": {"name": "Grit"},
+    "ability.wit": {"name": "Wit"},
+    "ability.sense": {"name": "Sense"},
+    "ability.charm": {"name": "Charm"},
+    "skill.climb": {},
+    "skill.sneak": {},
+    "skill.lore": {},
+    "skill.notice": {},
+    "skill.persuade": {},
+    "skill.endure": {},
+    "heritage": {"type": "text", "catalog": "heritage"},
+    "xp": {"name": "Experience", "type": "number", "min": 0},
+    "training": {"name": "Training", "type": "number", "min": 0},
+    "bond": {
+      "name": "Bond",
+      "type": "compound",
+      "parts": {
+        "target": {"type": "text"},
+        "strength": {"type": "rating", "min": 0, "max": 5, "cost": {"raise": "target"}}
+      }
+    },
+    "patron": {"name": "Patron", "type": "relation"}
+  },
+  "tables": {
+    "level": {"steps": [
+      [0, {"level": 1, "prof": 2}],
+      [300, {"level": 2, "prof": 2}],
+      [900, {"level": 3, "prof": 2}],
+      [2700, {"level": 4, "prof": 2}],
+      [6500, {"level": 5, "prof": 3}]
+    ]}
+  },
+  "derived": {
+    "mod_might": {"expr": "(ability.might - 10) // 2", "name": "Might mod"},
+    "mod_grace": {"expr": "(ability.grace - 10) // 2", "name": "Grace mod"},
+    "mod_grit": {"expr": "(ability.grit - 10) // 2", "name": "Grit mod"},
+    "mod_wit": {"expr": "(ability.wit - 10) // 2", "name": "Wit mod"},
+    "mod_sense": {"expr": "(ability.sense - 10) // 2", "name": "Sense mod"},
+    "mod_charm": {"expr": "(ability.charm - 10) // 2", "name": "Charm mod"},
+    "level": {"expr": "table('level', xp).level", "name": "Level"},
+    "prof": {"expr": "table('level', xp).prof", "name": "Proficiency"},
+    "load": {"expr": "sum(list.gear[*].load)", "name": "Load"},
+    "capacity": {"expr": "ability.might * 5", "name": "Capacity"}
+  },
+  "lists": {
+    "feats": {"name": "Feats", "cap": "1 + level // 2", "catalog": "feat"},
+    "gear": {"name": "Gear", "fields": {"load": "entry.weight * entry.qty"}}
+  },
+  "spans": {
+    "journey": {"name": "Journey"}
+  },
+  "creation": {
+    "budgets": {
+      "abilities": {"class": "ability", "total": 27, "step_cost": "if(target > 13, 2, 1)"},
+      "skills": {"class": "skill", "total": 3}
+    },
+    "checks": {
+      "heritage": {"when": "not heritage", "message": "Pick a heritage"}
+    }
+  },
+  "notices": {
+    "overloaded": {"scope": "sheet", "when": "load > capacity",
+                   "message": "Carrying more than capacity: slowed until something is dropped"}
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "source": "creation",
+  "events": [
+    {
+      "date": "412-03",
+      "when": "the week before the spring fair",
+      "source": "creation",
+      "kind": "creation",
+      "effects": [
+        {"set": "heritage", "to": "reedfolk"},
+        {"set": "ability.might", "to": 15},
+        {"set": "ability.grace", "to": 14},
+        {"set": "ability.grit", "to": 13},
+        {"set": "ability.wit", "to": 12},
+        {"set": "ability.sense", "to": 10},
+        {"set": "ability.charm", "to": 8},
+        {"set": "skill.sneak", "to": "proficient"},
+        {"set": "skill.lore", "to": "expert"},
+        {"set": "xp", "to": 0},
+        {"set": "training", "to": 0},
+        {"set": "bond", "to": {"target": "the ferryman who raised her", "strength": 1}},
+        {"gain": "list.feats", "id": "quick-step", "entry": {"ref": "quick_step"}},
+        {"gain": "list.gear", "id": "rope", "entry": {"name": "Rope", "weight": 2, "qty": 1}},
+        {"gain": "list.gear", "id": "rations", "entry": {"name": "Rations", "weight": 1, "qty": 5}}
+      ],
+      "note": "Point-buy: 27 spent on abilities, 3 on skills."
+    }
+  ]
+}

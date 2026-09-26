@@ -1,0 +1,33 @@
+{
+  "source": "s01",
+  "events": [
+    {
+      "date": "412-06",
+      "when": "after the fair",
+      "source": "s01",
+      "effects": [
+        {"add": "xp", "by": 350},
+        {"add": "training", "by": 3}
+      ],
+      "note": "First courier run delivered."
+    },
+    {
+      "date": "412-06",
+      "when": "practising on the rooftops",
+      "source": "s01",
+      "seq": 2,
+      "effects": [
+        {"add": "skill.sneak", "by": 1},
+        {"add": "training", "by": -2}
+      ]
+    },
+    {
+      "date": "412-07",
+      "source": "s01",
+      "effects": [
+        {"gain": "list.feats", "id": "iron-gut", "entry": {"ref": "iron_gut"}}
+      ],
+      "free": "level-up feat"
+    }
+  ]
+}
