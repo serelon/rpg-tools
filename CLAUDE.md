@@ -8,7 +8,7 @@ Portable RPG tools for solo RPG sessions with Claude. Provides dice rolling, tar
 
 ## Tools
 
-All tools are standalone Python scripts in `scripts/`. No dependencies beyond Python standard library. No build step, no tests, no linting.
+All tools are standalone Python scripts in `scripts/`. No dependencies beyond Python standard library. No build step, no linting. Tests (stdlib `unittest`): `python tests/run_tests.py`.
 
 **Instant Tools** (work immediately, no data files):
 - `dice.py` - Roll20-compatible dice notation
@@ -24,6 +24,14 @@ All tools are standalone Python scripts in `scripts/`. No dependencies beyond Py
 - `memories.py` - Memory tracking (needs `memories/`)
 - `log.py` - Session logging with automatic changelog generation (needs `campaign/`)
 - `campaign.py` - Campaign state management and queries (needs `campaign/`)
+- `sheet.py` - Event-sourced character sheets: a ledger of dated events folded against a rules pack (needs a `sheet.json` manifest + rules/shape/catalog). Engine package `scripts/sheetlib/` (deliberately not under `scripts/lib/`, which campaign templates glob into Desktop bundles). Not part of the Desktop skill package — Desktop reads resolved JSON. Toy pack: `examples/sheet/d20-lite/`; guide: `references/sheet-guide.md`.
+
+```bash
+python scripts/sheet.py resolve SHEET [--at D] [--player]    # resolved JSON
+python scripts/sheet.py validate SHEET [--strict]            # warnings, anchors, notices
+python scripts/sheet.py quote SHEET KEY [--by N]             # cost of a raise
+python scripts/sheet.py add SHEET KEY --date D --source S    # append event, cost auto-filled
+```
 
 ## Building the Skill Package
 
@@ -66,6 +74,7 @@ Campaign data is NOT included in this repo. Tools expect JSON files in the appro
 - `references/oracle-guide.md` - Oracle types and usage patterns
 - `references/pool-guide.md` - Pool/deck management with state tracking
 - `references/campaign-state-guide.md` - Campaign state system and session logging
+- `references/sheet-guide.md` - Sheet rules/shape/catalog/history schemas, expression language, CLI
 
 ## Modifiers
 

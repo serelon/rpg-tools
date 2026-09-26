@@ -38,6 +38,7 @@ Require JSON data files in specific directories. See [Campaign Data Structure](#
 | `locations.py` | Location data with hierarchy | `locations/` |
 | `stories.py` | Story collection retrieval | `stories/` |
 | `memories.py` | Campaign memory tracking | `memories/` |
+| `sheet.py` | Event-sourced character sheets (ledger folded against a rules pack) | `sheet.json` + `history/` |
 
 ---
 
@@ -127,6 +128,23 @@ python scripts/memories.py search "query" --campaign NAME
 python scripts/memories.py character NAME            # Memories involving character
 ```
 
+### Character Sheets
+
+A character is a ledger of dated events (`history/*.json`) folded up to a date against a
+rules pack (rules + shape + catalog JSON). Nothing is refused; problems become warnings.
+Try the toy pack in `examples/sheet/d20-lite/`. Full guide: `references/sheet-guide.md`.
+
+```bash
+python scripts/sheet.py resolve examples/sheet/d20-lite/wren             # resolved JSON
+python scripts/sheet.py resolve examples/sheet/d20-lite/wren --at 412-06 --player
+python scripts/sheet.py validate examples/sheet/d20-lite/wren            # warnings, anchors, notices
+python scripts/sheet.py quote examples/sheet/d20-lite/wren bond.strength --by 2
+python scripts/sheet.py add SHEET skill.climb --date 413-02 --source s03 # append, cost auto-filled
+python scripts/sheet.py diff SHEET --from 412-03 --to 412-10             # what changed
+```
+
+`sheet.py` is a local tool and not part of the Desktop skill package.
+
 ---
 
 ## Campaign Data Structure
@@ -165,6 +183,15 @@ JSON schema and workflow guides:
 - [Capturing Stories](guides/story-capture-guide.md)
 - [Session Setup](guides/session-setup-guide.md)
 - [Session Debrief](guides/session-debrief-guide.md)
+- [Character Sheets](references/sheet-guide.md)
+
+## Tests
+
+```bash
+python tests/run_tests.py
+```
+
+Stdlib `unittest`, no dependencies.
 
 ---
 
