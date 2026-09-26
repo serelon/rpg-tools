@@ -1,0 +1,1 @@
+{"extends": "c.json", "x": "A", "gone": null, "nested": {"b": 2}, "arr": [9]}

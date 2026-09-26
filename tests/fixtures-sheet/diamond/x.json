@@ -1,0 +1,1 @@
+{"extends": ["a.json", "b.json"], "own": 1}
