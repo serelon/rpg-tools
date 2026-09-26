@@ -254,8 +254,11 @@ not rewrite spent XP. The fold compares what was paid with what it would quote a
 
 **Lifecycle:** a retired trait touched again comes back fresh (from its default), keeping
 its old provenance; `gain` of a retired entry id revives it with only the new entry; `gain`
-of a live id, `edit`/`retire` of something missing, reusing a span id or ending a closed
-span are `invalid-event` (effect skipped). `add` on text/relation and setting an enum to an
+of a live id, `edit`/`retire` of something missing, reusing a span id, ending a closed
+span or ending a span with the wrong KIND are `invalid-event` (effect skipped). A trait
+brought back (or into being) by an anchor alone is fresh too, and is `gm_only` if every
+anchor that lifted it sits in a `gm_only` event. `gm_only` from the TraitDef, trait meta or
+a `gm_only` creating event each hide a trait; `gm_only: false` never un-hides one. `add` on text/relation and setting an enum to an
 unknown value are `invalid-event`; `add` past either end of an enum clamps and warns
 `over-cap`.
 
@@ -288,8 +291,11 @@ safe subset of Python syntax, parsed with `ast` and checked against a whitelist 
   including `in`/`not in`, and calls to the builtins only;
 - `list.gear[*].load` projects over a list; `if(c, a, b)` is the lazy conditional;
 - arithmetic needs numbers (no string or list tricks), division by zero and non-finite
-  results are errors; attributes on `None` give `None`; ordering against `None` is an error;
-- max 1000 characters, AST depth 50; no `_private` attributes.
+  results are errors, and so is any result past ±10^15; attributes on `None` give `None`;
+  ordering against `None` is an error;
+- max 1000 characters, AST depth 50; no `_private` attributes; no non-finite literals
+  (`1e999`), and JSON inputs may not use `NaN`/`Infinity`;
+- a single priced raise or creation spend walks at most 1000 steps (else `expr-error`, 0).
 
 **Names** resolve longest dotted prefix first, then by tier: local variables → derived keys
 → traits (present value, or the default if declared / in an open class) → a bare class name

@@ -18,6 +18,9 @@ from .expr import Env, Evaluator, ExprError, is_number, lookup_table, normalise,
 OPS = ("set", "add", "gain", "edit", "retire", "start", "end", "anchor")
 ANCHOR_OPS = ("at_least", "at_most", "is", "has")
 TRAIT_META = ("name", "group", "note", "gm_only")
+# Most single steps one priced raise or creation spend may walk (guards pack- or
+# ledger-driven loops: a base of -1e8 must not spin the engine).
+MAX_STEPS = 1000
 
 
 # ------------------------------------------------------------------ sinks
@@ -302,9 +305,10 @@ class Engine:
     def trait_gm_only(self, state, key):
         td = self.model.tdef(key)
         meta = state.meta.get(key) or {}
-        if "gm_only" in meta:
-            return bool(meta["gm_only"])
-        return bool(td.get("gm_only")) or key in state.gm_created
+        # Any one source hides the trait (S8): TraitDef, edit meta, inherited.
+        # An explicit meta ``gm_only: false`` never un-hides the other two.
+        return (bool(td.get("gm_only")) or key in state.gm_created
+                or bool(meta.get("gm_only")))
 
 
 # ------------------------------------------------------------------ events
@@ -538,6 +542,10 @@ class Folder:
             loc["value"] = self.state.values.get(key, self.e.default(self.env, key))
         total = 0
         c = int(cur)
+        if new - c > MAX_STEPS:
+            self.sink.expr_error(self.e.site(td, "cost"), "%s: %s steps to price (more than %d)"
+                                 % (key, _fmt(new - c), MAX_STEPS), ref=self.e.current_ref)
+            return 0
         while c < new:
             use = "new" if (c == 0 and "new" in cost) else "raise"
             if use in cost:
@@ -892,9 +900,14 @@ class Folder:
 
     def _op_end(self, eff, ev, expected, touched_r, touched_n, gained, costed):
         sid = eff["id"]
+        kind = eff["end"]
+        if kind not in self.m.spans:
+            self.sink.warn("unknown-trait", "span kind %s is not declared" % kind, key=kind, ref=ev.ref)
         sp = self.state.spans.get(sid)
         if sp is None or sp.end is not None:
-            return self._bad(ev, "end %s: no open span %s" % (eff["end"], sid), sid)
+            return self._bad(ev, "end %s: no open span %s" % (kind, sid), sid)
+        if sp.kind != kind:
+            return self._bad(ev, "end %s: span %s is a %s span" % (kind, sid, sp.kind), sid)
         sp.end = ev.date
         note = eff.get("note")
         if note:
@@ -908,7 +921,7 @@ class Folder:
         op = [a for a in ANCHOR_OPS if a in eff][0]
         rec = {"id": eff["id"], "key": target, op: eff[op], "date": ev.date, "ref": ev.ref,
                "satisfied": False, "folded": None, "satisfied_by": [], "_op": op,
-               "_applies": False, "_pos": ev.pos}
+               "_applies": False, "_pos": ev.pos, "_gm": bool(ev.gm_only)}
         self.anchors.append(rec)
         st = self.state
         if op == "has":
@@ -1173,6 +1186,16 @@ def anchor_state(engine, state, anchors, ref_pos):
                 v = last["is"]
                 lifted = [last["ref"]]
         if v != base:
+            if not present:
+                # The anchor makes the key present (S7.6). A retired trait comes back
+                # fresh (S5): no stale name/note/gm_only meta. A key created only by
+                # gm_only anchor events inherits gm_only (S8).
+                astate.meta.pop(key, None)
+                gm_refs = {a["ref"] for a in lst if a.get("_gm")}
+                if lifted and all(r in gm_refs for r in lifted):
+                    astate.gm_created.add(key)
+                else:
+                    astate.gm_created.discard(key)
             astate.values[key] = v
             astate.retired.discard(key)
             refs = astate.refs.setdefault(key, [])
@@ -1259,6 +1282,10 @@ def final_sweep(res, folder):
 
 def _step_spend(engine, env, key, value_n, base_n, budget, site):
     if value_n >= base_n:
+        if value_n - base_n > MAX_STEPS:
+            engine.sink.expr_error(site, "%s: %d steps above base (more than %d)"
+                                   % (key, value_n - base_n, MAX_STEPS))
+            return 0
         total = 0
         c = base_n
         while c < value_n:

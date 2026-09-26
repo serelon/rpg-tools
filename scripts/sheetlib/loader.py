@@ -11,6 +11,7 @@ warnings: nothing in a ledger is refused.
 import copy
 import glob
 import json
+import math
 import os
 import re
 
@@ -26,15 +27,37 @@ RESERVED_RULES = ("modifiers", "tallies")
 
 # ------------------------------------------------------------------ files
 
+def _reject_constant(name):
+    raise ValueError("non-standard JSON constant %s not allowed" % name)
+
+
+def _finite_float(text):
+    v = float(text)
+    if not math.isfinite(v):
+        raise ValueError("number %s is out of range" % text)
+    return v
+
+
+def json_loads(text):
+    """Strict JSON: rejects NaN/Infinity and overflowing floats (ValueError)."""
+    return json.loads(text, parse_constant=_reject_constant, parse_float=_finite_float)
+
+
+def json_load(fh):
+    return json_loads(fh.read())
+
+
 def read_json(path, what="file"):
     try:
         with open(path, encoding="utf-8") as fh:
-            return json.load(fh)
+            return json_load(fh)
     except FileNotFoundError:
         raise SheetError("missing %s: %s" % (what, path))
     except json.JSONDecodeError as exc:
         raise SheetError("malformed JSON in %s: %s (line %d col %d)"
                          % (path, exc.msg, exc.lineno, exc.colno))
+    except ValueError as exc:
+        raise SheetError("malformed JSON in %s: %s" % (path, exc))
     except OSError as exc:
         raise SheetError("cannot read %s: %s" % (path, exc))
 
@@ -623,8 +646,8 @@ def load_history_file(path, index, base_dir):
     events = []
     try:
         with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
+            data = json_load(fh)
+    except (OSError, ValueError) as exc:  # JSONDecodeError is a ValueError
         warnings.append({"code": "invalid-event",
                          "message": "%s: unreadable history file (%s); skipped" % (rel, exc)})
         data = None

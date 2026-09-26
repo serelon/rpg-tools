@@ -409,7 +409,7 @@ def to_json(doc, compact=False):
 
 def export_js(doc, source, at=None, key=None):
     """Player-view JS fragment: assigns ``DATA.sheet`` (or ``DATA.sheets[key]``)."""
-    body = json.dumps(doc, ensure_ascii=False, indent=1).replace("<", "\\u003c")
+    body = _js_safe(json.dumps(doc, ensure_ascii=False, indent=1))
     regen = "python rpg-tools/scripts/sheet.py export %s" % source
     if at:
         regen += " --at %s" % at
@@ -417,7 +417,20 @@ def export_js(doc, source, at=None, key=None):
         regen += " --key %s" % key
     head = ("/* GENERATED — do not hand-edit.\n"
             "   Source: %s (player view, at %s)\n"
-            "   Regenerate: %s */\n" % (source, at or "latest", regen))
+            "   Regenerate: %s */\n" % (_comment_safe(source), _comment_safe(at or "latest"),
+                                        _comment_safe(regen)))
     if key:
-        return head + "(DATA.sheets = DATA.sheets || {})[%s] = %s;\n" % (json.dumps(key), body)
+        return head + "(DATA.sheets = DATA.sheets || {})[%s] = %s;\n" % (
+            _js_safe(json.dumps(key)), body)
     return head + "DATA.sheet = %s;\n" % body
+
+
+def _js_safe(text):
+    """Defuse ``</script>`` / ``<!--`` inside a JS literal (S10)."""
+    return text.replace("<", "\\u003c")
+
+
+def _comment_safe(text):
+    """Keep a string inside a ``/* */`` comment: no ``*/``, no ``<``, one line."""
+    return (str(text).replace("*/", "* /").replace("<", "&lt;")
+            .replace("\r", " ").replace("\n", " "))

@@ -11,7 +11,7 @@ import re
 
 from .expr import SheetError, is_number
 from .fold import NullSink, check_event, run_fold
-from .loader import HistoryFile, expand_history, history_matches
+from .loader import HistoryFile, expand_history, history_matches, json_load
 
 SOURCE_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
 EVENT_ORDER = ("date", "when", "source", "seq", "kind", "effects", "note", "gm_only",
@@ -111,8 +111,8 @@ def read_history_raw(path, source):
         return {"source": source, "events": []}
     try:
         with open(path, encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
+            data = json_load(fh)
+    except (OSError, ValueError) as exc:  # JSONDecodeError is a ValueError
         raise SheetError("cannot append to %s: %s" % (path, exc))
     if not isinstance(data, dict) or not isinstance(data.get("events"), list):
         raise SheetError("cannot append to %s: not an object with an events array" % path)

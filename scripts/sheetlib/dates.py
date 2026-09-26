@@ -6,14 +6,15 @@ bookkeeping for when a sheet changes, not story timestamps.
 """
 import re
 
-DATE_RE = re.compile(r"^([+-]?\d{1,6})(?:-(\d{2})(?:-(\d{2}))?)?$")
+# ASCII digits only, whole string only (no trailing newline via ``$``).
+DATE_RE = re.compile(r"([+-]?[0-9]{1,6})(?:-([0-9]{2})(?:-([0-9]{2}))?)?")
 
 
 def parse(text):
     """Return ``(year, month|None, day|None)`` or ``None`` if invalid."""
     if not isinstance(text, str):
         return None
-    m = DATE_RE.match(text)
+    m = DATE_RE.fullmatch(text)
     if not m:
         return None
     year = int(m.group(1))

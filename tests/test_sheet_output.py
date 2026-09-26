@@ -357,9 +357,25 @@ class TestFragment(OutputCase):
         self.assertEqual(payload["character"]["meta"]["note"], "a </script> b <!-- c")
 
     def test_key(self):
-        js = export_js({"format": "sheet/1"}, "x", key="ailsa")
-        self.assertIn('(DATA.sheets = DATA.sheets || {})["ailsa"] = {', js)
+        js = export_js({"format": "sheet/1"}, "x", key="hero")
+        self.assertIn('(DATA.sheets = DATA.sheets || {})["hero"] = {', js)
         self.assertIn("at latest", js)
+
+    def test_key_and_source_cannot_break_out(self):
+        js = export_js({"format": "sheet/1"}, "a*/b</script>c", at="1200",
+                       key="wr</script>x*/y<!--z")
+        self.assertNotIn("<", js)
+        head, body = js.split("*/\n", 1)
+        self.assertEqual(head.count("*/"), 0)          # the comment closes exactly once
+        prefix = "(DATA.sheets = DATA.sheets || {})["
+        self.assertTrue(body.startswith(prefix + '"wr\\u003c/script>x*/y'))
+        key_literal, rhs = body[len(prefix):].split("] = ", 1)
+        self.assertEqual(json.loads(key_literal), "wr</script>x*/y<!--z")
+        self.assertEqual(json.loads(rhs[:-2]), {"format": "sheet/1"})
+        # a plain path/key is untouched by the escaping
+        plain = export_js({"format": "sheet/1"}, "path/to/char", key="hero_2")
+        self.assertIn("Regenerate: python rpg-tools/scripts/sheet.py export path/to/char --key hero_2 */",
+                      plain)
 
 
 if __name__ == "__main__":

@@ -32,6 +32,7 @@ from sheetlib import (SheetError, export_js, load_sheet, quote, resolve_full,  #
 from sheetlib import dates  # noqa: E402
 from sheetlib.expr import normalise  # noqa: E402
 from sheetlib.fold import NullSink, check_event  # noqa: E402
+from sheetlib.loader import json_loads  # noqa: E402
 from sheetlib import writer  # noqa: E402
 
 
@@ -85,7 +86,7 @@ def date_arg(value):
 
 def number_arg(value):
     try:
-        v = json.loads(value)
+        v = json_loads(value)
     except ValueError:
         v = None
     if isinstance(v, bool) or not isinstance(v, (int, float)):
@@ -98,7 +99,7 @@ def kv_arg(value):
         raise argparse.ArgumentTypeError("expected k=v, got %r" % value)
     k, v = value.split("=", 1)
     try:
-        v = json.loads(v)
+        v = json_loads(v)
     except ValueError:
         pass
     return k, v
@@ -262,7 +263,7 @@ def cmd_event(a):
         else:
             with open(a.file, encoding="utf-8") as fh:
                 text = fh.read()
-        data = json.loads(text)
+        data = json_loads(text)
     except (OSError, ValueError) as exc:
         raise SheetError("cannot read events from %s: %s" % (a.file, exc))
     if isinstance(data, dict) and "events" in data:

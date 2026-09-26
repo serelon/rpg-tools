@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sheet_helpers import SheetDir, ev, warnings_of  # noqa: E402
 from sheetlib.expr import (DictEnv, Evaluator, ExprError, SheetError, compile_expr,  # noqa: E402
-                           pretokenise)
+                           compile_slot, pretokenise)
 
 
 def run(src, names=None, tables=None, catalog=None, local=None):
@@ -65,6 +65,22 @@ class TestWhitelist(unittest.TestCase):
         with self.assertRaises(SheetError):
             compile_expr("1 +")
 
+    def test_very_deep_is_clean_sheet_error(self):
+        # deep enough to blow a recursive depth walk, still within MAX_SOURCE
+        for src in ["-" * 500 + "1", "1+" * 499 + "1", "-" * 999 + "1"]:
+            with self.assertRaises(SheetError, msg=src[:10]) as cm:
+                compile_expr(src)
+            self.assertIn("nested deeper", str(cm.exception))
+
+    def test_non_finite_literals_fatal(self):
+        for src in ["1e999", "-1e999", "abs(-1e999)", "max(1e999, 0)"]:
+            with self.assertRaises(SheetError, msg=src):
+                compile_expr(src)
+        for bad in [float("inf"), float("-inf"), float("nan"), 10 ** 16]:
+            with self.assertRaises(SheetError, msg=repr(bad)):
+                compile_slot(bad, "slot")
+        self.assertEqual(compile_slot(10 ** 15, "slot"), 10 ** 15)
+
 
 class TestOperatorRules(unittest.TestCase):
     def test_abuse_is_expr_error(self):
@@ -73,6 +89,18 @@ class TestOperatorRules(unittest.TestCase):
                     "-'a'", "l.x", "a.x", "s[0]", "l['k']", "1 in a"]:
             with self.assertRaises(ExprError, msg=src):
                 run(src, {"a": 1, "l": [1], "s": "str"})
+
+    def test_non_finite_and_huge_results_are_expr_error(self):
+        inf = float("inf")
+        for src in ["a", "-a", "abs(a)", "max(a, 0)", "min([a])", "clamp(a, 0, a)",
+                    "round(a, 1)", "if(True, a, 0)"]:
+            with self.assertRaises(ExprError, msg=src):
+                run(src, {"a": inf})
+        big = int("9" * 490)
+        for src in ["b", "b * b", "sum([b, b])", "c * c", "c * c // c"]:
+            with self.assertRaises(ExprError, msg=src):
+                run(src, {"b": big, "c": 10 ** 8})
+        self.assertEqual(run("c * 1000000", {"c": 10 ** 8}), 10 ** 14)
 
     def test_bool_counts_as_int(self):
         self.assertEqual(run("True + 1"), 2)

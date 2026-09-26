@@ -405,5 +405,108 @@ class TestWarnings(FoldCase):
         self.assertEqual(got, [("high-level", None), ("long-sleep", "t1"), ("open-sleep", "t3")])
 
 
+class TestReviewRegressions(FoldCase):
+    """Fixes from the post-build review (anchors × gm_only, span kinds, gm_only sources)."""
+
+    def test_gm_only_anchor_creating_key_is_gm_only(self):
+        sd = self.sheet({"branch-1200": [ev("1200", {"anchor": "virtue.delta", "id": "b",
+                                                     "at_least": 3}, gm_only=True)]})
+        res = sd.fold()
+        self.assertEqual(res.astate.values["virtue.delta"], 3)
+        self.assertIn("virtue.delta", res.astate.gm_created)
+        pl, _ = sd.resolve(view="player")
+        gm, _ = sd.resolve(view="gm")
+        self.assertIn("virtue.delta", gm["values"])
+        self.assertNotIn("virtue.delta", pl["values"])
+
+    def test_mixed_anchor_creating_key_is_visible(self):
+        sd = self.sheet({"branch-1200": [
+            ev("1200", {"anchor": "virtue.delta", "id": "a", "at_least": 3}),
+            ev("1201", {"anchor": "virtue.delta", "id": "b", "at_least": 3}, gm_only=True)]})
+        pl, _ = sd.resolve(view="player")
+        self.assertEqual(pl["values"]["virtue.delta"], 3)
+
+    def test_gm_only_anchor_on_present_key_keeps_it_visible(self):
+        sd = self.sheet({"s01": [ev("1101", {"set": "attr.two", "to": 2}, free="x")],
+                         "branch-1200": [ev("1200", {"anchor": "attr.two", "id": "a",
+                                                     "at_least": 4}, gm_only=True)]})
+        pl, _ = sd.resolve(view="player")
+        self.assertEqual(pl["values"]["attr.two"], 4)
+
+    def test_anchor_revives_retired_trait_fresh(self):
+        res = self.fold({"s01": [
+            ev("1101", {"set": "virtue.gamma", "to": 2, "name": "Old Name", "note": "old note",
+                        "gm_only": True}, free="x"),
+            ev("1102", {"retire": "virtue.gamma"})],
+            "branch-1200": [ev("1200", {"anchor": "virtue.gamma", "id": "a", "at_least": 3})]})
+        self.assertEqual(res.astate.values["virtue.gamma"], 3)
+        self.assertNotIn("virtue.gamma", res.astate.meta)
+        self.assertFalse(res.engine.trait_gm_only(res.astate, "virtue.gamma"))
+        self.assertIn("virtue.gamma", res.state.meta)  # unanchored state untouched
+
+    def test_meta_gm_only_false_cannot_unhide_traitdef(self):
+        sd = self.sheet({"s01": [ev("1101", {"set": "mentor", "to": {"ref": "x", "name": "X"},
+                                             "gm_only": False})]})
+        res = sd.fold()
+        self.assertTrue(res.engine.trait_gm_only(res.astate, "mentor"))
+        pl, _ = sd.resolve(view="player")
+        self.assertNotIn("mentor", pl["values"])
+
+    def test_meta_gm_only_false_cannot_unhide_gm_created(self):
+        res = self.fold({"s01": [
+            ev("1101", {"set": "level", "to": 1}, gm_only=True),
+            ev("1102", {"edit": "level", "fields": {"gm_only": False}})]})
+        self.assertTrue(res.engine.trait_gm_only(res.astate, "level"))
+
+    def test_end_kind_must_match_span(self):
+        res = self.fold({"s01": [
+            ev("1101", {"start": "sleep", "id": "j"}),
+            ev("1102", {"end": "journey", "id": "j"}),
+            ev("1103", {"end": "sleep", "id": "j"})]})
+        self.assertEqual(codes(res), ["unknown-trait", "invalid-event"])
+        self.assertEqual(res.astate.spans["j"].end, "1103")
+
+    def test_end_kind_mismatch_leaves_span_open(self):
+        r = rules(spans={"sleep": {"name": "Sleep"}, "trip": {"name": "Trip"}})
+        res = self.fold({"s01": [ev("1101", {"start": "trip", "id": "j"}),
+                                 ev("1102", {"end": "sleep", "id": "j"})]}, rules=r)
+        self.assertEqual(codes(res), ["invalid-event"])
+        self.assertIsNone(res.astate.spans["j"].end)
+
+    def test_bad_dates_are_invalid_events(self):
+        res = self.fold({"s01": [ev("1130\n", {"start": "sleep", "id": "a"}),
+                                 ev("١١٣١", {"set": "xp", "to": 4})]})
+        self.assertEqual(codes(res), ["invalid-event", "invalid-event"])
+        self.assertNotIn("a", res.astate.spans)
+        self.assertNotIn("xp", res.astate.values)
+
+    def test_price_step_loop_is_capped(self):
+        res = self.fold({"s01": [ev("1101", {"set": "attr.one", "to": 1}, free="x"),
+                                 ev("1102", {"set": "attr.one", "to": 10 ** 9})]})
+        self.assertIn("expr-error", codes(res))
+        self.assertEqual(res.astate.values["attr.one"], 10 ** 9)
+
+    def test_creation_step_loop_is_capped(self):
+        r = rules(creation={"budgets": {"virtues": {"class": "virtue", "total": 3,
+                                                    "base": "-100000000",
+                                                    "step_cost": "1"}}})
+        res = self.fold({"creation": [creation_event()]}, rules=r)
+        self.assertIn("expr-error", codes(res))
+
+    def test_nonfinite_json_skips_history_file(self):
+        sd = self.sheet({})
+        path = os.path.join(sd.dir, "history", "s01.json")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write('{"source": "s01", "events": [{"date": "1101", '
+                     '"effects": [{"add": "xp", "by": Infinity}]}]}')
+        res = sd.fold()
+        self.assertEqual(codes(res), ["invalid-event"])
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write('{"source": "s01", "events": [{"date": "1101", '
+                     '"effects": [{"set": "xp", "to": 1e999}]}]}')
+        self.assertEqual(codes(sd.fold()), ["invalid-event"])
+
+
 if __name__ == "__main__":
     unittest.main()

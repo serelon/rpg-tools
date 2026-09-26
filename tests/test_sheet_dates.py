@@ -26,6 +26,11 @@ class TestDateRegex(unittest.TestCase):
             self.assertIsNone(dates.parse(bad), bad)
             self.assertFalse(dates.is_valid(bad))
 
+    def test_no_trailing_newline_or_non_ascii_digits(self):
+        for bad in ["1130\n", "1130-10\n", "١١٣١", "1130-١٠",
+                    " 1130", "1130 "]:
+            self.assertIsNone(dates.parse(bad), repr(bad))
+
 
 class TestSortKey(unittest.TestCase):
     def test_vaguer_sorts_first(self):

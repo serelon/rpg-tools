@@ -112,6 +112,67 @@ class TestReadCommands(CliCase):
         code, out, err = run("resolve", self.char)
         self.assertEqual((code, out), (2, ""))
 
+    def patch_rules(self, fn):
+        path = os.path.join(self.pack, "rules.json")
+        with open(path, encoding="utf-8") as fh:
+            r = json.load(fh)
+        fn(r)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(r, fh, ensure_ascii=False)
+
+    def test_pathological_pack_input_exits_2_cleanly(self):
+        def deep(r):
+            r["derived"]["zz"] = {"expr": "-" * 500 + "1"}
+
+        def inf_const(r):
+            r["derived"]["zz"] = {"expr": "abs(-1e999)"}
+
+        def inf_base(r):
+            r["creation"]["budgets"]["abilities"]["base"] = "1e999"
+
+        for patch in (deep, inf_const, inf_base):
+            with self.subTest(patch=patch.__name__):
+                shutil.rmtree(self.pack)
+                shutil.copytree(TOY, self.pack)
+                self.patch_rules(patch)
+                code, out, err = run("resolve", self.char, "--compact")
+                self.assertEqual((code, out), (2, ""), err)
+                self.assertIn("sheet: error:", err)
+                self.assertNotIn("Traceback", err)
+        # non-standard JSON constants in a pack file are fatal too
+        with open(os.path.join(self.pack, "rules.json"), encoding="utf-8") as fh:
+            text = fh.read()
+        with open(os.path.join(self.pack, "rules.json"), "w", encoding="utf-8") as fh:
+            fh.write(text.replace('"total": 27', '"total": Infinity', 1))
+        code, out, err = run("resolve", self.char)
+        self.assertEqual((code, out), (2, ""), err)
+        self.assertNotIn("Traceback", err)
+
+    def test_runaway_numbers_are_warnings_not_crashes(self):
+        nines = "9" * 490
+
+        def chain(r):
+            r["derived"].update({"a1": nines + "*" + nines, "a2": "a1*a1", "a3": "a2*a2",
+                                 "a4": "a3*a3"})
+            prev = "a4"
+            for i in range(5, 25):
+                r["derived"]["a%d" % i] = "%s*%s" % (prev, prev)
+                prev = "a%d" % i
+            r["creation"]["budgets"]["abilities"]["base"] = "-100000000"
+            r["traits"]["ability.might"]["min"] = "1e300 * 1e300"
+
+        self.patch_rules(chain)
+        code, out, err = run("resolve", self.char, "--compact")
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("Infinity", out)
+        doc = json.loads(out, parse_constant=lambda c: self.fail("non-standard %s" % c))
+        self.assertIsNone(doc["derived"]["a1"])
+        self.assertIn("expr-error", [w["code"] for w in doc["warnings"]])
+        code, out, err = run("add", self.char, "ability.might", "--by", "1", "--date", "1200",
+                             "--source", "s09", "--dry-run")
+        self.assertNotIn("Traceback", err)
+        self.assertIn(code, (0, 1))
+
     def test_usage_error_exit_2(self):
         code, _, _ = run("frobnicate", self.char)
         self.assertEqual(code, 2)

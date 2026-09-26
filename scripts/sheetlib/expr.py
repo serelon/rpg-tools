@@ -40,6 +40,17 @@ SEGMENT_RE = re.compile(r"^[a-z_][a-z0-9_]*$")
 
 MAX_SOURCE = 1000
 MAX_DEPTH = 50
+# Largest magnitude any expression constant, literal slot or result may have.
+# Sheet stats never need more; unbounded ints would let a pack hang the engine
+# (repeated squaring) or break JSON output (>4300-digit ints).
+MAX_MAGNITUDE = 10 ** 15
+
+
+def _in_bounds(x):
+    """Finite and |x| <= MAX_MAGNITUDE (bools are fine)."""
+    if isinstance(x, float) and not math.isfinite(x):
+        return False
+    return abs(x) <= MAX_MAGNITUDE
 
 _ALLOWED_NODES = (
     ast.Expression, ast.Constant, ast.Name, ast.Load, ast.Attribute,
@@ -83,11 +94,16 @@ class Compiled:
         return "Compiled(%r)" % self.src
 
 
-def _depth(node):
-    children = list(ast.iter_child_nodes(node))
-    if not children:
-        return 1
-    return 1 + max(_depth(c) for c in children)
+def _too_deep(tree, limit):
+    """True if the AST is deeper than ``limit`` (iterative; bails out early)."""
+    stack = [(tree, 1)]
+    while stack:
+        node, d = stack.pop()
+        if d > limit:
+            return True
+        for c in ast.iter_child_nodes(node):
+            stack.append((c, d + 1))
+    return False
 
 
 def compile_expr(src, where="expression"):
@@ -101,7 +117,9 @@ def compile_expr(src, where="expression"):
         tree = ast.parse(text.strip(), mode="eval")
     except SyntaxError as exc:
         raise SheetError("%s: syntax error in expression %r: %s" % (where, src, exc.msg))
-    if _depth(tree) > MAX_DEPTH:
+    except (RecursionError, MemoryError):
+        raise SheetError("%s: expression nested deeper than %d" % (where, MAX_DEPTH))
+    if _too_deep(tree, MAX_DEPTH):
         raise SheetError("%s: expression nested deeper than %d" % (where, MAX_DEPTH))
     for node in ast.walk(tree):
         if not isinstance(node, _ALLOWED_NODES):
@@ -110,6 +128,9 @@ def compile_expr(src, where="expression"):
         if isinstance(node, ast.Constant) and type(node.value) not in _CONST_TYPES:
             raise SheetError("%s: constant of type %s not allowed in expression %r"
                              % (where, type(node.value).__name__, src))
+        if isinstance(node, ast.Constant) and isinstance(node.value, float) \
+                and not math.isfinite(node.value):
+            raise SheetError("%s: non-finite number in expression %r" % (where, src))
         if isinstance(node, ast.Attribute) and node.attr.startswith("_") \
                 and node.attr != "__all__":
             raise SheetError("%s: attribute %r not allowed in expression %r"
@@ -126,7 +147,12 @@ def compile_expr(src, where="expression"):
 
 def compile_slot(value, where):
     """An expression slot: JSON number/bool literal, None, or expression string."""
-    if value is None or isinstance(value, bool) or isinstance(value, (int, float)):
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        if not _in_bounds(value):
+            raise SheetError("%s: number out of range (non-finite or above %d): %r"
+                             % (where, MAX_MAGNITUDE, value))
         return value
     if isinstance(value, str):
         return compile_expr(value, where)
@@ -196,8 +222,12 @@ def _num(x, what):
 
 
 def _finite(x):
-    if isinstance(x, float) and not math.isfinite(x):
-        raise ExprError("non-finite result")
+    """Numbers must be finite and within MAX_MAGNITUDE (S4 non-finite → expr-error)."""
+    if is_number(x):
+        if isinstance(x, float) and not math.isfinite(x):
+            raise ExprError("non-finite result")
+        if abs(x) > MAX_MAGNITUDE:
+            raise ExprError("number too large (above %d)" % MAX_MAGNITUDE)
     return x
 
 
@@ -262,7 +292,7 @@ class Evaluator:
         if not isinstance(compiled, Compiled):
             return compiled  # literal slot
         try:
-            return self._ev(compiled.tree.body, local or {})
+            return _finite(self._ev(compiled.tree.body, local or {}))
         except ExprError:
             raise
         except RecursionError:
