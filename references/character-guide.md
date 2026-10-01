@@ -98,6 +98,12 @@ never load-bearing canon. A missing exemplar degrades prose quality, never corre
 with a `creator` field and cross-links in `relationships` on both sides — never embedded
 as a block inside their owner's profile.
 
+**Nature (`minimal.nature`, optional, shown by `characters.py`):** what someone *is*, for
+settings where that decides every scene (vampires, ghouls, the fae, the awakened). A dict of
+short fields printed on one line by `get` and `list --short`, e.g.
+`{"kind": "Cainite", "clan": "Gangrel", "generation": "8th", "road": "Kings", "standing": "lord of the point", "bond": "none"}`.
+A campaign that uses it may require it and pair it with a prose `full.nature`.
+
 **Campaign-level schema additions:** a campaign may declare additional required fields
 (e.g. a power-classification notation) in its own CLAUDE.md or schema note. Captures and
 migrations in that campaign must follow the campaign's declared additions.

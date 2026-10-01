@@ -77,6 +77,13 @@ def filter_characters(
     return result
 
 
+def format_nature(nature: Any) -> str:
+    """One line for a minimal profile's `nature`: what someone is (kind, clan, standing, bonds)."""
+    if isinstance(nature, dict):
+        return " · ".join(f"{key.replace('_', ' ')}: {value}" for key, value in nature.items() if value)
+    return str(nature)
+
+
 def format_minimal(char: Dict) -> str:
     """Format character's minimal profile."""
     lines = []
@@ -90,6 +97,8 @@ def format_minimal(char: Dict) -> str:
         lines.append(f"**Essence:** {minimal['essence']}")
     if minimal.get("voice"):
         lines.append(f"**Voice:** \"{minimal['voice']}\"")
+    if minimal.get("nature"):
+        lines.append(f"**Nature:** {format_nature(minimal['nature'])}")
 
     # Show what's available
     available = []
