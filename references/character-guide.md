@@ -104,6 +104,20 @@ short fields printed on one line by `get` and `list --short`, e.g.
 `{"kind": "Cainite", "clan": "Gangrel", "generation": "8th", "road": "Kings", "standing": "lord of the point", "bond": "none"}`.
 A campaign that uses it may require it and pair it with a prose `full.nature`.
 
+**Cast index (`index`, optional, read by `characters.py index` / `group`):** a GM's map of
+the cast, built from every profile instead of a hand-kept list.
+`{"line": "Étaín's mother, mortal; keeps the old ways", "groups": ["the-house", "the-glen"], "weight": "core", "status": "active"}`.
+- `line`: the briefest orientation, a few words, not a portrait.
+- `groups`: cast groups, first one primary. A group is who you'd load *together* (a household,
+  a village, a lord's hall). Groups are defined in one file beside the profiles,
+  `{"kind": "cast-groups", "groups": [{"id", "name", "when"}]}`, where `when` says when to load it.
+- `weight`: `core` (protagonist, companions, `major`-tagged), `major`, `minor`, `passing`.
+- `status`: `active` (default), `dormant` (off stage a while), `gone` (away, alive), `dead`,
+  with an optional `status_note`.
+
+`index` prints everyone on one line under their first group; `group ID [--depth full]` prints a
+group's profiles. Profiles without an `index` block are listed apart and warned about.
+
 **Campaign-level schema additions:** a campaign may declare additional required fields
 (e.g. a power-classification notation) in its own CLAUDE.md or schema note. Captures and
 migrations in that campaign must follow the campaign's declared additions.

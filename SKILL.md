@@ -110,6 +110,8 @@ See **[character-guide.md](references/character-guide.md)** for schema.
 
 ```bash
 python scripts/characters.py list [--short]                    # List characters
+python scripts/characters.py index                             # Cast index: one line each, by group
+python scripts/characters.py group GROUP [--depth full]        # Profiles of everyone in a group
 python scripts/characters.py get NAME [--depth full]           # Get profile
 python scripts/characters.py get NAME --section SECTION        # Get section
 python scripts/characters.py sections NAME                     # List sections

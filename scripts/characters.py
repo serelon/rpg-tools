@@ -12,12 +12,31 @@ from lib import discover_data, find_item, load_changelog, save_item, delete_item
 
 # Character storage
 characters: Dict[str, Dict] = {}
+# Cast groups, in file order: id -> {"name", "when", ...}
+groups: Dict[str, Dict] = {}
+
+#: Index weights, heaviest first; statuses other than active are shown beside the name.
+WEIGHTS = ["core", "major", "minor", "passing"]
+STATUSES = ["active", "dormant", "gone", "dead"]
 
 
 def discover_characters(search_root: Path) -> None:
-    """Discover character files from characters/ folder."""
-    global characters
-    characters = discover_data("characters", search_root)
+    """Discover character files from characters/ folder.
+
+    A file with ``"kind": "cast-groups"`` defines the cast index's groups instead of a
+    character. Anything that isn't a profile (no name, no minimal block, e.g. a resolved
+    sheet sitting beside the profiles) is left out of the cast.
+    """
+    global characters, groups
+    characters, groups = {}, {}
+    for key, item in discover_data("characters", search_root).items():
+        if item.get("kind") == "cast-groups":
+            for g in item.get("groups", []):
+                if g.get("id") in groups:
+                    print(f"Warning: cast group '{g['id']}' defined twice", file=sys.stderr)
+                groups[g["id"]] = g
+        elif item.get("name") or item.get("minimal"):
+            characters[key] = item
 
 
 def filter_characters(
@@ -96,7 +115,10 @@ def format_minimal(char: Dict) -> str:
     if minimal.get("essence"):
         lines.append(f"**Essence:** {minimal['essence']}")
     if minimal.get("voice"):
-        lines.append(f"**Voice:** \"{minimal['voice']}\"")
+        voice = minimal["voice"]
+        if not (voice.startswith('"') and voice.endswith('"')):
+            voice = f'"{voice}"'
+        lines.append(f"**Voice:** {voice}")
     if minimal.get("nature"):
         lines.append(f"**Nature:** {format_nature(minimal['nature'])}")
 
@@ -264,6 +286,96 @@ def cmd_list(
 
         print(f"\nTotal: {len(filtered)} characters")
         print("Use --short for minimal profiles, or 'get <name>' for details")
+
+
+def _index(char: Dict) -> Dict:
+    return char.get("index") or {}
+
+
+def _sort_key(char: Dict):
+    weight = _index(char).get("weight")
+    rank = WEIGHTS.index(weight) if weight in WEIGHTS else len(WEIGHTS)
+    return (rank, (char.get("name") or char.get("id") or "").lower())
+
+
+def _index_line(char: Dict, also: Optional[List[str]] = None) -> str:
+    """One cast-index line: name, lookup key, weight, status, the brief line."""
+    idx = _index(char)
+    bits = [f"**{char.get('name', char.get('id'))}** `{char.get('id')}`"]
+    if idx.get("weight"):
+        bits.append(idx["weight"])
+    status = idx.get("status", "active")
+    if status != "active":
+        bits.append(status + (f" ({idx['status_note']})" if idx.get("status_note") else ""))
+    line = " · ".join(bits)
+    if idx.get("line"):
+        line += f": {idx['line']}"
+    if also:
+        line += f" *(also: {', '.join(also)})*"
+    return "- " + line
+
+
+def cmd_index() -> None:
+    """The cast index: everyone, one line each, under their first group."""
+    def gname(gid):
+        return groups.get(gid, {}).get("name", gid)
+
+    members: Dict[str, List[Dict]] = {gid: [] for gid in groups}
+    unindexed = []
+    for char in characters.values():
+        gids = _index(char).get("groups") or []
+        if not gids:
+            unindexed.append(char)
+            continue
+        for gid in gids:
+            if gid not in groups:
+                print(f"Warning: {char.get('id')} names unknown cast group '{gid}'", file=sys.stderr)
+        members.setdefault(gids[0], []).append(char)
+
+    print(f"# The cast ({len(characters)})\n")
+    print("`characters.py group <group>` loads a group's profiles (`--depth full` for full ones); "
+          "`characters.py get <key> --depth full` loads one person.\n")
+    for gid, chars in members.items():
+        if not chars:
+            continue
+        g = groups.get(gid, {})
+        print(f"## {g.get('name', gid)} `{gid}`")
+        if g.get("when"):
+            print(f"*{g['when']}*")
+        for char in sorted(chars, key=_sort_key):
+            others = [gname(x) for x in (_index(char).get("groups") or [])[1:]]
+            print(_index_line(char, others))
+        print()
+    if unindexed:
+        print("## Not yet indexed")
+        for char in sorted(unindexed, key=_sort_key):
+            role = char.get("minimal", {}).get("role", "")
+            print(f"- **{char.get('name', char.get('id'))}** `{char.get('id')}`" + (f": {role}" if role else ""))
+        print()
+        print(f"Warning: {len(unindexed)} profile(s) have no index block", file=sys.stderr)
+
+
+def cmd_group(group_id: str, depth: str = "minimal") -> None:
+    """Everyone in a cast group (first group or not), heaviest first, at the given depth."""
+    if group_id not in groups:
+        hits = [g for g in groups if g.startswith(group_id)]
+        if len(hits) != 1:
+            known = ", ".join(groups) or "none defined"
+            print(f"Error: no cast group '{group_id}' (groups: {known})", file=sys.stderr)
+            sys.exit(1)
+        group_id = hits[0]
+    g = groups[group_id]
+    chars = [c for c in characters.values() if group_id in (_index(c).get("groups") or [])]
+    print(f"# {g.get('name', group_id)} ({len(chars)})")
+    if g.get("when"):
+        print(f"*{g['when']}*")
+    for char in sorted(chars, key=_sort_key):
+        print()
+        status = _index(char).get("status", "active")
+        if status != "active":
+            note = _index(char).get("status_note")
+            print(f"[{status}" + (f": {note}" if note else "") + "]")
+        print(format_full(char) if depth == "full" else format_minimal(char))
 
 
 def cmd_get(
@@ -551,6 +663,8 @@ def main():
         print("  delete <id> [--force]          Delete a character")
         print("  list [filters...]              List character names")
         print("  list --short [filters...]      List with minimal profiles")
+        print("  index                          Cast index: one line each, by group")
+        print("  group <group> [--depth full]   Profiles of everyone in a cast group")
         print("  get <name>                     Get minimal profile")
         print("  get <name> --depth full        Get full profile")
         print("  get <name> --section NAME      Get specific section")
@@ -711,6 +825,13 @@ def main():
         cmd_delete(char_name, force)
     elif command == "list":
         cmd_list(faction, subfaction, tag, location, branch, short)
+    elif command == "index":
+        cmd_index()
+    elif command == "group":
+        if not char_name:
+            print("Error: group id is required for 'group' command", file=sys.stderr)
+            sys.exit(1)
+        cmd_group(char_name, depth)
     elif command == "get":
         if not char_name:
             print("Error: character name is required for 'get' command", file=sys.stderr)
