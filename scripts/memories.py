@@ -125,9 +125,11 @@ def filter_memories(
     session: Optional[str] = None,
     intensity: Optional[str] = None,
     perspective: Optional[str] = None,
-    before_era: Optional[str] = None
+    before_era: Optional[str] = None,
+    exclude_tags: Optional[List[str]] = None
 ) -> List[Dict]:
-    """Filter memories by various criteria."""
+    """Filter memories by various criteria. `exclude_tags` drops any memory carrying
+    one of those tags exactly (not substring, unlike `tag`)."""
     result = list(memories.values())
 
     if campaign:
@@ -158,6 +160,11 @@ def filter_memories(
         tag_lower = tag.lower()
         result = [m for m in result
                   if any(tag_lower in t.lower() for t in m.get("tags", []))]
+
+    if exclude_tags:
+        drop = {t.lower() for t in exclude_tags}
+        result = [m for m in result
+                  if not any(t.lower() in drop for t in m.get("tags", []))]
 
     if era:
         era_lower = era.lower()
@@ -190,6 +197,8 @@ def format_memory(mem: Dict, show_text: bool = True) -> str:
 
     # Metadata
     meta = []
+    if mem.get("id"):
+        meta.append(f"ID: {mem['id']}")
     if mem.get("type"):
         meta.append(f"Type: {mem['type']}")
     if mem.get("format"):
@@ -254,10 +263,12 @@ def cmd_list(
     intensity: Optional[str] = None,
     perspective: Optional[str] = None,
     short: bool = False,
-    full: bool = False
+    full: bool = False,
+    exclude_tags: Optional[List[str]] = None
 ) -> None:
     """List memories (titles; --short adds details; --full adds the text)."""
     filtered = filter_memories(
+        exclude_tags=exclude_tags,
         campaign=campaign,
         character=character,
         location=location,
@@ -292,14 +303,15 @@ def cmd_list(
             print()
     else:
         # Just titles and basic info
-        print(f"\n{'Title':<45} {'Type':<18} {'Era':<15}")
-        print("-" * 78)
+        print(f"\n{'ID':<36} {'Title':<40} {'Type':<18} {'Era':<15}")
+        print("-" * 112)
 
         for mem in filtered:
-            title = mem.get("title", mem.get("id", "Untitled"))[:43]
+            mem_id = mem.get("id", "")
+            title = mem.get("title", mem.get("id", "Untitled"))[:38]
             mem_type = mem.get("type", "")[:16]
             era = mem.get("era", "")[:13]
-            print(f"{title:<45} {mem_type:<18} {era:<15}")
+            print(f"{mem_id:<36} {title:<40} {mem_type:<18} {era:<15}")
 
         print(f"\nTotal: {len(filtered)} memories")
         print("Use --short for details, or 'get <id>' for full memory")
@@ -733,6 +745,7 @@ def main():
         print("  --type TYPE            Filter by type")
         print("  --format FORMAT        Filter by format (vivid/sequential/summary)")
         print("  --tag TAG              Filter by tag")
+        print("  --exclude-tag TAG      Drop memories with this exact tag (repeatable, or comma-separated)")
         print("  --era ERA              Filter by era")
         print("  --session SESSION      Filter by session")
         print("  --intensity LEVEL      Filter by intensity")
@@ -748,6 +761,7 @@ def main():
     mem_type = None
     mem_format = None
     tag = None
+    exclude_tags = []
     era = None
     session = None
     intensity = None
@@ -788,6 +802,9 @@ def main():
             i += 2
         elif arg == "--tag" and i + 1 < len(sys.argv):
             tag = sys.argv[i + 1]
+            i += 2
+        elif arg == "--exclude-tag" and i + 1 < len(sys.argv):
+            exclude_tags.extend(t.strip() for t in sys.argv[i + 1].split(",") if t.strip())
             i += 2
         elif arg == "--era" and i + 1 < len(sys.argv):
             era = sys.argv[i + 1]
@@ -876,7 +893,7 @@ def main():
         )
     elif command == "list":
         cmd_list(campaign, character, location, mem_type, mem_format, tag, era, session,
-                 intensity, perspective, short, full)
+                 intensity, perspective, short, full, exclude_tags)
     elif command == "get":
         if not mem_id:
             print("Error: memory id required for 'get'", file=sys.stderr)

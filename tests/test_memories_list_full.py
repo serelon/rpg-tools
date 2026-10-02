@@ -52,6 +52,25 @@ class ListFull(unittest.TestCase):
         self.assertIn("Anchor One", out)
         self.assertNotIn("The first anchor's words.", out)
 
+    def test_plain_list_shows_ids_for_get(self):
+        out = self.run_list("--tag", "core")
+        self.assertIn("anchor-one", out)
+
+    def test_exclude_tag_leaves_the_rest(self):
+        out = self.run_list("--exclude-tag", "core")
+        self.assertIn("Passing", out)
+        self.assertNotIn("Anchor One", out)
+        self.assertIn("Total: 1 memories", out)
+
+    def test_exclude_tag_is_exact_and_stacks(self):
+        out = self.run_list("--exclude-tag", "cor")
+        self.assertIn("Total: 3 memories", out)
+        out = self.run_list("--exclude-tag", "bond", "--exclude-tag", "weather")
+        self.assertIn("Anchor One", out)
+        self.assertIn("Total: 1 memories", out)
+        out = self.run_list("--exclude-tag", "bond,weather")
+        self.assertIn("Total: 1 memories", out)
+
 
 if __name__ == "__main__":
     unittest.main()

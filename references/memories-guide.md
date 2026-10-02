@@ -124,6 +124,7 @@ memories.py list --intensity high          # Filter by intensity
 memories.py list --tag loss                # Filter by tag
 memories.py list --short                   # Show details without text
 memories.py list --tag core --full         # Every match whole, text included (read anchors in one go)
+memories.py list --exclude-tag core,exemplar  # The rest, by id (exact tags; repeatable); then `get ID`
 
 # Retrieve
 memories.py get ID                         # Get specific memory

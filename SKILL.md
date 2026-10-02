@@ -164,6 +164,7 @@ See **[memories-guide.md](references/memories-guide.md)** for schema.
 ```bash
 python scripts/memories.py list --campaign NAME         # List memories
 python scripts/memories.py list --tag core --full       # Every match whole, text included
+python scripts/memories.py list --exclude-tag core,exemplar  # Everything else: ids to pick from, then `get ID`
 python scripts/memories.py get MEMORY_ID                # Get specific
 python scripts/memories.py random --campaign NAME
 python scripts/memories.py recent --campaign NAME       # Most recent
