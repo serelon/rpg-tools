@@ -4,6 +4,7 @@
 import json
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -293,9 +294,12 @@ def _index(char: Dict) -> Dict:
 
 
 def _sort_key(char: Dict):
+    """Heaviest first, the protagonist ahead of their weight, then by name (accents folded)."""
     weight = _index(char).get("weight")
     rank = WEIGHTS.index(weight) if weight in WEIGHTS else len(WEIGHTS)
-    return (rank, (char.get("name") or char.get("id") or "").lower())
+    lead = 0 if "protagonist" in (char.get("tags") or []) else 1
+    name = unicodedata.normalize("NFKD", char.get("name") or char.get("id") or "")
+    return (rank, lead, name.encode("ascii", "ignore").decode().lower())
 
 
 def _index_line(char: Dict, also: Optional[List[str]] = None) -> str:

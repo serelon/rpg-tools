@@ -68,6 +68,14 @@ class CastIndex(unittest.TestCase):
         out, _ = self.run_cli("index")
         self.assertLess(out.index("**Mother**"), out.index("**Father**"))
 
+    def test_accented_names_sort_with_their_letter(self):
+        cdir = Path(self.tmp.name) / "characters"
+        for cid, name in (("e", "Étaín"), ("m", "Muirenn")):
+            c = profile(cid, name, {"groups": ["the-glen"], "weight": "minor"})
+            (cdir / f"{cid}.json").write_text(json.dumps(c), encoding="utf-8")
+        out, _ = self.run_cli("index")
+        self.assertLess(out.index("**Étaín**"), out.index("**Muirenn**"))
+
     def test_unindexed_profiles_are_listed_and_warned(self):
         out, err = self.run_cli("index")
         self.assertIn("## Not yet indexed", out)
