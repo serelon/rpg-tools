@@ -123,6 +123,7 @@ memories.py list --format vivid            # Filter by format
 memories.py list --intensity high          # Filter by intensity
 memories.py list --tag loss                # Filter by tag
 memories.py list --short                   # Show details without text
+memories.py list --tag core --full         # Every match whole, text included (read anchors in one go)
 
 # Retrieve
 memories.py get ID                         # Get specific memory

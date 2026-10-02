@@ -253,9 +253,10 @@ def cmd_list(
     session: Optional[str] = None,
     intensity: Optional[str] = None,
     perspective: Optional[str] = None,
-    short: bool = False
+    short: bool = False,
+    full: bool = False
 ) -> None:
-    """List memories."""
+    """List memories (titles; --short adds details; --full adds the text)."""
     filtered = filter_memories(
         campaign=campaign,
         character=character,
@@ -277,7 +278,14 @@ def cmd_list(
     filtered.sort(key=lambda m: (parse_session(m.get("session", "")),
                                   parse_era(m.get("era", ""))))
 
-    if short:
+    if full:
+        # Every matching memory whole, text included: the dump for anchor sets
+        # like `--tag core`, read in one go rather than one `get` per id
+        for mem in filtered:
+            print(format_memory(mem))
+            print("\n" + "-" * 78 + "\n")
+        print(f"Total: {len(filtered)} memories")
+    elif short:
         # Show full details without text
         for mem in filtered:
             print(format_memory(mem, show_text=False))
@@ -691,6 +699,7 @@ def main():
         print("  create [id] --title T --text T ...   Create a new memory")
         print("  list [filters...]                    List memories")
         print("  list --short [filters...]            List with details (no text)")
+        print("  list --full [filters...]             List every match whole, text included")
         print("  get <id>                             Get specific memory")
         print("  random [filters...]                  Get random memory")
         print("  recent [--campaign NAME] [--count N] Show recent memories")
@@ -744,6 +753,7 @@ def main():
     intensity = None
     perspective = None
     short = False
+    full = False
     count = 5
     by_era = False
     query = None
@@ -793,6 +803,9 @@ def main():
             i += 2
         elif arg == "--short":
             short = True
+            i += 1
+        elif arg == "--full":
+            full = True
             i += 1
         elif arg == "--count" and i + 1 < len(sys.argv):
             count = int(sys.argv[i + 1])
@@ -863,7 +876,7 @@ def main():
         )
     elif command == "list":
         cmd_list(campaign, character, location, mem_type, mem_format, tag, era, session,
-                 intensity, perspective, short)
+                 intensity, perspective, short, full)
     elif command == "get":
         if not mem_id:
             print("Error: memory id required for 'get'", file=sys.stderr)
