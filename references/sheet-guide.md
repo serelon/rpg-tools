@@ -183,7 +183,8 @@ Creation events (`"kind": "creation"`) are checked against budgets instead of pr
 - **Group:** `name`, `order` (ties by key), `gm_only`, `sections`.
 - **Section:** `name`, `order`, `gm_only`, `note`, and exactly one of `fields` (array),
   `class` (+ `where: {group: X}`, `show: present | active | all`, optional `kind`),
-  `list: NAME`, `spans: KIND | "*"`.
+  `list: NAME` (+ optional `show: present`: omit the section while the list is empty;
+  without it an empty list still renders), `spans: KIND | "*"`.
 - **Field:** `key` (required except `track`/`nested`), `kind`, `name`, `max` (display-only
   override; `over-cap` always uses the TraitDef), `levels` (track), `options` (choice:
   `{catalog: ns}` · `{table: name}` · `{values: [...]}`), `fields` (nested), `show: present`

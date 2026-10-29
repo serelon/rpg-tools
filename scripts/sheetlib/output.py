@@ -329,6 +329,9 @@ class Builder:
                     ents = self.list_entries(sec["list"])
                     if ents is None:
                         continue
+                    # opt-in only: an empty list section with no show key still renders
+                    if sec.get("show") == "present" and not ents:
+                        continue
                     ld = m.lists.get(sec["list"]) or {}
                     cap = self.ev(ld["cap"], {}, "lists.%s.cap" % sec["list"]) if "cap" in ld else None
                     so.update({"kind": "list", "list": sec["list"], "count": len(ents),

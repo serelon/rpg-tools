@@ -60,7 +60,8 @@ SHAPE = {"id": "out-shape", "groups": {
     "marks": {"name": "Marks", "order": 60, "sections": {
         "marks": {"list": "marks", "note": "Things that stay"},
         "items": {"order": 2, "list": "items"},
-        "hidden": {"order": 3, "list": "hidden"}}},
+        "hidden": {"order": 3, "list": "hidden"},
+        "items_if_any": {"order": 4, "list": "items", "show": "present"}}},
     "time": {"name": "Time", "order": 70, "sections": {"spans": {"spans": "*"}}},
     "secret": {"name": "Secret", "order": 80, "gm_only": True, "sections": {
         "s": {"fields": [{"key": "level", "kind": "scalar"}]}}},
@@ -136,7 +137,7 @@ class TestStructure(OutputCase):
         self.assertEqual([g["id"] for g in self.gm["groups"]],
                          ["ident", "attrs", "powers", "knacks", "virtues", "marks", "time", "secret"])
         self.assertEqual([s["id"] for s in self.group(self.gm, "marks")["sections"]],
-                         ["marks", "items", "hidden"])
+                         ["marks", "items", "hidden"])  # items_if_any: empty + show present
         sec = self.section(self.gm, "marks", "marks")
         self.assertEqual(list(sec)[:3], ["id", "name", "kind"])
         self.assertEqual(sec["note"], "Things that stay")
