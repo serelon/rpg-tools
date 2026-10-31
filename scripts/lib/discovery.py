@@ -34,6 +34,31 @@ def _dir_files(data_dir: Path, file_pattern: str) -> List[Path]:
     return results
 
 
+def _campaign_type_dirs(campaign_dir: Path, data_type: str,
+                        on_warning: Optional[Callable[[str], None]] = None) -> List[Path]:
+    """The {data_type}/ folders one campaign exposes to discovery.
+
+    Always ``campaign_dir/{data_type}/``. A campaign may opt in to more with a
+    ``campaign.json`` beside it: ``{"discover": ["subsettings/*", "branches/*"]}``
+    adds ``{match}/{data_type}/`` for every folder each pattern matches. Opt-in
+    because other campaigns keep same-id variants in branches (AUs, ports).
+    """
+    dirs = [campaign_dir / data_type]
+    config = campaign_dir / "campaign.json"
+    if config.is_file():
+        try:
+            patterns = json.loads(config.read_text(encoding="utf-8-sig")).get("discover", [])
+        except (json.JSONDecodeError, OSError, AttributeError) as e:
+            if on_warning:
+                on_warning(f"Warning: ignoring {config}: {e}")
+            patterns = []
+        for pattern in patterns:
+            for match in sorted(campaign_dir.glob(pattern)):
+                if match.is_dir():
+                    dirs.append(match / data_type)
+    return [d for d in dirs if d.is_dir()]
+
+
 def discover_data(
     data_type: str,
     search_root: Path,
@@ -41,7 +66,8 @@ def discover_data(
     file_pattern: str = "*.json",
     loose_pattern: Optional[str] = None,
     multi_collection_key: Optional[str] = None,
-    on_warning: Optional[Callable[[str], None]] = None
+    on_warning: Optional[Callable[[str], None]] = None,
+    only_dir: Optional[Path] = None
 ) -> Dict[str, Dict[str, Any]]:
     """Discover and load JSON data files of a given type.
 
@@ -60,6 +86,7 @@ def discover_data(
                               When None, returned dict is keyed by bare IDs
                               (legacy behavior; required for non-namegen tools).
         on_warning: Optional callback for warning messages. If None, prints to stderr.
+        only_dir: Optional folder; when given, only its files load (search skipped).
 
     Returns:
         Dict mapping item IDs to their data dictionaries.
@@ -67,7 +94,8 @@ def discover_data(
     Search order:
         1. {search_root}/{data_type}/
         2. Parent directories: {parent}/{data_type}/
-        3. campaigns/*/{data_type}/
+        3. campaigns/*/{data_type}/, plus the folders a campaign opts in to
+           via campaign.json "discover" (e.g. subsettings/*/{data_type}/)
         4. tools/data/{data_type}/
         5. /mnt/skills/user/rpg-tools/tools/data/{data_type}/
         6. /mnt/user-data/uploads/{data_type}/
@@ -102,8 +130,7 @@ def discover_data(
             campaigns_found = True
             for campaign_dir in campaigns_dir.iterdir():
                 if campaign_dir.is_dir():
-                    type_dir = campaign_dir / data_type
-                    if type_dir.exists():
+                    for type_dir in _campaign_type_dirs(campaign_dir, data_type, on_warning):
                         data_paths.extend(_dir_files(type_dir, file_pattern))
             break
     # Also check from cwd if different from search_root
@@ -114,8 +141,7 @@ def discover_data(
             if campaigns_dir.exists():
                 for campaign_dir in campaigns_dir.iterdir():
                     if campaign_dir.is_dir():
-                        type_dir = campaign_dir / data_type
-                        if type_dir.exists():
+                        for type_dir in _campaign_type_dirs(campaign_dir, data_type, on_warning):
                             data_paths.extend(_dir_files(type_dir, file_pattern))
                 break
 
@@ -148,6 +174,13 @@ def discover_data(
                 type_dir = subdir / data_type
                 if type_dir.exists():
                     data_paths.extend(_dir_files(type_dir, file_pattern))
+
+    # only_dir: load that one folder and nothing else (e.g. one branch's memories).
+    if only_dir is not None:
+        only_dir = Path(only_dir)
+        if not only_dir.is_dir():
+            on_warning(f"Warning: {only_dir} is not a folder; nothing loaded")
+        data_paths = _dir_files(only_dir, file_pattern) if only_dir.is_dir() else []
 
     # De-duplicate discovered paths: the same file is often found via more
     # than one search step (e.g. cwd inside a campaign + the campaigns/* scan),

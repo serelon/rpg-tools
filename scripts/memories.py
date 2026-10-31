@@ -14,13 +14,14 @@ from lib import parse_era, parse_session, discover_data, find_item, save_item
 memories: Dict[str, Dict] = {}
 
 
-def discover_memories(search_root: Path) -> None:
-    """Discover memory files from memories/ folder."""
+def discover_memories(search_root: Path, only_dir: Optional[Path] = None) -> None:
+    """Discover memory files from memories/ folder (or only from only_dir)."""
     global memories
     memories = discover_data(
         "memories",
         search_root,
-        loose_pattern="*-memories.json"
+        loose_pattern="*-memories.json",
+        only_dir=only_dir
     )
 
 
@@ -699,8 +700,15 @@ def main():
     # Find search root
     search_root = Path.cwd()
 
-    # Load memories
-    discover_memories(search_root)
+    # Load memories (--dir PATH: only that folder, e.g. one branch's memories/)
+    only_dir = None
+    if "--dir" in sys.argv[2:]:
+        at = sys.argv.index("--dir", 2)
+        if at + 1 >= len(sys.argv):
+            print("Error: --dir needs a folder", file=sys.stderr)
+            sys.exit(1)
+        only_dir = Path(sys.argv[at + 1])
+    discover_memories(search_root, only_dir)
 
     # Validate connections (warnings only, doesn't exit)
     validate_connections()
@@ -739,6 +747,7 @@ def main():
         print("  --story ID             Link to a story")
         print("  --json                 Output created memory as JSON")
         print("\nFilters (for list/random):")
+        print("  --dir PATH             Load memories only from this folder (any command)")
         print("  --campaign NAME        Filter by campaign")
         print("  --character NAME       Filter by character (single)")
         print("  --location NAME        Filter by location (single)")
@@ -785,7 +794,9 @@ def main():
     i = 2
     while i < len(sys.argv):
         arg = sys.argv[i]
-        if arg == "--campaign" and i + 1 < len(sys.argv):
+        if arg == "--dir" and i + 1 < len(sys.argv):
+            i += 2  # read before loading, above
+        elif arg == "--campaign" and i + 1 < len(sys.argv):
             campaign = sys.argv[i + 1]
             i += 2
         elif arg == "--character" and i + 1 < len(sys.argv):

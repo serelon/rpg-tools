@@ -29,6 +29,15 @@ All data tools use `scripts/lib/discovery.py` to find JSON data files. Discovery
 7. /home/claude/*/{data_type}/  # Extracted skill bundles
 ```
 
+**Campaign scopes (opt-in).** In step 3 a campaign may expose more folders with a
+`campaign.json` beside its data: `{"discover": ["subsettings/*", "branches/*"]}` adds
+`{match}/{data_type}/` for every folder a pattern matches. Opt-in, because many campaigns keep
+same-id variants (AUs, ported characters) in branches. Bundles never carry `campaign.json`, so
+bundle behaviour is unchanged. A stopgap toward configurable routes.
+
+**`only_dir`.** `discover_data(..., only_dir=PATH)` loads that one folder and nothing else
+(`memories.py --dir PATH`), e.g. one branch's memories for a bundle build.
+
 ### ID Extraction
 
 Each item gets an ID from (in priority order):
