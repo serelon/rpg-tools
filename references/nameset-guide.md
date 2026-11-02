@@ -7,6 +7,7 @@ All v1 namesets keep working unchanged. Every v2 capability is opt-in.
 ## Contents
 
 - [Quick Reference](#quick-reference)
+- [Target Sizes](#target-sizes)
 - [Nameset Types](#nameset-types)
 - [File Layout & Namespaces](#file-layout--namespaces)
 - [Schema Reference](#schema-reference)
@@ -65,6 +66,20 @@ python scripts/namegen.py groups --nameset NAME
 ```bash
 python scripts/namegen.py validate
 ```
+
+---
+
+## Target Sizes
+
+Aim for these counts **per leaf nameset** (aggregates don't count; each source leaf should meet them on its own):
+
+| Category | Target |
+|----------|--------|
+| Given names, per gender | 200 |
+| Unisex given names | 100 |
+| Family names | 200 |
+
+Smaller pools repeat noticeably and randomize poorly. It's fine to go under when pushing for the target would hurt quality, for example a language with few documented names, or a culture whose given names are strongly gendered. If you do, say why in the `design` block. Other categories (titles, ship names, bynames) have no fixed target, but they should be large enough not to repeat in play; about 100 is a good default for open-ended pools.
 
 ---
 
