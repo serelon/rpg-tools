@@ -533,10 +533,11 @@ Syntax `{...}*N-M` repeats the bracketed group a random number of times between 
 
 Each repetition rolls fresh placeholders. Useful for lineage chains, ancestor-recital formats, and multi-generation patronymics.
 
-> **Important gotcha.** Inside the chain group, **a single brace pair is a literal, not a placeholder**. To repeat a placeholder, double the braces.
+> **Brace rule.** The outer braces delimit the repeated group; placeholders inside it use
+> **single** braces, as everywhere else. Don't double them: `{ {{foo}}'ess}*1-3` renders the
+> literal text (`'ess 'ess`) with no name.
 >
-> `{foo}*1-3` repeats the literal text `foo`.
-> `{{foo}}*1-3` repeats the placeholder `{foo}`.
+> `{ {foo}'ess}*1-3` → ` Kha'ess Riq'ess` (fresh `{foo}` each repetition).
 
 Examples:
 
