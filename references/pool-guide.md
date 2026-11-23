@@ -69,6 +69,32 @@ python scripts/pool.py draw playing-cards 5
 # Jack of Spades
 ```
 
+### Weighted Draw (profiles)
+
+One shared pool, but some drawers should be likelier to get some tokens (a child rarely draws
+"dark", an elder often draws "compromised"). Put weight profiles in the definition; tokens not
+listed weigh 1, a weight of 0 means that profile can't draw it:
+
+```json
+{
+  "id": "morality",
+  "tokens": [{"token": "Joker", "count": 2}, {"token": "Dark", "count": 5}, {"token": "Decent", "count": 10}],
+  "settings": {"draw_mode": "random"},
+  "weights": {
+    "young":   {"Dark": 0.3, "Decent": 1.5},
+    "veteran": {"Dark": 1.2}
+  }
+}
+```
+
+```bash
+python scripts/pool.py draw morality --profile young
+```
+
+A profile only tilts the odds of that draw: the pool stays shared and depletes as usual, so
+what one drawer takes, nobody else can get. A profile draw is always weighted-random, whatever
+`draw_mode` says. The definition must be findable in `./pools/` at draw time.
+
 ### Peek Without Removing
 
 ```bash

@@ -268,8 +268,33 @@ def cmd_create(name: str, tokens_shorthand: Optional[str] = None,
         sys.exit(1)
 
 
-def cmd_draw(name: str, count: int = 1, output_json: bool = False) -> None:
-    """Draw tokens from a pool."""
+def load_profile_weights(definition_name: str, profile: str) -> Dict[str, float]:
+    """Weights for a draw profile, from the definition's "weights": {profile: {token: w}}.
+
+    Tokens not listed weigh 1. A profile only tilts the odds of one draw; the pool stays
+    shared and depletes as usual.
+    """
+    defn = load_pool_definition(definition_name)
+    profiles = (defn or {}).get("weights", {})
+    if profile not in profiles:
+        known = ", ".join(sorted(profiles)) or "none"
+        print(f"Error: no weight profile '{profile}' in definition '{definition_name}' "
+              f"(known: {known}; definitions are read from ./pools/)", file=sys.stderr)
+        sys.exit(1)
+    return profiles[profile]
+
+
+def weighted_index(tokens: List[str], weights: Dict[str, float]) -> Optional[int]:
+    """Pick an index from tokens, each token weighted (default 1). None if all weigh 0."""
+    w = [max(0.0, float(weights.get(t, 1))) for t in tokens]
+    if sum(w) <= 0:
+        return None
+    return random.choices(range(len(tokens)), weights=w)[0]
+
+
+def cmd_draw(name: str, count: int = 1, output_json: bool = False,
+             profile: Optional[str] = None) -> None:
+    """Draw tokens from a pool (weighted random when a profile is given)."""
     state = load_state(name)
     if not state:
         print(f"Error: Pool '{name}' not initialized. Use 'create' first.", file=sys.stderr)
@@ -278,6 +303,7 @@ def cmd_draw(name: str, count: int = 1, output_json: bool = False) -> None:
     tokens = state["tokens"]
     settings = state.get("settings", DEFAULT_SETTINGS)
     definition_name = state.get("definition")
+    weights = load_profile_weights(definition_name or name, profile) if profile else None
     drawn = []
 
     for _ in range(count):
@@ -310,7 +336,14 @@ def cmd_draw(name: str, count: int = 1, output_json: bool = False) -> None:
 
         # Draw based on mode
         draw_mode = settings.get("draw_mode", "pop_top")
-        if draw_mode == "pop_top":
+        if weights is not None:  # a profile means a weighted random draw, whatever the mode
+            idx = weighted_index(tokens, weights)
+            if idx is None:
+                print(f"Warning: every token left in '{name}' weighs 0 for profile "
+                      f"'{profile}'", file=sys.stderr)
+                break
+            drawn.append(tokens.pop(idx))
+        elif draw_mode == "pop_top":
             drawn.append(tokens.pop(0))
         elif draw_mode == "pop_bottom":
             drawn.append(tokens.pop())
@@ -492,6 +525,8 @@ def print_usage():
     print("  --bottom                      Return token to bottom (default)")
     print("  --random                      Return token to random position")
     print("  --json                        Output as JSON")
+    print("  --profile P                   (draw) weighted random draw, weights from the")
+    print("                                definition's \"weights\": {P: {token: w}}; unlisted = 1")
     print()
     print("Pool settings (in definition JSON):")
     print("  draw_mode:    pop_top, pop_bottom, random")
@@ -513,6 +548,7 @@ def main():
     position = "bottom"
     return_token = None
     output_json = False
+    profile = None
 
     i = 2
     while i < len(sys.argv):
@@ -532,6 +568,9 @@ def main():
         elif arg == "--json":
             output_json = True
             i += 1
+        elif arg == "--profile" and i + 1 < len(sys.argv):
+            profile = sys.argv[i + 1]
+            i += 2
         elif arg.startswith("--"):
             print(f"Unknown option: {arg}", file=sys.stderr)
             sys.exit(1)
@@ -563,7 +602,7 @@ def main():
         if not pool_name:
             print("Error: Pool name required", file=sys.stderr)
             sys.exit(1)
-        cmd_draw(pool_name, count, output_json)
+        cmd_draw(pool_name, count, output_json, profile)
     elif command == "peek":
         if not pool_name:
             print("Error: Pool name required", file=sys.stderr)
