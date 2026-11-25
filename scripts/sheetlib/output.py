@@ -323,7 +323,10 @@ class Builder:
                 self.e.sink.expr_error("mounts.%s.%s" % (kind, mt.id), str(exc))
                 ns = {}
             row = {"id": mt.id, "name": ns.get("name") or mt.id, "ref": mt.ref, "fields": []}
+            hidden = getattr(ns, "gm_keys", frozenset()) if not self.gm else frozenset()
             for f in fields:
+                if any(f["key"] == g or f["key"].startswith(g + ".") for g in hidden):
+                    continue  # a child's gm_only value never reaches the player view
                 v = ns
                 for seg in f["key"].split("."):
                     v = v.get(seg) if isinstance(v, dict) else None

@@ -632,7 +632,8 @@ class Folder:
             getattr(self, "_op_" + op)(eff, ev, expected, touched_r, touched_n, gained, costed_keys)
         if ev.satisfies:
             self.satisfies.append((ev.satisfies, ev.ref))
-        if not creation:
+        is_tick = isinstance(ev.raw, dict) and isinstance(ev.raw.get("tick"), dict)
+        if not creation and not is_tick:  # a tick's stock moves are flows, not purchases
             self._payment(ev, expected, costed_keys)
         self.expected[ev.ref] = {k: normalise(v) for k, v in expected.items()}
         # bounds, post-event, unanchored

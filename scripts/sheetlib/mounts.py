@@ -47,11 +47,13 @@ def nest(flat):
 
 
 class Namespace(dict):
-    """A child's values; ``mount``/``mounts`` are fetched on first read."""
+    """A child's values; ``mount``/``mounts`` are fetched on first read.
+    ``gm_keys``: the child's gm_only traits and derived keys (lenses hide them from players)."""
 
-    def __init__(self, data, lazy):
+    def __init__(self, data, lazy, gm_keys=()):
         super().__init__(data)
         self._lazy = lazy
+        self.gm_keys = frozenset(gm_keys)
 
     def get(self, key, default=None):
         if key in ("mount", "mounts") and not dict.__contains__(self, key) and self._lazy:
@@ -118,10 +120,12 @@ def namespace_of(env, model, name, mid):
     data["list"] = env.list_view()
     data["id"] = mid
     data["name"] = name
+    gm = {k for k in env.state.values if env.engine.trait_gm_only(env.state, k)}
+    gm |= {k for k, dd in model.derived.items() if dd.get("gm_only")}
 
     def lazy(which):
         st = env.state
         if which == "mounts":
             return {k: [env.mount_ns(m) for m in live_mounts(st, k)] for k in st.mounts}
         return {k: {m.id: env.mount_ns(m) for m in live_mounts(st, k)} for k in st.mounts}
-    return Namespace(data, lazy)
+    return Namespace(data, lazy, gm)

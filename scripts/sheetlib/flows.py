@@ -56,11 +56,11 @@ def parse_target(src, site, model, each, caps, allow_cap):
     if segs[0] == "child":
         if each is None or each[0] != "mounts" or len(segs) < 2:
             raise SheetError("%s: child.KEY needs a mounts.KIND for_each (%r)" % (site, src))
-        return Target("child", ".".join(segs[1:]), src=src)
+        chain, key = _chain(segs[1:], site, src)
+        return Target("child", key, chain, src=src)
     if segs[0] == "mount":
-        if len(segs) < 4:
-            raise SheetError("%s: mount target needs mount.KIND.ID.KEY (%r)" % (site, src))
-        return Target("mount", ".".join(segs[3:]), (segs[1], segs[2]), src=src)
+        chain, key = _chain(segs, site, src)
+        return Target("mount", key, chain, src=src)
     if src in caps:
         if not allow_cap:
             raise SheetError("%s: capacity %s can only be consumed" % (site, src))
@@ -70,6 +70,19 @@ def parse_target(src, site, model, each, caps, allow_cap):
     if segs[0] in RESERVED or segs[0] == "list":
         raise SheetError("%s: %r is not a stock" % (site, src))
     return Target("trait", src, src=src)
+
+
+def _chain(segs, site, src):
+    """``mount.K.I.mount.K2.I2.key`` → ``([(K, I), (K2, I2)], "key")`` (any depth)."""
+    chain = []
+    while segs and segs[0] == "mount":
+        if len(segs) < 4:
+            raise SheetError("%s: mount target needs mount.KIND.ID.KEY (%r)" % (site, src))
+        chain.append((segs[1], segs[2]))
+        segs = segs[3:]
+    if not segs or segs[0] in RESERVED:
+        raise SheetError("%s: %r does not end in a stock" % (site, src))
+    return chain, ".".join(segs)
 
 
 class Flow:

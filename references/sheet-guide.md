@@ -445,6 +445,9 @@ full sheet with its own pack, manifest and history. Declare the kinds in the rul
   `mount.ship.fortune.skill.pilot`), `list`, `id`, `name`, and its own `mount`/`mounts`
   (nesting is fine). A child never reads its parent: anything both need comes from a shared
   pack file via `extends`.
+- **Lenses and the player view:** a lens field naming one of the child's `gm_only` traits or
+  derived keys is left out of the player view (and `export`). A parent's own derived value
+  that reads a child's `gm_only` value is not tainted automatically: mark it `gm_only`.
 - **Same date:** a child resolves at the parent's `--at`. An unmounted (or not yet
   mounted) child reads as `None`.
 - A missing child, a broken child pack or a mount cycle is an `expr-error`, value `None`.
@@ -511,8 +514,10 @@ burning. Three rules:
   included) or per mounted child (`for_each: "mounts.KIND"`, `entry` = its namespace);
   `where` filters, `order` decides who is served first.
 - **Targets** (keys of `consume`/`produce`, and `short`/`substituted`): a trait key;
-  `entry.FIELD` (a list for_each); `child.KEY` (a mounts for_each); `mount.KIND.ID.KEY`; or,
-  under `consume` only, a pooled capacity id.
+  `entry.FIELD` (a list for_each); `child.KEY` (a mounts for_each); `mount.KIND.ID.KEY`, to
+  any depth (`mount.ship.fortune.mount.crew.volker.strain`, `child.mount.crew.volker.strain`);
+  or, under `consume` only, a pooled capacity id. A target whose mount isn't live that day is
+  skipped and reported.
 - **Diets:** a need fills from ranked sources in order, each at its ratio (1.5 pulp does the
   work of 1 honey); `above` keeps a reserve the source won't go below, so opportunists only
   eat surplus.
@@ -567,8 +572,14 @@ sheet.py tick fleet --id voyage1 --to 2853-03-02 \
   of every stock and entry field since the last one, so `resolve --at` inside the skip is
   right to checkpoint resolution. The last one carries `tick.end`, the carry, the rolls owed,
   and what's needed to replay the tick.
-- Every ledger in the tree must accept `history/tick-ID.json` (manifest globs), or nothing is
-  written anywhere (exit 2). `--dry-run` reports without writing; `--json` for tools.
+- **The tree:** every sheet mounted (at any depth) during the tick is simulated once, however
+  many parents it passes through (a navigator moved from one ship to another). A child ticks
+  only on days it is mounted somewhere in the tree; on other days only its own ledger events
+  apply. Every ledger that changed gets its own `history/tick-ID.json`, so every mounted
+  child's manifest needs the `history/tick-*.json` glob too, or nothing is written anywhere
+  (exit 2).
+- Tick events are flows, not purchases: they never trigger `no-cost`/`cost-mismatch`, even
+  when a stock is the pack's currency. `--dry-run` reports without writing; `--json` for tools.
 - The report lists stocks, flows that ran short, overflow, provider hours, transitions and
   rolls owed.
 - `shortcut:` the simulation folds without anchors, and steps every day (a 300-day skip over

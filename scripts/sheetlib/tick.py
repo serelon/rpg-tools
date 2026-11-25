@@ -89,15 +89,19 @@ class Sim:
             eng.mount_ctx = ctx
         self.events = [(self.cal.day_of_key(e.key), e) for e in events]
         self.ev_i = 0
-        self.children = {}  # path -> Sim
+        self.children = {}  # path -> Sim (shared: one Sim per sheet per tick)
         self.out = []
         self.n_out = 0
+        self.was_active = False
+        tick.registry[sheet.path] = self
         stack = path_stack + [sheet.path]
         for path in self.mount_paths(tick.end):
             if path in stack:
                 raise TickError("mount cycle: %s" % " -> ".join(stack + [path]))
-            from .loader import load_sheet
-            self.children[path] = Sim(load_sheet(path), tick, stack)
+            if path not in tick.registry:
+                from .loader import load_sheet
+                Sim(load_sheet(path), tick, stack)
+            self.children[path] = tick.registry[path]
 
     def mount_paths(self, end):
         out = []
@@ -117,11 +121,21 @@ class Sim:
             p = os.path.join(p, "sheet.json")
         return os.path.abspath(p)
 
-    def walk(self):
-        """Post-order: children before parents."""
-        for c in self.children.values():
-            yield from c.walk()
-        yield self
+    def active(self, seen=None):
+        """Post-order over children live-mounted now: children before parents, each once.
+        A child that is not mounted anywhere in the tree today does not tick."""
+        seen = set() if seen is None else seen
+        if self.sheet.path in seen:
+            return []
+        seen.add(self.sheet.path)
+        out = []
+        for kind in list(self.folder.state.mounts):
+            for mt in live_mounts(self.folder.state, kind):
+                c = self.child_of(mt)
+                if c is not None:
+                    out.extend(c.active(seen))
+        out.append(self)
+        return out
 
     def child_of(self, mt):
         return self.children.get(self.path_of(mt.ref))
@@ -294,8 +308,9 @@ class Tick:
         self.occ_raw = [[n, d, dict(p or {})] for n, d, p in occurrences]
         self.sink = Sink()
         self.report = Report()
+        self.registry = {}
         self.root = Sim(sheet, self, [])
-        self.sims = list(self.root.walk())
+        self.sims = list(self.registry.values())
         last = self._guard()
         if start is None:
             if last is None:
@@ -369,7 +384,9 @@ class Tick:
         for sim in self.sims:
             sim.set_today(day)
             sim.apply_until(day)
-        for sim in self.sims:
+        act = self.root.active()
+        for sim in act:
+            sim.was_active = True
             sim.dawn()
         for name, params in self.occ.get(day, []):
             od = self.root.rules.occurrences[name]
@@ -377,17 +394,19 @@ class Tick:
                 self._flow(self.root, flow, {"occ": params})
             if od.get("roll"):
                 self._owe(self.root, day, "occurrence:%s" % name, od["roll"], None)
-        for sim in self.sims:
+        for sim in act:
             for flow in sim.rules.flows:
                 self._flow(sim, flow, {})
-        for sim in self.sims:
+        for sim in act:
             sim.overflow(self.report)
             fields = self._watched(sim)
             sim.write_back()
             self._transitions(sim, day, fields)
             self._rolls(sim, day)
-            if self._is_checkpoint(day):
-                self._checkpoint(sim, day, final=day == self.end)
+        if self._is_checkpoint(day):
+            for sim in self.sims:
+                if sim.was_active:
+                    self._checkpoint(sim, day, final=day == self.end)
 
     def _is_checkpoint(self, day):
         if day == self.end or self.checkpoint == "day":
@@ -431,14 +450,13 @@ class Tick:
             return sim, ("e", flow.each[1], inst, t.key)
         if t.kind == "capacity":
             return sim, ("c", t.key)
-        if t.kind == "child":
-            c = sim.child_of(inst)
-            return (c, ("t", t.key)) if c is not None else None
-        mt = (sim.folder.state.mounts.get(t.mount[0]) or {}).get(t.mount[1])
-        if mt is None or mt.retired:
-            return None
-        c = sim.child_of(mt)
-        return (c, ("t", t.key)) if c is not None else None
+        s = sim.child_of(inst) if t.kind == "child" else sim
+        for kind, mid in t.mount or ():
+            if s is None:
+                return None
+            mt = (s.folder.state.mounts.get(kind) or {}).get(mid)
+            s = None if mt is None or mt.retired else s.child_of(mt)
+        return (s, ("t", t.key)) if s is not None else None
 
     def _avail(self, sim, t, inst, flow):
         loc = self._bk(sim, t, inst, flow)
@@ -798,6 +816,8 @@ def _diff(sim):
         s = b.values.get(k)
         if is_number(v) and not isinstance(v, bool):
             target = _round(v) if _integer(m, k) else round(v, 6)
+            if k not in b.values:
+                s = sim.shadow._current(k)  # a never-set stock folds from its default
             base = s if is_number(s) else 0
             d = target - base
             if abs(d) > EPS:

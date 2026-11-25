@@ -364,6 +364,83 @@ class TestMountedTree(TickCase):
         self.assertEqual(rep.stocks["b"]["fuel"], b["fuel"])
 
 
+class TestTreeEdges(TickCase):
+    def crew_pack(self):
+        self.pack({"traits": {"strain": num(), "x": num()},
+                   "flows": {"live": {"produce": {"x": 1}}}}, name="crew")
+        self.pack({"traits": {"x": num()}, "mounts": {"crew": {}}}, name="ship")
+
+    def test_writes_two_levels_down(self):
+        self.crew_pack()
+        self.pack({"traits": {"exotic": num()}, "mounts": {"ship": {}},
+                   "occurrences": {"jump": {"flows": {"burn": {
+                       "consume": {"exotic": 5},
+                       "produce": {"mount.ship.s1.mount.crew.nav.strain": "occ.d"}}}}}})
+        self.sheet("nav", start(), rules="crew")
+        self.sheet("s1", start({"mount": "crew", "id": "nav", "ref": "../nav"}), rules="ship")
+        f = self.sheet("fleet", start({"set": "exotic", "to": 20},
+                                      {"mount": "ship", "id": "s1", "ref": "../s1"}))
+        self.tick(f, "t1", "1200-01-03", start="1200-01-01",
+                  occurrences=[("jump", "1200-01-02", {"d": 9})])
+        nav, _, _ = self.values(self.p("nav"))
+        self.assertEqual((nav["strain"], nav["x"]), (9, 3))
+        self.assertEqual(self.values(f)[0]["exotic"], 15)
+        self.assertEqual(self.values(self.p("s1"))[0].get("strain"), None)
+
+    def test_one_sim_per_sheet_and_unmounted_children_rest(self):
+        self.crew_pack()
+        self.pack({"mounts": {"ship": {}}})
+        self.sheet("nav", start(), rules="crew")
+        self.sheet("old", start({"set": "x", "to": 0}), rules="crew")
+        self.sheet("a", start({"mount": "crew", "id": "nav", "ref": "../nav"}) + [
+            {"date": "1200-01-04", "effects": [{"unmount": "crew", "id": "nav"}]}], rules="ship")
+        self.sheet("b", [{"date": "1200-01-04", "effects": [
+            {"mount": "crew", "id": "nav", "ref": "../nav"}]}], rules="ship")
+        f = self.sheet("fleet", start({"mount": "ship", "id": "a", "ref": "../a"},
+                                      {"mount": "ship", "id": "b", "ref": "../b"},
+                                      {"mount": "ship", "id": "o", "ref": "../old"}) + [
+            {"date": "1200-01-03", "effects": [{"unmount": "ship", "id": "o"}]}])
+        t, rep = self.tick(f, "t1", "1200-01-06", start="1200-01-01")
+        self.assertEqual(self.values(self.p("nav"))[0]["x"], 6)  # once a day, through the move
+        self.assertEqual(self.values(self.p("old"))[0]["x"], 2)  # ticks only while mounted
+        self.assertEqual(len([p for p in rep.files if "/nav/" in p]), 1)
+
+    def test_nonzero_defaults_and_rating_min(self):
+        self.pack({"traits": {"fuel": num(default=10), "morale": {"min": 1, "max": 9}},
+                   "flows": {"up": {"produce": {"fuel": 1, "morale": 1}}}})
+        v = self.sheet("v", start())
+        self.tick(v, "t1", "1200-01-03", start="1200-01-01")
+        vals, _, res = self.values(v)
+        self.assertEqual((vals["fuel"], vals["morale"]), (13, 4))
+        self.assertNotIn("no-cost", [w["code"] for w in res.warnings])
+
+    def test_currency_stock_is_not_a_purchase(self):
+        self.pack({"currency": "credits", "traits": {"credits": num(), "x": {"cost": {"raise": 5}}},
+                   "flows": {"burn": {"consume": {"credits": 30}}}})
+        v = self.sheet("v", start({"set": "credits", "to": 100}))
+        self.tick(v, "t1", "1200-01-02", start="1200-01-01")
+        vals, _, res = self.values(v)
+        self.assertEqual(vals["credits"], 40)
+        self.assertEqual([w for w in res.warnings if w["code"] in ("cost-mismatch", "no-cost")], [])
+
+
+class TestLensPrivacy(TickCase):
+    def test_child_gm_only_trait_hidden_in_player_lens(self):
+        self.pack({"traits": {"fuel": num(), "secret": num(gm_only=True)}}, name="child")
+        write_json(self.p("pack/lens.json"), {"id": "l", "groups": {"g": {"sections": {"pods": {
+            "mounts": "pod", "fields": [{"key": "fuel"}, {"key": "secret"}]}}}}})
+        self.pack({"mounts": {"pod": {}}})
+        self.sheet("c", start({"set": "fuel", "to": 1}, {"set": "secret", "to": 7}), rules="child")
+        f = self.sheet("f", start({"mount": "pod", "id": "c", "ref": "../c"}))
+        m = json.load(open(self.p("f/sheet.json")))
+        m["shape"] = "../pack/lens.json"
+        write_json(self.p("f/sheet.json"), m)
+        for view, keys in (("gm", ["fuel", "secret"]), ("player", ["fuel"])):
+            doc, _ = resolve_full(load_sheet(f), view=view)
+            row = doc["groups"][0]["sections"][0]["rows"][0]
+            self.assertEqual([x["key"] for x in row["fields"]], keys, view)
+
+
 class TestCli(TickCase):
     def test_dry_run_and_json(self):
         self.pack({"traits": {"grain": num()}, "flows": {"grow": {"produce": {"grain": 2}}}})
