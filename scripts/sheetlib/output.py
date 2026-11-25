@@ -1,8 +1,9 @@
 """Resolved JSON (spec S8) and the player JS fragment (spec S10)."""
 import json
 
-from .expr import is_number, normalise
+from .expr import ExprError, is_number, normalise
 from .fold import span_years
+from .mounts import live_mounts
 
 
 def _title(ident):
@@ -305,6 +306,34 @@ class Builder:
             o["from"] = self.refs(sp.refs)
         return o
 
+    # -- mounts
+    def mount_visible(self, mt):
+        md = self.m.mounts.get(mt.kind) or {}
+        gm_only = bool(md.get("gm_only")) or mt.gm_created
+        return self.gm or not gm_only
+
+    def lens_rows(self, kind, fields):
+        rows = []
+        for mt in live_mounts(self.st, kind):
+            if not self.mount_visible(mt):
+                continue
+            try:
+                ns = self.env.mount_ns(mt)
+            except ExprError as exc:
+                self.e.sink.expr_error("mounts.%s.%s" % (kind, mt.id), str(exc))
+                ns = {}
+            row = {"id": mt.id, "name": ns.get("name") or mt.id, "ref": mt.ref, "fields": []}
+            for f in fields:
+                v = ns
+                for seg in f["key"].split("."):
+                    v = v.get(seg) if isinstance(v, dict) else None
+                row["fields"].append({"key": f["key"], "name": f.get("name") or _title(
+                    f["key"].split(".")[-1]), "value": normalise(v)})
+            if self.prov:
+                row["from"] = self.refs(mt.refs)
+            rows.append(row)
+        return rows
+
     # -- top level
     def build(self):
         m = self.m
@@ -342,6 +371,9 @@ class Builder:
                     sps = [self.span_out(sp) for sp in self.st.spans.values()
                            if kind == "*" or sp.kind == kind]
                     so.update({"kind": "spans", "spans": [s for s in sps if s is not None]})
+                elif "mounts" in sec:
+                    so.update({"kind": "mounts", "mounts": sec["mounts"],
+                               "rows": self.lens_rows(sec["mounts"], sec.get("fields") or [])})
                 elif "class" in sec:
                     so.update({"kind": "fields", "fields": self.class_fields(sec)})
                 else:
@@ -362,6 +394,21 @@ class Builder:
         doc["lists"] = lists
         doc["spans"] = [s for s in (self.span_out(sp) for sp in self.st.spans.values())
                         if s is not None]
+        if self.st.mounts or m.mounts:  # absent for sheets that never mount (output unchanged)
+            mounts = {}
+            for kind in list(m.mounts) + [k for k in self.st.mounts if k not in m.mounts]:
+                ms = []
+                for mt in live_mounts(self.st, kind):
+                    if not self.mount_visible(mt):
+                        continue
+                    o = {"id": mt.id, "ref": mt.ref}
+                    if mt.gm_created and self.gm:
+                        o["gm_only"] = True
+                    if self.prov:
+                        o["from"] = self.refs(mt.refs)
+                    ms.append(o)
+                mounts[kind] = ms
+            doc["mounts"] = mounts
         values = {}
         for k, v in self.st.values.items():
             if not self.gm and self.trait_gm(k):

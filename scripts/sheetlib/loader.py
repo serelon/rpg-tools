@@ -273,6 +273,7 @@ class Model:
         self.traits = _obj(r, "traits", "rules")
         self.lists = _obj(r, "lists", "rules")
         self.spans = _obj(r, "spans", "rules")
+        self.mounts = _obj(r, "mounts", "rules")
         self.tables = _obj(r, "tables", "rules")
         self.derived = {}
         self.creation = _obj(r, "creation", "rules")
@@ -320,6 +321,8 @@ class Model:
                 flds[fk] = compile_slot(flds[fk], "%s.fields.%s" % (site, fk))
         for name, sd in self.spans.items():
             _check_name(name, "span kind")
+        for name in self.mounts:
+            _check_name(name, "mount kind")
         for name, tab in self.tables.items():
             if not valid_key(name):
                 raise SheetError("rules: invalid table name %r" % name)
@@ -450,10 +453,18 @@ class Model:
                 site = "shape.groups.%s.sections.%s" % (gid, sid)
                 if not isinstance(sec, dict):
                     raise SheetError("%s must be an object" % site)
-                kinds = [k for k in ("fields", "class", "list", "spans") if k in sec]
+                kinds = [k for k in ("fields", "class", "list", "spans", "mounts") if k in sec]
+                if "mounts" in sec and kinds.count("fields"):
+                    kinds.remove("fields")  # a lens: mounts + the fields it shows
                 if len(kinds) != 1:
-                    raise SheetError("%s needs exactly one of fields/class/list/spans" % site)
-                if "fields" in sec:
+                    raise SheetError("%s needs exactly one of fields/class/list/spans/mounts" % site)
+                if "mounts" in sec:
+                    if sec["mounts"] not in self.mounts:
+                        raise SheetError("%s: unknown mount kind %r" % (site, sec["mounts"]))
+                    for i, f in enumerate(sec.get("fields") or []):
+                        if not isinstance(f, dict) or not isinstance(f.get("key"), str):
+                            raise SheetError("%s.fields[%d] needs a key" % (site, i))
+                elif "fields" in sec:
                     self._validate_fields(sec["fields"], site + ".fields")
                 if "class" in sec and sec["class"] not in self.classes:
                     raise SheetError("%s: unknown class %r" % (site, sec["class"]))

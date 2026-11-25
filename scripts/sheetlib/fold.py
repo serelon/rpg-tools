@@ -15,8 +15,9 @@ import copy
 from . import dates
 from .calendar import GREGORIAN
 from .expr import Env, Evaluator, ExprError, is_number, lookup_table, normalise, valid_key
+from .mounts import Mount, MountContext, live_mounts
 
-OPS = ("set", "add", "gain", "edit", "retire", "start", "end", "anchor")
+OPS = ("set", "add", "gain", "edit", "retire", "start", "end", "anchor", "mount", "unmount")
 ANCHOR_OPS = ("at_least", "at_most", "is", "has")
 TRAIT_META = ("name", "group", "note", "gm_only")
 # Most single steps one priced raise or creation spend may walk (guards pack- or
@@ -92,6 +93,7 @@ class State:
         self.gm_created = set()
         self.lists = {}
         self.spans = {}
+        self.mounts = {}
         self.version = 0
 
     def bump(self):
@@ -130,6 +132,17 @@ class StateEnv(Env):
     def lookup(self, segs, local):
         m = self.m
         st = self.state
+        if segs[0] == "mount":
+            if len(segs) < 3:
+                raise ExprError("mount needs mount.KIND.ID")
+            mt = (st.mounts.get(segs[1]) or {}).get(segs[2])
+            if mt is None or mt.retired:
+                return None, 3
+            return self.mount_ns(mt), 3
+        if segs[0] == "mounts":
+            if len(segs) < 2:
+                raise ExprError("mounts needs mounts.KIND")
+            return [self.mount_ns(mt) for mt in live_mounts(st, segs[1])], 2
         for n in range(len(segs), 0, -1):
             k = ".".join(segs[:n])
             if n == 1 and k in local:
@@ -208,6 +221,12 @@ class StateEnv(Env):
             return None
         return (self.m.catalog.get(ns) or {}).get(str(normalise(key)) if not isinstance(key, str) else key)
 
+    def mount_ns(self, mt):
+        ctx = self.engine.mount_ctx
+        if ctx is None:
+            raise ExprError("mounts are unavailable here")
+        return ctx.child(mt)
+
     def today(self):
         t = self.engine.today
         if t is None:
@@ -248,6 +267,7 @@ class Engine:
         self.current_ref = None
         self.calendar = calendar or GREGORIAN
         self.today = None  # day number expressions see as today()
+        self.mount_ctx = None
 
     def env(self, state):
         return StateEnv(self, state)
@@ -383,11 +403,13 @@ def check_effect(eff):
     elif op == "retire":
         if is_list and (not isinstance(eff.get("id"), str) or not eff.get("id")):
             return "retire of a list entry needs an id"
-    elif op in ("start", "end"):
+    elif op in ("start", "end", "mount", "unmount"):
         if is_list or "." in target:
-            return "%s: span kind must be a bare name" % op
+            return "%s: %s kind must be a bare name" % (op, "mount" if "mount" in op else "span")
         if not isinstance(eff.get("id"), str) or not eff.get("id"):
             return "%s needs an id" % op
+        if op == "mount" and (not isinstance(eff.get("ref"), str) or not eff.get("ref")):
+            return "mount needs a ref (path to the child sheet)"
     elif op == "anchor":
         if not isinstance(eff.get("id"), str) or not eff.get("id"):
             return "anchor needs an id"
@@ -941,6 +963,33 @@ class Folder:
             sp.refs.append(ev.ref)
         self.state.bump()
 
+    def _op_mount(self, eff, ev, expected, touched_r, touched_n, gained, costed):
+        kind = eff["mount"]
+        mid = eff["id"]
+        if kind not in self.m.mounts:
+            self.sink.warn("unknown-trait", "mount kind %s is not declared" % kind, key=kind, ref=ev.ref)
+        bucket = self.state.mounts.setdefault(kind, {})
+        old = bucket.get(mid)
+        if old is not None and not old.retired:
+            return self._bad(ev, "mount %s: %s is already mounted" % (kind, mid), mid)
+        refs = old.refs if old is not None else []
+        if ev.ref not in refs:
+            refs.append(ev.ref)
+        if old is not None:
+            del bucket[mid]
+        bucket[mid] = Mount(kind, mid, eff["ref"], refs, ev.gm_only)
+        self.state.bump()
+
+    def _op_unmount(self, eff, ev, expected, touched_r, touched_n, gained, costed):
+        kind = eff["unmount"]
+        mt = (self.state.mounts.get(kind) or {}).get(eff["id"])
+        if mt is None or mt.retired:
+            return self._bad(ev, "unmount %s: %s is not mounted" % (kind, eff["id"]), eff["id"])
+        mt.retired = True
+        if ev.ref not in mt.refs:
+            mt.refs.append(ev.ref)
+        self.state.bump()
+
     def _op_anchor(self, eff, ev, expected, touched_r, touched_n, gained, costed):
         target = eff["anchor"]
         op = [a for a in ANCHOR_OPS if a in eff][0]
@@ -1088,7 +1137,7 @@ def span_years(span, at_end_key, latest_key, cal=None):
     return cal.years(end - start)
 
 
-def run_fold(sheet, at=None, sink=None):
+def run_fold(sheet, at=None, sink=None, mount_ctx=None):
     """Fold the sheet's ledger (optionally up to ``at``) → FoldResult."""
     model = sheet.model
     sink = sink or Sink()
@@ -1096,6 +1145,7 @@ def run_fold(sheet, at=None, sink=None):
         sink.warn(w["code"], w["message"])
     cal = getattr(sheet, "calendar", None) or GREGORIAN
     engine = Engine(model, sink, cal)
+    engine.mount_ctx = mount_ctx or MountContext(sheet, at)
     notices = []
     for rk in ("modifiers", "tallies"):
         if model.raw_rules.get(rk):
