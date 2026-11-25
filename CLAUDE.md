@@ -31,7 +31,13 @@ python scripts/sheet.py resolve SHEET [--at D] [--player]    # resolved JSON
 python scripts/sheet.py validate SHEET [--strict]            # warnings, anchors, notices
 python scripts/sheet.py quote SHEET KEY [--by N]             # cost of a raise
 python scripts/sheet.py add SHEET KEY --date D --source S    # append event, cost auto-filled
+python scripts/sheet.py tick SHEET --id ID --to D [--from D] # advance time: flows → history/tick-ID.json
 ```
+
+Sheets can mount child sheets (`mount`/`unmount` effects; reads go one way down) and be
+ticked: pack-declared flows, capacities, providers, transitions, rolls owed and occurrences,
+simulated day by day and written as checkpoint events (`sheetlib/flows.py`, `sheetlib/tick.py`;
+guide sections "Mounts" and "Ticks and flows"). This replaced the retired `factions.py`.
 
 ## Building the Skill Package
 

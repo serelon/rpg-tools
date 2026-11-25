@@ -18,7 +18,8 @@ python scripts/sheet.py quote examples/sheet/d20-lite/wren bond.strength --by 2
 Contents: [Layout](#layout) · [Keys](#keys-and-reserved-names) · [Merging](#loading-and-merging) ·
 [Rules](#rules) · [Shape](#shape) · [Catalog](#catalog) · [Manifest](#manifest) ·
 [History](#history-events-and-effects) · [Dates](#dates) · [Expressions](#expressions) ·
-[The fold](#the-fold) · [Warnings](#warnings-and-notices) · [Output](#output) · [CLI](#cli) ·
+[The fold](#the-fold) · [Warnings](#warnings-and-notices) · [Output](#output) ·
+[Mounts](#mounts-sheets-inside-sheets) · [Ticks and flows](#ticks-and-flows) · [CLI](#cli) ·
 [Authoring tips](#authoring-tips)
 
 ---
@@ -45,9 +46,9 @@ A campaign can add a houserule file that `extends` the pack and patches a number
 - List entry ids, span ids, anchor ids and catalog ids that are only used as *values* may
   contain `-` (`north-road`).
 - **Reserved** (never a trait's first segment, derived key, class, list or span name):
-  `current target key id entry value index list span_years span_open span_note span_id` and
-  the builtin names `sum count min max table catalog clamp if _if round floor ceil abs rank
-  get`. `base`/`effective` (output fields) and `modifiers`/`tallies` (rules keys) are held
+  `current target key id entry value index list span_years span_open span_note span_id
+  mount mounts occ child` and the builtin names `sum count min max table catalog clamp if _if
+  round floor ceil abs rank get today day all any has span_open select`. `base`/`effective` (output fields) and `modifiers`/`tallies` (rules keys) are held
   for a later modifier layer; a non-empty `modifiers`/`tallies` just produces a
   `reserved-unimplemented` notice.
 
@@ -184,7 +185,9 @@ Creation events (`"kind": "creation"`) are checked against budgets instead of pr
 - **Section:** `name`, `order`, `gm_only`, `note`, and exactly one of `fields` (array),
   `class` (+ `where: {group: X}`, `show: present | active | all`, optional `kind`),
   `list: NAME` (+ optional `show: present`: omit the section while the list is empty;
-  without it an empty list still renders), `spans: KIND | "*"`.
+  without it an empty list still renders), `spans: KIND | "*"`, or a **lens**
+  `mounts: KIND` + `fields: [{key, name?}]` (one row per live child, the keys read from
+  the child's values and derived).
 - **Field:** `key` (required except `track`/`nested`), `kind`, `name`, `max` (display-only
   override; `over-cap` always uses the TraitDef), `levels` (track), `options` (choice:
   `{catalog: ns}` · `{table: name}` · `{values: [...]}`), `fields` (nested), `show: present`
@@ -217,6 +220,8 @@ may need (`catalog('skill', id).ability`, a kind's list of powers).
 `history` is a list of paths/globs expanded in order, each glob sorted naturally, duplicates
 kept at first position; a listed file that does not exist yet is simply skipped. The
 **file index** (position in that list) is a sort tiebreak. `meta` is passed through.
+`calendar` (optional; the pack's `rules.calendar` otherwise) is described under
+[Dates](#dates). A sheet that will be ticked needs `history/tick-*.json` in its globs.
 
 ## History: events and effects
 
@@ -241,11 +246,13 @@ Event fields: `date` (required), `when` (freeform label), `seq` (tiebreak), `eff
 | `{"gain": "list.NAME", "id": ID, "entry": {...}}` | add a list entry (`name`, `text`, `gm_only`, `ref`, any fields) |
 | `{"edit": KEY, "fields": {...}}` | trait meta only: `name group note gm_only`; `null` removes |
 | `{"edit": "list.NAME", "id": ID, "fields": {...}}` | merge into an entry; `null` removes |
+| `{"edit": "list.NAME", "id": ID, "by": {FIELD: N}}` | add to an entry's number fields (deltas compose like `add`; may sit beside `fields`) |
 | `{"retire": KEY}` / `{"retire": "list.NAME", "id": ID}` | off the sheet; history keeps it |
 | `{"start": KIND, "id": ID, "name"?, "note"?}` / `{"end": KIND, "id": ID, "note"?}` | spans |
 | `{"anchor": KEY, "id": ID, "at_least": N}` / `"at_most": N` | numeric assertion (enum by index) |
 | `{"anchor": KEY, "id": ID, "is": V}` | text/enum assertion |
 | `{"anchor": "list.NAME", "id": ID, "has": ENTRY_ID}` | entry must be live |
+| `{"mount": KIND, "id": ID, "ref": PATH}` / `{"unmount": KIND, "id": ID}` | a child sheet, see [Mounts](#mounts-sheets-inside-sheets) |
 
 `set`/`add` may also carry trait meta (`name`, `group`, `note`, `gm_only`).
 
@@ -279,8 +286,23 @@ Prose is never a date. Dates say *when the sheet changes*; `when` carries the st
   order they were written.
 - **`--at D`** includes everything within the named period: `--at 1130` includes
   `1130-12-31`.
-- **Years** (span durations): `Y + (M−1)/12 + (D−1)/372`. An open span runs to `--at`, else
-  to the latest included event.
+- **Years** (span durations): days between the dates ÷ the calendar's year length
+  (365.2425 for Gregorian). An open span runs to the end of `--at`, else to the latest
+  included event.
+- **A day past its month** (`1131-02-30`) warns `invalid-event` but is kept, counted as the
+  month's last day.
+
+**Calendar.** Day arithmetic (spans, `today()`, `day()`, ticks) runs on a calendar. The
+default is the proleptic Gregorian calendar (signed years, year 0 exists). A campaign can
+declare its own in the manifest or the pack's rules:
+
+```json
+"calendar": {"months": [{"name": "Firstmonth", "days": 30}, ...],   // exactly 12
+             "epoch": "2389-03-14", "format": "L+{epoch_days}d"}
+```
+
+Custom calendars have no leap years. `format` is for display (tick reports): tokens `{y}
+{m} {d} {month} {epoch_days}`. Dates in the ledger stay partial ISO either way.
 
 ## Expressions
 
@@ -316,12 +338,22 @@ gives the position.
 | `clamp(x, lo, hi)`, `round(x, n)`, `floor(x)`, `ceil(x)`, `abs(x)` | numeric helpers |
 | `rank(key)` | enum position of a trait |
 | `get(container, k)` | same as `container[k]` |
+| `all(xs)`, `any(xs)` | truth of every / some item (`all([])` is true) |
+| `select(xs, flags)` | the items of `xs` whose matching flag is truthy: `sum(select(list.gear[*].w, list.gear[*].big))` is a filtered sum |
+| `today()` | day number of the resolve date (the end of `--at`, else the latest event; during a tick, the day being simulated) |
+| `day(date)` | day number of a date string: `today() - day(entry.laid)` is an age in days |
+| `has(list, id)` | the entry is live (`has('tech', 'wheel')`: an unlock) |
+| `span_open(kind)` | some span of that kind is open (a season, lean times) |
 
 **Locals** per slot: costs `key id current target entry` (+ `value` for compound parts);
 `active`, budget `where`/`base`: `key id entry`; budget `step_cost`: `key id entry current
 target`; class `per_trait`: `key id entry value index`; list `cost`/`fields`: `entry`;
-span notices: `span_id span_years span_open span_note`. `entry` is the catalog entry for
-the trait id (or the flat list entry for list slots).
+span notices: `span_id span_years span_open span_note`; flows, capacities and rolls: `entry`
+(a list row, or a child's namespace under `for_each: "mounts.KIND"`) and `occ` (occurrence
+parameters). `entry` is the catalog entry for the trait id (or the flat list entry for list
+slots).
+
+**Mount reads:** `mount.KIND.ID.key` and `mounts.KIND` (see [Mounts](#mounts-sheets-inside-sheets)).
 
 Runtime failures never crash the tool: they produce an `expr-error` warning and the value
 `None`. Derived cycles (`a -> b -> a`) are reported the same way.
@@ -380,7 +412,11 @@ the GM view `anchors`, `warnings`, `notices`.
   `value` = `max`; tracks give `levels` or `max`. Class sections add `computed` from
   `per_trait`. GM view adds `warn: [codes]`.
 - **Lists** entries `{id, name, text, ref?, fields, from}`; **spans** `{id, kind, name,
-  start, end, open, years, note, from}`.
+  start, end, open, years, note, from}`; lens sections `{kind: "mounts", mounts, rows:
+  [{id, name, ref, fields: [{key, name, value}], from}]}`.
+- `mounts` (`{KIND: [{id, ref, from}]}`, after `spans`) appears only on a sheet that
+  declares or uses mounts; every other sheet's output is unchanged. `export` ships the lens
+  rows only, never the children themselves.
 - `values` holds present, non-retired traits (anchored); `derived` every derived key.
 - **Provenance:** `from` lists the refs (`"s01#3"` = third event of `history/s01.json`) of
   events that touched a trait/entry/span. `--provenance off` drops it.
@@ -388,6 +424,155 @@ the GM view `anchors`, `warnings`, `notices`.
   notices, everything `gm_only` (including traits, entries and spans *created* by a
   `gm_only` event, and `gm_only` derived keys), and hides refs to `gm_only` events and to
   events containing anchors (branch files are spoilers).
+
+## Mounts: sheets inside sheets
+
+A parent sheet mounts child sheets (a fleet its ships, a ship its officers). Each child is a
+full sheet with its own pack, manifest and history. Declare the kinds in the rules
+(`"mounts": {"ship": {"name": "Ships", "gm_only"?: false}}`) and mount with dated effects:
+
+```json
+{"date": "2852-04", "effects": [{"mount": "ship", "id": "fortune", "ref": "../fortune"}]}
+{"date": "2853-01", "effects": [{"unmount": "ship", "id": "fortune"}]}
+```
+
+- `ref` is a path to the child's `sheet.json` (or its directory), relative to the parent's
+  manifest. Mount lifecycle mirrors list entries: mounting a live id or unmounting a missing
+  one is `invalid-event`; a kind that isn't declared warns `unknown-trait`.
+- **Reads go one way down.** `mount.ship.fortune.bunker` reads one child;
+  `mounts.ship` is the live children in mount order, so `sum(mounts.ship[*].bunker)`
+  projects. A child's namespace holds its values and derived keys (dotted keys nested:
+  `mount.ship.fortune.skill.pilot`), `list`, `id`, `name`, and its own `mount`/`mounts`
+  (nesting is fine). A child never reads its parent: anything both need comes from a shared
+  pack file via `extends`.
+- **Same date:** a child resolves at the parent's `--at`. An unmounted (or not yet
+  mounted) child reads as `None`.
+- A missing child, a broken child pack or a mount cycle is an `expr-error`, value `None`.
+- Writes are local to each ledger, except that a parent's **tick** may write into its
+  children (below).
+
+## Ticks and flows
+
+A **tick** advances a sheet (and every sheet mounted under it) through time, day by day, and
+writes what happened as ordinary ledger events in `history/tick-ID.json`. It is the
+bookkeeping between sessions: stores growing and spoiling, cohorts maturing, wages and fuel
+burning. Three rules:
+
+- **Stored as paid.** The written numbers are the truth. A later change to the ledger or the
+  pack never rewrites an old tick; `validate --ticks` replays every tick and warns
+  `tick-drift` where the flows would now give something else (re-tick, or let it stand).
+- **The tick never rolls dice.** It reports the rolls that came due, with their day, and
+  keeps going. Roll them afterwards and write the results as events.
+- **One file per tick per ledger.** Retracting a tick = deleting `history/tick-ID.json` in
+  each ledger it wrote to. Ticks can't overlap: a new one starts after the last one ends.
+
+### Stocks, counters and capacities
+
+- **Stocks** are `number` traits (or number fields on list entries). A `max` is storage:
+  anything over it **overflows** to the trait named by the TraitDef's `overflow` (itself
+  capped), else it is lost; both are reported. `integer: true` stocks (and ratings) are
+  written rounded; the remainder is kept as a `carry` and picked up by the next tick.
+  Give stocks `"default": 0` so expressions can compare them before they're first set.
+- **Counters** are stocks a flow adds to when it runs short (`short`, in days: a day at 70%
+  adds 0.3) or eats from a fallback (`substituted`, the fraction of the need).
+- **Capacities** reset every day and are never stored: labour, care, berth-hours.
+
+```json
+"capacities": {
+  "labour": {"amount": "folk * 8"},                                    // pooled
+  "care":   {"providers": "nurses", "amount": "entry.hours",            // per provider entry
+             "keys": "entry.knows"}}                                    // {key: rate} or [keys]
+```
+
+### Flows
+
+```json
+"flows": {
+  "mill":  {"priority": 20, "consume": {"grain": 12, "labour": 4}, "produce": {"flour": 10}},
+  "eat":   {"priority": 40, "consume": {"food": {"need": "folk * 0.5",
+              "from": [["bread", 1], ["honey", 1, {"above": "honey_reserve"}], ["flour", 2]]}},
+            "short": "hungry", "substituted": "plain_fare"},
+  "grow":  {"priority": 50, "for_each": "litters", "where": "entry.stage != 'egg'",
+            "order": "entry.laid",
+            "needs": {"care": {"key": "entry.recipe", "amount": "entry.size", "assign": "sticky"}},
+            "consume": {"honey": "if(entry.stage == 'crawler', entry.size * 0.1, 0)"},
+            "produce": {"entry.progress": 1}},
+  "refuel": {"for_each": "mounts.ship", "where": "entry.fuel < 5",
+             "consume": {"depot": 3}, "produce": {"child.fuel": 3}}}
+```
+
+- **Every day, flows run in priority order** (low first, ties by id). Rates are read from
+  the state at dawn; availability comes from running balances, so an earlier priority is
+  served first. A flow that can't get all its inputs runs at the fraction it can get (every
+  input and output scaled by it), and the shortfall goes to its `short` counter.
+- **`active`** gates a flow (an unlock `has('tech', 'kilns')`, a season `span_open('winter')`,
+  a date `today() >= day('2390-06')`).
+- **`for_each`** runs a flow once per live list entry (`entry` = the row, list fields
+  included) or per mounted child (`for_each: "mounts.KIND"`, `entry` = its namespace);
+  `where` filters, `order` decides who is served first.
+- **Targets** (keys of `consume`/`produce`, and `short`/`substituted`): a trait key;
+  `entry.FIELD` (a list for_each); `child.KEY` (a mounts for_each); `mount.KIND.ID.KEY`; or,
+  under `consume` only, a pooled capacity id.
+- **Diets:** a need fills from ranked sources in order, each at its ratio (1.5 pulp does the
+  work of 1 honey); `above` keeps a reserve the source won't go below, so opportunists only
+  eat surplus.
+- **Needs** ask a provider capacity for work, optionally of one `key`. A provider offers
+  `amount` hours a day and a rate per key (skill: a 0.5 rate takes twice the hours); keyed and
+  unkeyed work draw on the same budget. **Matching** is greedy: demands in priority/order,
+  each taking the least flexible provider first (fewest keys, then most hours left, then id).
+  `assign: "sticky"` (default; needs a list for_each) keeps the pairing on the entry (field
+  `assigned_<capacity>`, or `field`) and only re-matches when that provider is gone or lacks
+  the key; `"daily"` re-matches every day and may split across providers. Every shortfall is
+  reported, with the hours each provider spent per flow.
+
+### Transitions, rolls and occurrences
+
+```json
+"transitions": {"litters": {
+  "pupate": {"at": "table('growth', entry.kind).pupa", "effects": [
+      {"edit": "list.litters", "id": "{id}", "fields": {"stage": "pupa"}}]},
+  "emerge": {"at": "table('growth', entry.kind).total", "roll": "notables: fate per litter",
+             "effects": [{"add": "census.{kind}", "by_expr": "entry.size"},
+                         {"retire": "list.litters", "id": "{id}"}]}}},
+"rolls": {"famine": {"when": "hungry >= 3", "message": "famine: roll losses"},
+          "sickly": {"scope": "list:litters", "when": "entry.hungry > 5", "message": "..."}},
+"occurrences": {"jump": {"roll": "navigator: jump roll", "flows": {
+  "burn": {"consume": {"exotic": "occ.hulls * 5"}, "produce": {"mount.ship.journey.strain": "occ.distance"}}}}}
+```
+
+- A **transition** fires on the day an entry field (default `progress`) crosses its `at`.
+  Its effects are written as their own event dated that day; `{field}` in any string is the
+  entry's field, `by_expr`/`to_expr` are expressions (local `entry`). Its `roll` is owed.
+- A **roll** is owed on each day its `when` turns true (not again while it stays true);
+  `scope: "list:NAME"` checks each entry.
+- An **occurrence** is an impulse inside time (a jump, a laying): its flows run once on its
+  day, before the day's ordinary flows, with its parameters as `occ`. Occurrences fire on
+  the ticked (top) sheet and may write down into children.
+
+### Running a tick
+
+```bash
+sheet.py tick SHEET --id skip03 --from 2390-03-01 --to 2390-08 --dry-run
+sheet.py tick SHEET --id skip03 --to 2390-08                          # continues after the last tick
+sheet.py tick fleet --id voyage1 --to 2853-03-02 \
+    --occur jump@2853-02-18:distance=9,lane=charted --itinerary voyage.json
+```
+
+- `--from` is the first simulated day (needed only for a sheet's first tick); `--to` the
+  last (a month means its last day). The itinerary file is `[{"occur", "date", "params"}]`.
+- A day, in order: the ledger's own events dated that day are applied (session events in
+  the middle of a skip count) → capacities reset → occurrences → flows (children's first)
+  → overflow → transitions → rolls → checkpoint.
+- **Checkpoints** (`--checkpoint month` default, `week`, `day`, `skip`) write the net change
+  of every stock and entry field since the last one, so `resolve --at` inside the skip is
+  right to checkpoint resolution. The last one carries `tick.end`, the carry, the rolls owed,
+  and what's needed to replay the tick.
+- Every ledger in the tree must accept `history/tick-ID.json` (manifest globs), or nothing is
+  written anywhere (exit 2). `--dry-run` reports without writing; `--json` for tools.
+- The report lists stocks, flows that ran short, overflow, provider hours, transitions and
+  rolls owed.
+- `shortcut:` the simulation folds without anchors, and steps every day (a 300-day skip over
+  40 cohorts and 15 providers takes well under a second).
 
 ## CLI
 
@@ -399,7 +584,9 @@ error. Dates on the command line must match the date format — prose exits 2.
 ```bash
 sheet.py resolve SHEET [--at D] [--gm|--player] [--provenance on|off] [--compact]
 sheet.py export SHEET [--at D] [--provenance on|off] [--key NAME]   # JS: DATA.sheet = {...};
-sheet.py validate SHEET [--at D] [--strict] [--json]
+sheet.py validate SHEET [--at D] [--strict] [--ticks] [--json]   # --ticks: replay ticks, tick-drift
+sheet.py tick SHEET --id ID [--from D] --to D [--occur NAME@D[:k=v,...]] [--itinerary F]
+              [--checkpoint day|week|month|skip] [--dry-run] [--json]
 sheet.py quote SHEET KEY [--by N] [--at D] [--json]    # bond.strength 2→4: 3 + 4 = 7 training
 sheet.py history SHEET [KEY] [--at D] [--json]         # date  ref  when  effects
 sheet.py diff SHEET --from D --to D [--player] [--json]
@@ -412,6 +599,7 @@ sheet.py diff SHEET --from D --to D [--player] [--json]
 ```bash
 sheet.py add SHEET skill.climb --date 413-02 --source s03              # payment auto-filled
 sheet.py add SHEET ability.wit --no-cost --free "a gift" --date 413 --source s03
+sheet.py set SHEET heritage --to reedfolk --date 413 --source s03     # --to takes JSON or a bare word
 sheet.py gain SHEET list.gear --id lamp --name Lamp --set weight=1 --set qty=2 --date 413 --source s03
 sheet.py edit SHEET list.gear --id lamp --set qty=3 --unset tag --date 413 --source s03
 sheet.py retire SHEET list.gear --id anvil --date 413 --source s03
