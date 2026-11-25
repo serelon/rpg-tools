@@ -301,6 +301,24 @@ class TestGuardsAndLedger(TickCase):
         self.assertFalse(os.path.exists(self.p("v/history/tick-t1.json")))
 
 
+class TestDrift(TickCase):
+    def test_replay_matches_then_drifts(self):
+        from sheetlib.tick import check_ticks
+        self.pack({"traits": {"fuel": num(), "x": num()},
+                   "occurrences": {"hop": {"flows": {"b": {"consume": {"fuel": "occ.n"}}}}},
+                   "flows": {"grow": {"produce": {"x": 1}}}})
+        v = self.sheet("v", start({"set": "fuel", "to": 50}))
+        self.tick(v, "t1", "1200-02-10", start="1200-01-01",
+                  occurrences=[("hop", "1200-01-05", {"n": 7})])
+        self.tick(v, "t2", "1200-03-01")
+        self.assertEqual(check_ticks(load_sheet(v)), [])
+        self.pack({"traits": {"fuel": num(), "x": num()},
+                   "occurrences": {"hop": {"flows": {"b": {"consume": {"fuel": "occ.n"}}}}},
+                   "flows": {"grow": {"produce": {"x": 2}}}})
+        drift = check_ticks(load_sheet(v))
+        self.assertEqual([d["ref"] for d in drift], ["tick-t1", "tick-t2"])
+
+
 class TestEditBy(TickCase):
     def test_entry_field_deltas_compose(self):
         self.pack({"lists": {"bag": {}}})

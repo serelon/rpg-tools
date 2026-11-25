@@ -68,6 +68,8 @@ class Sim:
     """One sheet of the tick tree: a simulated fold and a shadow of the ledger."""
 
     def __init__(self, sheet, tick, path_stack):
+        if tick.ignore:
+            sheet = sheet.with_history([hf for hf in sheet.history if hf.stem not in tick.ignore])
         self.sheet = sheet
         self.tick = tick
         self.model = sheet.model
@@ -278,7 +280,8 @@ def _event(raw, ref, file_index, idx):
 # ------------------------------------------------------------------ the tick
 
 class Tick:
-    def __init__(self, sheet, tick_id, end, start=None, occurrences=(), checkpoint="month"):
+    def __init__(self, sheet, tick_id, end, start=None, occurrences=(), checkpoint="month",
+                 ignore=()):
         if not isinstance(tick_id, str) or not re.match(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$", tick_id):
             raise TickError("invalid tick id %r" % (tick_id,))
         if checkpoint not in CHECKPOINTS:
@@ -287,6 +290,8 @@ class Tick:
         self.cal = sheet.calendar
         self.end = self.cal.day(end, end=True)
         self.checkpoint = checkpoint
+        self.ignore = set(ignore)  # history stems left out (re-running a tick for drift)
+        self.occ_raw = [[n, d, dict(p or {})] for n, d, p in occurrences]
         self.sink = Sink()
         self.report = Report()
         self.root = Sim(sheet, self, [])
@@ -658,6 +663,9 @@ class Tick:
              "through": self.cal.date(day)}
         if final:
             t["end"] = True
+            t["checkpoint"] = self.checkpoint
+            if self.occ_raw:
+                t["occur"] = self.occ_raw
             carry = {}
             for k, v in sim.folder.state.values.items():
                 if _integer(sim.model, k) and is_number(v):
@@ -702,6 +710,57 @@ class Tick:
                                        "events": [writer.order_event(e) for e in sim.out]})
             self.report.files.append(path)
         return plans
+
+
+def check_ticks(sheet):
+    """Re-run every tick of ``sheet`` (and its subtree) → ``tick-drift`` warnings.
+
+    Each tick is replayed from its recorded start, occurrences and checkpoint mode
+    over the ledger without its own file and without any later tick, and its
+    written events are compared with what the flows give now."""
+    ends = []
+    for hf in sheet.history:
+        for raw in hf.events:
+            t = raw.get("tick") if isinstance(raw, dict) else None
+            if isinstance(t, dict) and t.get("end") and hf.stem == "tick-%s" % t.get("id"):
+                ends.append((sheet.calendar.day(t["through"]), t))
+    ends.sort(key=lambda x: x[0])
+    stems = ["tick-%s" % t["id"] for _, t in ends]
+    out = []
+    for i, (_, t) in enumerate(ends):
+        try:
+            tk = Tick(sheet, t["id"], t["through"], start=t["from"],
+                      occurrences=[tuple(o) for o in t.get("occur") or []],
+                      checkpoint=t.get("checkpoint", "month"), ignore=stems[i:])
+            tk.run()
+        except SheetError as exc:
+            out.append({"code": "tick-drift", "message": "tick %s cannot be replayed: %s"
+                        % (t["id"], exc)})
+            continue
+        for sim in tk.sims:
+            stored = _stored(sim.sheet.path, stems[i])
+            now = [_comparable(e) for e in sim.out]
+            if [_comparable(e) for e in stored] != now:
+                out.append({"code": "tick-drift", "message": "tick %s on %s: the flows now give "
+                            "different results than were written (re-tick, or let it stand)"
+                            % (t["id"], sim.name), "ref": stems[i]})
+    return out
+
+
+def _stored(sheet_path, stem):
+    """The events a tick wrote into one ledger (none if it wrote nothing there)."""
+    from .loader import json_load
+    p = os.path.join(os.path.dirname(sheet_path), "history", stem + ".json")
+    if not os.path.exists(p):
+        return []
+    with open(p, encoding="utf-8") as fh:
+        return json_load(fh).get("events", [])
+
+
+def _comparable(e):
+    t = dict(e.get("tick") or {})
+    t.pop("owed", None)
+    return (e.get("date"), normalise(e.get("effects")), t.get("kind"), t.get("carry"))
 
 
 def _iid(inst):

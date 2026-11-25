@@ -6,7 +6,7 @@ A character is resolved, not stored: a ledger of dated events
 
     sheet.py resolve SHEET [--at D] [--gm|--player] [--provenance on|off] [--compact]
     sheet.py export SHEET [--at D] [--provenance on|off] [--key NAME]
-    sheet.py validate SHEET [--at D] [--strict] [--json]
+    sheet.py validate SHEET [--at D] [--strict] [--ticks] [--json]
     sheet.py quote SHEET KEY [--by N] [--at D] [--json]
     sheet.py add SHEET KEY [--by N] [--cost N | --no-cost] --date D --source S ...
     sheet.py set SHEET KEY --to V [--cost N | --no-cost] --date D --source S ...
@@ -144,6 +144,9 @@ def cmd_export(a):
 def cmd_validate(a):
     sheet = load_sheet(a.sheet)
     doc, res = resolve_full(sheet, at=a.at, view="gm")
+    if a.ticks:
+        from sheetlib.tick import check_ticks
+        doc["warnings"].extend(check_ticks(sheet))
     anchors = doc["anchors"]
     if a.json:
         out(json.dumps({"at": a.at, "warnings": doc["warnings"], "anchors": anchors,
@@ -550,6 +553,8 @@ def build_parser():
     sp = base("validate", "warnings, anchors and notices")
     sp.add_argument("--at", type=date_arg)
     sp.add_argument("--strict", action="store_true", help="exit 1 if any warning")
+    sp.add_argument("--ticks", action="store_true",
+                    help="also replay every tick and warn tick-drift where flows changed")
     sp.add_argument("--json", action="store_true")
     sp.set_defaults(func=cmd_validate)
 
