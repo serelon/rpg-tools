@@ -16,6 +16,7 @@ import os
 import re
 
 from .calendar import Calendar
+from .flows import TickRules
 from .expr import (RESERVED, SheetError, compile_slot, valid_key, valid_segment)
 
 TRAIT_TYPES = ("rating", "enum", "number", "text", "compound", "relation")
@@ -389,6 +390,11 @@ class Model:
             if scope != "sheet" and not (isinstance(scope, str) and scope.startswith("span:")):
                 raise SheetError("notices.%s: scope must be sheet or span:KIND" % code)
             nd["when"] = compile_slot(nd["when"], "notices.%s.when" % code)
+        for key, td in self.traits.items():
+            ov = td.get("overflow")
+            if ov is not None and ov != "lost" and (not isinstance(ov, str) or ov not in self.traits):
+                raise SheetError("traits.%s.overflow must be \"lost\" or a declared trait" % key)
+        self.tick = TickRules(self)
         self._validate_shape()
 
     def _check_tdef(self, d, site, is_class, inherited=None):

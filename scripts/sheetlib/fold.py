@@ -396,8 +396,15 @@ def check_effect(eff):
         if not isinstance(eff.get("entry", {}), dict):
             return "gain: entry must be an object"
     elif op == "edit":
-        if not isinstance(eff.get("fields"), dict):
-            return "edit needs a fields object"
+        delta = eff.get("by")
+        if delta is not None:
+            if not is_list:
+                return "edit by (field deltas) only applies to list entries"
+            if not isinstance(delta, dict) or not all(
+                    is_number(v) and not isinstance(v, bool) for v in delta.values()):
+                return "edit by must map fields to numbers"
+        if not isinstance(eff.get("fields", {} if delta is not None else None), dict):
+            return "edit needs a fields object (or by, for list entries)"
         if is_list and (not isinstance(eff.get("id"), str) or not eff.get("id")):
             return "edit of a list entry needs an id"
     elif op == "retire":
@@ -873,7 +880,7 @@ class Folder:
 
     def _op_edit(self, eff, ev, expected, touched_r, touched_n, gained, costed):
         target = eff["edit"]
-        fields = eff["fields"]
+        fields = eff.get("fields") or {}
         if target.startswith("list."):
             lname = target.split(".", 1)[1]
             e = (self.state.lists.get(lname) or {}).get(eff["id"])
@@ -886,6 +893,15 @@ class Folder:
                     e.data.pop(k, None)
                 else:
                     e.data[k] = copy.deepcopy(v)
+            for k, d in (eff.get("by") or {}).items():
+                if k == "id":
+                    continue
+                cur = e.data.get(k)
+                if cur is not None and (not is_number(cur) or isinstance(cur, bool)):
+                    self._bad(ev, "edit %s %s: by on non-number field %s" % (target, eff["id"], k),
+                              target)
+                    continue
+                e.data[k] = normalise((cur or 0) + d)
             if ev.ref not in e.refs:
                 e.refs.append(ev.ref)
             self.state.bump()

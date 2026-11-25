@@ -14,6 +14,8 @@ A character is resolved, not stored: a ledger of dated events
     sheet.py edit SHEET TARGET [--id ID] --set k=v ... [--unset k ...] --date D --source S ...
     sheet.py retire SHEET TARGET [--id ID] --date D --source S ...
     sheet.py event SHEET --file PATH|- --source S [--date D]
+    sheet.py tick SHEET --id ID [--from D] --to D [--occur NAME@D[:k=v]] [--itinerary F]
+                 [--checkpoint day|week|month|skip] [--dry-run] [--json]
     sheet.py history SHEET [KEY] [--at D] [--json]
     sheet.py diff SHEET --from D --to D [--player] [--json]
 
@@ -316,6 +318,92 @@ def cmd_event(a):
     return _finish(a, sheet, path, final)
 
 
+def _occurrences(a):
+    from sheetlib.tick import TickError, parse_occur
+    occ = [parse_occur(x) for x in a.occur or []]
+    if a.itinerary:
+        try:
+            with open(a.itinerary, encoding="utf-8") as fh:
+                data = json_loads(fh.read())
+        except (OSError, ValueError) as exc:
+            raise SheetError("cannot read itinerary %s: %s" % (a.itinerary, exc))
+        items = data.get("occurrences") if isinstance(data, dict) else data
+        if not isinstance(items, list):
+            raise SheetError("itinerary must be a list (or {\"occurrences\": [...]})")
+        for i, it in enumerate(items):
+            if not isinstance(it, dict) or not isinstance(it.get("occur"), str) \
+                    or not dates.is_valid(it.get("date")):
+                raise TickError("itinerary item %d needs occur and a date" % (i + 1))
+            params = it.get("params") or {}
+            if not isinstance(params, dict):
+                raise TickError("itinerary item %d: params must be an object" % (i + 1))
+            occ.append((it["occur"], it["date"], params))
+    for name, date, _ in occ:
+        if not dates.is_valid(date):
+            raise TickError("occurrence %s: invalid date %r" % (name, date))
+    return occ
+
+
+def cmd_tick(a):
+    from sheetlib.tick import Tick
+    sheet = load_sheet(a.sheet)
+    t = Tick(sheet, a.id, a.to, start=a.from_, occurrences=_occurrences(a),
+             checkpoint=a.checkpoint)
+    rep = t.run()
+    plans = t.plan_writes()
+    if not a.dry_run:
+        t.write()
+    if a.json:
+        out(json.dumps({"tick": a.id, "from": t.cal.date(t.start), "through": t.cal.date(t.end),
+                        "dry_run": a.dry_run, "files": [rel(p) for _, p, _ in plans],
+                        "events": {s.name: s.out for s, _, _ in plans},
+                        "flows": rep.flows, "overflow": rep.overflow,
+                        "transitions": rep.transitions, "owed": rep.owed,
+                        "hours": rep.hours, "assignments": rep.assignments,
+                        "stocks": rep.stocks, "warnings": rep.warnings},
+                       ensure_ascii=False, indent=2))
+    else:
+        out(_tick_text(a, t, rep, plans))
+    emit_warnings(rep.warnings, a.quiet)
+    return 0
+
+
+def _tick_text(a, t, rep, plans):
+    L = ["%stick %s: %s → %s (%d days)" % ("DRY RUN " if a.dry_run else "", a.id,
+                                            t.cal.display(t.start), t.cal.display(t.end),
+                                            t.end - t.start + 1)]
+    for sim, path, _ in plans:
+        L.append("  %s %s (%d events)" % ("would write" if a.dry_run else "wrote", rel(path),
+                                         len(sim.out)))
+    for name, stocks in rep.stocks.items():
+        if stocks:
+            L.append("stocks [%s]: %s" % (name, ", ".join("%s %s" % (k, fmt(v))
+                                                         for k, v in stocks.items())))
+    for name, flows in rep.flows.items():
+        short = {f: s for f, s in flows.items() if s["short_days"] > 1e-9}
+        if short:
+            L.append("short [%s]: %s" % (name, ", ".join(
+                "%s %s of %d runs" % (f, fmt(round(s["short_days"], 2)), s["runs"])
+                for f, s in short.items())))
+    for name, ov in rep.overflow.items():
+        L.append("overflow [%s]: %s" % (name, ", ".join(
+            "%s %s" % (k, fmt(round(v, 2))) for k, v in ov.items())))
+    for name, caps in rep.hours.items():
+        for cap, provs in caps.items():
+            L.append("hours [%s] %s: %s" % (name, cap, "; ".join(
+                "%s %s" % (p, ", ".join("%s %s" % (f, fmt(round(h, 2))) for f, h in per.items()))
+                for p, per in provs.items())))
+    for tr in rep.transitions:
+        L.append("  %s  %s/%s %s" % (tr["date"], tr["list"], tr["entry"], tr["transition"]))
+    if rep.owed:
+        L.append("rolls owed (you should roll these now, prolly):")
+        for o in rep.owed:
+            L.append("  %s  %s%s: %s" % (o["date"], o["roll"],
+                                         " [%s]" % o["entry"] if o.get("entry") else "",
+                                         o["message"]))
+    return "\n".join(L)
+
+
 def _touches(eff, key):
     for op in ("set", "add", "gain", "edit", "retire", "anchor"):
         t = eff.get(op)
@@ -519,6 +607,18 @@ def build_parser():
     sp.add_argument("--file", required=True, metavar="PATH|-")
     writer_flags(sp, date_required=False)
     sp.set_defaults(func=cmd_event)
+
+    sp = base("tick", "advance time: run flows, write checkpoints to history/tick-ID.json")
+    sp.add_argument("--id", required=True, help="tick id (file history/tick-ID.json)")
+    sp.add_argument("--from", dest="from_", type=date_arg,
+                    help="first day (default: the day after the last tick)")
+    sp.add_argument("--to", type=date_arg, required=True, help="last day (a month = its last day)")
+    sp.add_argument("--occur", action="append", metavar="NAME@DATE[:k=v,...]")
+    sp.add_argument("--itinerary", metavar="FILE", help="JSON list of {occur, date, params}")
+    sp.add_argument("--checkpoint", choices=("day", "week", "month", "skip"), default="month")
+    sp.add_argument("--dry-run", action="store_true")
+    sp.add_argument("--json", action="store_true")
+    sp.set_defaults(func=cmd_tick)
 
     sp = base("history", "fold-ordered events")
     sp.add_argument("key", metavar="KEY", nargs="?")

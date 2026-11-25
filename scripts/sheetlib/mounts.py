@@ -106,17 +106,21 @@ class MountContext:
 
 def namespace(res, mid):
     """A fold result as a read-only namespace for its parent."""
-    env = res.aenv
-    flat = dict(res.astate.values)
-    for k in res.model.derived:
+    return namespace_of(res.aenv, res.model, res.sheet.name, mid)
+
+
+def namespace_of(env, model, name, mid):
+    """A state (through its env) as a read-only namespace for its parent."""
+    flat = dict(env.state.values)
+    for k in model.derived:
         flat[k] = env.derived(k)
     data = nest(flat)
     data["list"] = env.list_view()
     data["id"] = mid
-    data["name"] = res.sheet.name
+    data["name"] = name
 
     def lazy(which):
-        st = res.astate
+        st = env.state
         if which == "mounts":
             return {k: [env.mount_ns(m) for m in live_mounts(st, k)] for k in st.mounts}
         return {k: {m.id: env.mount_ns(m) for m in live_mounts(st, k)} for k in st.mounts}
