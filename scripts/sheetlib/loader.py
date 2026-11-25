@@ -15,6 +15,7 @@ import math
 import os
 import re
 
+from .calendar import Calendar
 from .expr import (RESERVED, SheetError, compile_slot, valid_key, valid_segment)
 
 TRAIT_TYPES = ("rating", "enum", "number", "text", "compound", "relation")
@@ -615,8 +616,10 @@ class HistoryFile:
 class Sheet:
     """A loaded character: manifest + model + history files."""
 
-    def __init__(self, path, manifest, model, history_patterns, history, file_warnings):
+    def __init__(self, path, manifest, model, history_patterns, history, file_warnings,
+                 calendar=None):
         self.path = path
+        self.calendar = calendar
         self.dir = os.path.dirname(path)
         self.manifest = manifest
         self.model = model
@@ -629,7 +632,7 @@ class Sheet:
 
     def with_history(self, history):
         return Sheet(self.path, self.manifest, self.model, self.history_patterns,
-                     history, self.file_warnings)
+                     history, self.file_warnings, self.calendar)
 
 
 def manifest_path(path):
@@ -687,4 +690,6 @@ def load_sheet(path):
         hf, w = load_history_file(p, i, base)
         history.append(hf)
         warnings.extend(w)
-    return Sheet(mpath, manifest, model, patterns, history, warnings)
+    cal_spec = manifest.get("calendar", rules.get("calendar"))
+    calendar = Calendar(cal_spec) if cal_spec is not None else Calendar()
+    return Sheet(mpath, manifest, model, patterns, history, warnings, calendar)

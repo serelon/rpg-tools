@@ -27,6 +27,7 @@ class ExprError(Exception):
 BUILTINS = frozenset([
     "sum", "count", "min", "max", "table", "catalog", "clamp", "if", "_if",
     "round", "floor", "ceil", "abs", "rank", "get",
+    "today", "day", "all", "any", "has", "span_open", "select",
 ])
 
 # Names that may never be a trait key's first segment, derived key, class,
@@ -34,6 +35,7 @@ BUILTINS = frozenset([
 RESERVED = frozenset([
     "current", "target", "key", "id", "entry", "value", "index", "list",
     "span_years", "span_open", "span_note", "span_id",
+    "mount", "mounts", "occ", "child",
 ]) | BUILTINS
 
 SEGMENT_RE = re.compile(r"^[a-z_][a-z0-9_]*$")
@@ -246,6 +248,18 @@ class Env:
 
     def rank(self, key, local):
         raise ExprError("rank() unavailable")
+
+    def today(self):
+        raise ExprError("today() unavailable")
+
+    def day(self, text):
+        raise ExprError("day() unavailable")
+
+    def has(self, lname, eid):
+        raise ExprError("has() unavailable")
+
+    def span_open(self, kind):
+        raise ExprError("span_open() unavailable")
 
 
 def lookup_table(tables, name, key):
@@ -512,6 +526,34 @@ class Evaluator:
         if name == "get":
             need(2)
             return subscript(args[0], args[1])
+        if name in ("all", "any"):
+            need(1)
+            xs = _items(args[0], name)
+            return all(bool(x) for x in xs) if name == "all" else any(bool(x) for x in xs)
+        if name == "select":
+            need(2)
+            xs, flags = _items(args[0], "select"), _items(args[1], "select")
+            if len(xs) != len(flags):
+                raise ExprError("select() needs two lists of the same length")
+            return [x for x, f in zip(xs, flags) if f]
+        if name == "today":
+            need(0)
+            return self.env.today()
+        if name == "day":
+            need(1)
+            if not isinstance(args[0], str):
+                raise ExprError("day() needs a date string")
+            return self.env.day(args[0])
+        if name == "has":
+            need(2)
+            if not isinstance(args[0], str) or not isinstance(args[1], str):
+                raise ExprError("has() needs a list name and an entry id")
+            return self.env.has(args[0], args[1])
+        if name == "span_open":
+            need(1)
+            if not isinstance(args[0], str):
+                raise ExprError("span_open() needs a span kind")
+            return self.env.span_open(args[0])
         raise ExprError("unknown function %s" % name)
 
 

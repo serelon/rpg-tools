@@ -13,6 +13,7 @@ only; creation budgets and checks are evaluated on it.
 import copy
 
 from . import dates
+from .calendar import GREGORIAN
 from .expr import Env, Evaluator, ExprError, is_number, lookup_table, normalise, valid_key
 
 OPS = ("set", "add", "gain", "edit", "retire", "start", "end", "anchor")
@@ -207,6 +208,24 @@ class StateEnv(Env):
             return None
         return (self.m.catalog.get(ns) or {}).get(str(normalise(key)) if not isinstance(key, str) else key)
 
+    def today(self):
+        t = self.engine.today
+        if t is None:
+            raise ExprError("today() has no date (empty ledger)")
+        return t
+
+    def day(self, text):
+        if not dates.is_valid(text):
+            raise ExprError("day(): invalid date %r" % text)
+        return self.engine.calendar.day(text)
+
+    def has(self, lname, eid):
+        e = (self.state.lists.get(lname) or {}).get(eid)
+        return e is not None and not e.retired
+
+    def span_open(self, kind):
+        return any(sp.kind == kind and sp.end is None for sp in self.state.spans.values())
+
     def rank(self, key, local):
         if not valid_key(key):
             raise ExprError("rank(): invalid key %r" % key)
@@ -223,10 +242,12 @@ class StateEnv(Env):
 class Engine:
     """Model + sink; evaluation helpers shared by fold and output."""
 
-    def __init__(self, model, sink):
+    def __init__(self, model, sink, calendar=None):
         self.model = model
         self.sink = sink
         self.current_ref = None
+        self.calendar = calendar or GREGORIAN
+        self.today = None  # day number expressions see as today()
 
     def env(self, state):
         return StateEnv(self, state)
@@ -411,6 +432,7 @@ def check_event(ev):
 
 def collect_events(sheet, sink):
     """All events from the sheet's history files, validated; sorted."""
+    cal = getattr(sheet, "calendar", None) or GREGORIAN
     out = []
     for hf in sheet.history:
         for i, raw in enumerate(hf.events):
@@ -429,6 +451,9 @@ def collect_events(sheet, sink):
             for p in probs:
                 if not p.startswith("effect "):
                     sink.warn("invalid-event", "%s: %s" % (ref, p), ref=ref)
+            if cal.bad_day(raw["date"]):
+                sink.warn("invalid-event", "%s: %s is past the end of its month; counted as "
+                          "the month's last day" % (ref, raw["date"]), ref=ref)
             e = Event()
             e.ref = ref
             e.date = raw["date"]
@@ -1049,17 +1074,18 @@ class FoldResult:
     pass
 
 
-def span_years(span, at_end_key, latest_key):
-    start = dates.years(span.start)
+def span_years(span, at_end_key, latest_key, cal=None):
+    cal = cal or GREGORIAN
+    start = cal.day(span.start)
     if span.end is not None:
-        end = dates.years(span.end)
+        end = cal.day(span.end)
     elif at_end_key is not None:
-        end = dates.years_of_key(at_end_key)
+        end = cal.day_of_key(at_end_key, end=True)
     elif latest_key is not None:
-        end = dates.years_of_key(latest_key)
+        end = cal.day_of_key(latest_key)
     else:
         end = start
-    return end - start
+    return cal.years(end - start)
 
 
 def run_fold(sheet, at=None, sink=None):
@@ -1068,7 +1094,8 @@ def run_fold(sheet, at=None, sink=None):
     sink = sink or Sink()
     for w in sheet.file_warnings:
         sink.warn(w["code"], w["message"])
-    engine = Engine(model, sink)
+    cal = getattr(sheet, "calendar", None) or GREGORIAN
+    engine = Engine(model, sink, cal)
     notices = []
     for rk in ("modifiers", "tallies"):
         if model.raw_rules.get(rk):
@@ -1082,6 +1109,10 @@ def run_fold(sheet, at=None, sink=None):
         e.pos = i
     creation = [e for e in events if e.kind == "creation"]
     first_creation = creation[0].order() if creation else None
+    if at_end_key is not None:
+        engine.today = cal.day_of_key(at_end_key, end=True)
+    elif events:
+        engine.today = cal.day_of_key(events[-1].key)
 
     # creation state (quiet)
     cstate = None
@@ -1274,7 +1305,8 @@ def final_sweep(res, folder):
                 if sp.kind != kind:
                     continue
                 loc = {"span_id": sp.id, "span_open": sp.end is None, "span_note": sp.note,
-                       "span_years": round(span_years(sp, res.at_end, res.latest_key), 2)}
+                       "span_years": round(span_years(sp, res.at_end, res.latest_key,
+                                                      engine.calendar), 2)}
                 if engine.ev(env, nd["when"], loc, "notices.%s.when" % code):
                     res.notices.append({"code": code, "message": msg, "span": sp.id,
                                         "ref": sp.refs[0]})

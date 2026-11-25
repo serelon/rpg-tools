@@ -296,7 +296,8 @@ class Builder:
             return None
         o = {"id": sp.id, "kind": sp.kind, "name": sp.name, "start": sp.start, "end": sp.end,
              "open": sp.end is None,
-             "years": round(span_years(sp, self.res.at_end, self.res.latest_key), 2),
+             "years": round(span_years(sp, self.res.at_end, self.res.latest_key,
+                                       self.e.calendar), 2),
              "note": sp.note}
         if gm_only and self.gm:
             o["gm_only"] = True
