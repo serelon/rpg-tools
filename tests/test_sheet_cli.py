@@ -252,6 +252,17 @@ class TestWriters(CliCase):
         self.assertTrue(text.startswith('{\n  "source": "s03",\n'))
         self.assertNotIn("\r", text)
 
+    def test_set_writer(self):
+        code, out, err = run("set", self.char, "skill.climb", "--to", "expert", *self.W)
+        self.assertEqual(code, 0, err)
+        effs = self.hist("s03")["events"][0]["effects"]
+        self.assertEqual(effs, [{"set": "skill.climb", "to": "expert"},
+                                {"add": "training", "by": -3}])  # a raise via set is priced
+        code, out, err = run("set", self.char, "heritage", "--to", "reedfolk", *self.W)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(self.hist("s03")["events"][1]["effects"],
+                         [{"set": "heritage", "to": "reedfolk"}])
+
     def test_cost_override_and_warning_after_append(self):
         code, out, err = run("add", self.char, "bond.strength", "--cost", "1", *self.W)
         self.assertEqual(code, 0)

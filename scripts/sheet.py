@@ -9,6 +9,7 @@ A character is resolved, not stored: a ledger of dated events
     sheet.py validate SHEET [--at D] [--strict] [--json]
     sheet.py quote SHEET KEY [--by N] [--at D] [--json]
     sheet.py add SHEET KEY [--by N] [--cost N | --no-cost] --date D --source S ...
+    sheet.py set SHEET KEY --to V [--cost N | --no-cost] --date D --source S ...
     sheet.py gain SHEET list.NAME --id ID [--name S] [--text S] [--set k=v ...] --date D --source S ...
     sheet.py edit SHEET TARGET [--id ID] --set k=v ... [--unset k ...] --date D --source S ...
     sheet.py retire SHEET TARGET [--id ID] --date D --source S ...
@@ -103,6 +104,13 @@ def kv_arg(value):
     except ValueError:
         pass
     return k, v
+
+
+def value_arg(value):
+    try:
+        return json_loads(value)
+    except ValueError:
+        return value
 
 
 def rel(path):
@@ -212,6 +220,13 @@ def _meta(a):
 def cmd_add(a):
     sheet = load_sheet(a.sheet)
     eff = {"add": a.key, "by": a.by}
+    eff.update(_meta(a))
+    return _write(a, sheet, [eff])
+
+
+def cmd_set(a):
+    sheet = load_sheet(a.sheet)
+    eff = {"set": a.key, "to": a.to}
     eff.update(_meta(a))
     return _write(a, sheet, [eff])
 
@@ -465,6 +480,16 @@ def build_parser():
     cost_flags(sp)
     writer_flags(sp)
     sp.set_defaults(func=cmd_add)
+
+    sp = base("set", "append a set event (cost auto-filled for raises)")
+    sp.add_argument("key", metavar="KEY")
+    sp.add_argument("--to", type=value_arg, required=True,
+                    help="new value (JSON: 3, \"text\", {...}; bare words are text)")
+    sp.add_argument("--name")
+    sp.add_argument("--group")
+    cost_flags(sp)
+    writer_flags(sp)
+    sp.set_defaults(func=cmd_set)
 
     sp = base("gain", "append a list gain event")
     sp.add_argument("target", metavar="list.NAME")
