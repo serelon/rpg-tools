@@ -203,8 +203,6 @@ Locations can be controlled or influenced by factions. Track this relationship i
 
 For military installations, ships, or faction headquarters, the faction relationship is often implicit in the location's identity - an Imperial Navy ship like INS Leviathan is inherently tied to its faction.
 
-See [Creating Factions](faction-guide.md) for faction schema and territory tracking.
-
 ## Anti-Patterns - AVOID These
 
 - Exhaustive history for minor locations - evocative > exhaustive

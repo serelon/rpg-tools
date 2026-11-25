@@ -136,7 +136,7 @@ Collect:
 Create the minimal profile first:
 - **id**: lowercase, hyphenated (e.g., "juno", "captain-mitchell")
 - **name**: Display name
-- **faction/subfaction**: Group they belong to (links to faction tracker - see [Creating Factions](faction-guide.md))
+- **faction/subfaction**: Group they belong to (a label; organisations with tracked resources are sheets, see `sheet-guide.md`)
 - **tags**: Relevant labels (protagonist, antagonist, psychic, military, etc.)
 - **role**: Their position or function (max 10 words)
 - **demographics**: dob, gender, pronouns (mandatory — see Schema Rules for the DOB policy)
@@ -254,11 +254,9 @@ Characters can be linked to factions for organizational tracking:
 - **faction**: The faction ID this character belongs to
 - **subfaction**: Optional subfaction within the parent faction
 
-When a character belongs to a faction, ensure bidirectional sync:
-1. Set the `faction` field in the character JSON
-2. Add the character ID to the faction's `members.named` array
-
-See [Creating Factions](faction-guide.md) for faction schema and the bidirectional sync pattern.
+When a character belongs to a faction, set the `faction` field in the character JSON. An
+organisation whose resources and members are tracked is a sheet (mount its people as child
+sheets: see "Mounts" in `sheet-guide.md`).
 
 ## Example: Full Character
 

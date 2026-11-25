@@ -1,6 +1,6 @@
 ---
 name: rpg-tools
-description: "Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory/faction management, and story retrieval. Also provides guided campaign creation and pre-session setup. Use when the user asks to: roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories or factions, pull from story collections, start a new campaign, or do campaign prep/planning."
+description: "Solo RPG mechanical tools for dice rolling, tarot draws, oracles, name generation, character/location/memory management, and story retrieval. Also provides guided campaign creation and pre-session setup. Use when the user asks to: roll dice, draw tarot cards, consult oracles, generate names, load characters or locations, track memories, pull from story collections, start a new campaign, or do campaign prep/planning."
 ---
 
 # RPG Tools
@@ -21,7 +21,6 @@ Mechanical tools for solo RPG sessions. Run scripts from `scripts/`.
 - `locations.py` - Location profiles (needs `locations/`)
 - `stories.py` - Story collections (needs `stories/`)
 - `memories.py` - Memory tracking (needs `memories/`)
-- `factions.py` - Faction tracking (needs `factions/`)
 - `log.py` - Campaign event log (needs `campaign/log.json`)
 - `campaign.py` - Campaign management (needs `campaign/config.json`)
 
@@ -179,25 +178,6 @@ python scripts/memories.py create --campaign NAME --title T --text C
 
 Filters: `--character`, `--location`, `--type`, `--tag`, `--era`, `--session`, `--intensity`, `--perspective`
 
-### Factions
-
-See **[faction-guide.md](references/faction-guide.md)** for schema.
-
-```bash
-python scripts/factions.py list [--short]               # List factions
-python scripts/factions.py get NAME [--depth full]      # Get profile
-python scripts/factions.py tree [NAME]                  # Hierarchy
-python scripts/factions.py members NAME                 # List members
-python scripts/factions.py relationships NAME           # Relationships
-python scripts/factions.py economy NAME                 # Economy
-python scripts/factions.py resources NAME               # Resources
-python scripts/factions.py create ID --name N --type T --essence E
-python scripts/factions.py update NAME --field F --value V --reason R
-python scripts/factions.py delete NAME
-```
-
-Filters: `--type`, `--tag`
-
 ### Campaign Log
 
 See **[campaign-state-guide.md](references/campaign-state-guide.md)** for full documentation.
@@ -254,7 +234,6 @@ python scripts/campaign.py import FILE.zip [--into DIR]
 
 - **[character-guide.md](references/character-guide.md)** - Character JSON schema
 - **[location-guide.md](references/location-guide.md)** - Location hierarchy and connections
-- **[faction-guide.md](references/faction-guide.md)** - Faction hierarchy and economy
 - **[memories-guide.md](references/memories-guide.md)** - Memory tracking
 - **[nameset-guide.md](references/nameset-guide.md)** - Name generation collections
 - **[story-capture-guide.md](references/story-capture-guide.md)** - Story extraction

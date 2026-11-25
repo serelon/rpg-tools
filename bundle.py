@@ -14,7 +14,6 @@ INCLUDE_FILES = [
     'scripts/namegen.py',
     'scripts/characters.py',
     'scripts/locations.py',
-    'scripts/factions.py',
     'scripts/stories.py',
     'scripts/memories.py',
     'scripts/log.py',
