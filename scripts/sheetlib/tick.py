@@ -626,7 +626,9 @@ class Tick:
             for t in sim.rules.transitions[lname]:
                 if t["field"] != field:
                     continue
-                row = dict(e.data)
+                # the list-view row: stored fields plus computed list fields
+                row = next((dict(r) for r in sim.env.list_view().get(lname, [])
+                            if r["id"] == eid), dict(e.data))
                 at = sim.ev(t["at"], {"entry": row}, "transitions.%s.%s.at" % (lname, t["id"]))
                 if not (is_number(at) and _num(before) < at <= _num(after) + EPS):
                     continue

@@ -424,6 +424,46 @@ class TestTreeEdges(TickCase):
         self.assertEqual([w for w in res.warnings if w["code"] in ("cost-mismatch", "no-cost")], [])
 
 
+class TestChainedListFields(TickCase):
+    RULES = {"traits": {"adults": num()},
+             "lists": {"cohorts": {"fields": {
+                 "age": "today() - day(entry.laid)",
+                 "eff": "entry.age - entry.stretch",
+                 "stage": "if(entry.eff < 3, 'egg', if(entry.eff < 6, 'grub', 'adult'))",
+                 "ahead": "entry.later",
+                 "later": "1"}}}}
+
+    def test_fields_see_earlier_fields(self):
+        rules = dict(self.RULES, derived={"stages": "list.cohorts[*].stage"})
+        self.pack(rules)
+        v = self.sheet("v", start({"gain": "list.cohorts", "id": "a",
+                                   "entry": {"laid": "1200-01-01", "stretch": 1}}) + [
+            {"date": "1200-01-05", "effects": [{"set": "adults", "to": 0}]}])
+        _, doc, res = self.values(v)
+        f = doc["lists"]["cohorts"][0]["fields"]
+        self.assertEqual((f["age"], f["eff"], f["stage"]), (4, 3, "grub"))
+        self.assertIsNone(f["ahead"])  # a later field is not visible yet
+        self.assertEqual(f["later"], 1)
+        self.assertEqual(doc["derived"]["stages"], ["grub"])
+        self.assertEqual([w["code"] for w in res.warnings], [])
+
+    def test_transitions_and_flows_see_computed_fields(self):
+        self.pack({"traits": {"adults": num()},
+                   "lists": {"cohorts": {"fields": {"age": "today() - day(entry.laid)",
+                                                    "due": "entry.span - entry.age"}}},
+                   "flows": {"grow": {"for_each": "cohorts", "where": "entry.due > 0",
+                                      "produce": {"entry.progress": 1}}},
+                   "transitions": {"cohorts": {"done": {
+                       "at": "entry.age + entry.due",
+                       "effects": [{"add": "adults", "by_expr": "entry.n"},
+                                   {"retire": "list.cohorts", "id": "{id}"}]}}}})
+        v = self.sheet("v", start({"gain": "list.cohorts", "id": "a", "entry": {
+            "laid": "1200-01-01", "span": 4, "n": 5, "progress": 0}}))
+        t, rep = self.tick(v, "t1", "1200-01-08", start="1200-01-01")
+        self.assertEqual([tr["date"] for tr in rep.transitions], ["1200-01-04"])
+        self.assertEqual(self.values(v)[0]["adults"], 5)
+
+
 class TestLensPrivacy(TickCase):
     def test_child_gm_only_trait_hidden_in_player_lens(self):
         self.pack({"traits": {"fuel": num(), "secret": num(gm_only=True)}}, name="child")

@@ -203,7 +203,8 @@ class StateEnv(Env):
                 for e in self.state.live_entries(lname):
                     flat = dict(e.data)
                     for fk, fx in flds.items():
-                        flat[fk] = self.engine.ev(self, fx, {"entry": dict(e.data)},
+                        # fields chain in declaration order: each sees the ones before it
+                        flat[fk] = self.engine.ev(self, fx, {"entry": dict(flat)},
                                                   "lists.%s.fields.%s" % (lname, fk))
                     rows.append(flat)
                 view[lname] = rows

@@ -125,7 +125,9 @@ later prices.
 **Lists** are ordered collections of entries with stable ids (gear, feats, marks). `cap`
 is an expression; `cost` prices a `gain` (local `entry`); `catalog` joins an entry's `ref`
 to a catalog entry (name/text/levels); `fields` are computed per entry (local `entry`) and
-visible everywhere, including projections:
+visible everywhere, including projections (and to flows, rolls and transitions). They are
+evaluated in declaration order, and each sees the ones before it as `entry.NAME`
+(`age` → `eff_age` → `stage`); a field that reads a later one gets `None`:
 
 ```json
 "lists": {"gear": {"name": "Gear", "fields": {"load": "entry.weight * entry.qty"}}},
