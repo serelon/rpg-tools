@@ -141,7 +141,17 @@ python scripts/sheet.py validate examples/sheet/d20-lite/wren            # warni
 python scripts/sheet.py quote examples/sheet/d20-lite/wren bond.strength --by 2
 python scripts/sheet.py add SHEET skill.climb --date 413-02 --source s03 # append, cost auto-filled
 python scripts/sheet.py diff SHEET --from 412-03 --to 412-10             # what changed
+python scripts/sheet.py set SHEET heritage --to reedfolk --date 413 --source s03
+python scripts/sheet.py tick SHEET --id skip03 --from 413-03-01 --to 413-08 --dry-run   # advance time
+python scripts/sheet.py validate SHEET --ticks                           # replay ticks, warn tick-drift
 ```
+
+Sheets can also **mount** other sheets (a fleet its ships, a ship its crew; reads go one way
+down) and be **ticked**: a pack declares flows (stocks consumed and produced each day, by
+priority), capacities and skilled providers, transitions, rolls owed and occurrences, and
+`tick` simulates them day by day and writes the results as ledger events in
+`history/tick-ID.json`. It never rolls dice; it lists the rolls that came due. See the guide's
+"Mounts" and "Ticks and flows" sections.
 
 `sheet.py` is a local tool and not part of the Desktop skill package.
 
