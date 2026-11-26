@@ -48,7 +48,7 @@ A campaign can add a houserule file that `extends` the pack and patches a number
 - **Reserved** (never a trait's first segment, derived key, class, list or span name):
   `current target key id entry value index list span_years span_open span_note span_id
   mount mounts occ child` and the builtin names `sum count min max table catalog clamp if _if
-  round floor ceil abs rank get today day all any has span_open select`. `base`/`effective` (output fields) and `modifiers`/`tallies` (rules keys) are held
+  round floor ceil abs rank get today day all any has span_open select bor bits`. `base`/`effective` (output fields) and `modifiers`/`tallies` (rules keys) are held
   for a later modifier layer; a non-empty `modifiers`/`tallies` just produces a
   `reserved-unimplemented` notice.
 
@@ -340,6 +340,8 @@ gives the position.
 | `get(container, k)` | same as `container[k]` |
 | `all(xs)`, `any(xs)` | truth of every / some item (`all([])` is true) |
 | `select(xs, flags)` | the items of `xs` whose matching flag is truthy: `sum(select(list.gear[*].w, list.gear[*].big))` is a filtered sum |
+| `bor(xs)` | bitwise OR of non-negative whole numbers in a list or object's values; `None` skipped (an entry without the field projects as `None`); empty → 0. For bitmasks: `bor(select(list.crew[*].pieces, list.crew[*].on_duty))` pools what a group covers |
+| `bits(n)` | number of set bits in a non-negative whole number (`bits(254)` = 7) |
 | `today()` | day number of the resolve date (the end of `--at`, else the latest event; during a tick, the day being simulated) |
 | `day(date)` | day number of a date string: `today() - day(entry.laid)` is an age in days |
 | `has(list, id)` | the entry is live (`has('tech', 'wheel')`: an unlock) |

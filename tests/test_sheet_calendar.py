@@ -77,6 +77,17 @@ class TestPureBuiltins(unittest.TestCase):
         with self.assertRaises(ExprError):
             evx("select([1], [1, 2])")
 
+    def test_bor_and_bits(self):
+        self.assertEqual(evx("bor([108, 3, None])"), 111)
+        self.assertEqual(evx("bor([])"), 0)
+        self.assertEqual(evx("bits(254)"), 7)
+        self.assertEqual(evx("bits(0)"), 0)
+        self.assertEqual(evx("bits(bor([1, 2, 4.0]))"), 3)  # integral floats from JSON pass
+        for bad in ("bor([1, -2])", "bor([1.5])", "bor([True])", "bor(['x'])", "bits(-1)",
+                    "bits(None)", "bor(3)"):
+            with self.assertRaises(ExprError, msg=bad):
+                evx(bad)
+
     def test_env_builtins_unavailable_in_dict_env(self):
         for src in ("today()", "day('1130')", "has('x', 'y')", "span_open('x')"):
             with self.assertRaises(ExprError):
@@ -116,6 +127,44 @@ class TestStateBuiltins(unittest.TestCase):
         doc, res = self.sd.resolve()
         self.assertIn("invalid-event", codes(res))
         self.assertEqual(doc["values"]["n"], 9)
+
+    def test_bitmask_pooling_over_entries_missing_the_field(self):
+        rules = {"id": "b", "lists": {"daughters": {}},
+                 "derived": {"cover": "bor(select(list.daughters[*].sealer,"
+                                      " list.daughters[*].singing))",
+                             "quality": "bits(cover)",
+                             "all_cover": "bor(list.daughters[*].sealer)"}}
+        sd = SheetDir(rules, history={"s01": [ev("0001-01-01",
+            {"gain": "list.daughters", "id": "a", "entry": {"sealer": 108, "singing": True}},
+            {"gain": "list.daughters", "id": "b", "entry": {"sealer": 3, "singing": True}},
+            {"gain": "list.daughters", "id": "c", "entry": {"sealer": 128, "singing": False}},
+            {"gain": "list.daughters", "id": "d", "entry": {"singing": True}})]})  # not a nurse
+        try:
+            doc, res = sd.resolve()
+            self.assertEqual(doc["derived"]["cover"], 111)
+            self.assertEqual(doc["derived"]["quality"], 6)
+            self.assertEqual(doc["derived"]["all_cover"], 239)
+            self.assertEqual(codes(res), [])
+        finally:
+            sd.cleanup()
+
+    def test_thirty_day_calendar_with_launch_epoch(self):
+        cal = {"months": [{"days": 30}] * 12, "epoch": "0001-01-01", "format": "L+{epoch_days}d"}
+        rules = {"id": "t", "traits": {"n": {"type": "number"}},
+                 "derived": {"since_launch": "today() - day('0001-01-01')"}}
+        sd = SheetDir(rules, history={"s01": [ev("0001-01-01", {"set": "n", "to": 1}),
+                                              ev("0002-03-15", {"set": "n", "to": 2})]},
+                      manifest={"calendar": cal})
+        try:
+            doc, res = sd.resolve()
+            self.assertEqual(doc["derived"]["since_launch"], 360 + 60 + 14)
+            c = sd.load().calendar
+            self.assertEqual(c.display(c.day("0002-03-15")), "L+434d")
+            self.assertEqual(c.date(c.day("0001-01-01") + 30), "0001-02-01")
+            doc, res = sd.resolve(at="0001-02-30")  # day 30 exists in every month
+            self.assertNotIn("invalid-event", codes(res))
+        finally:
+            sd.cleanup()
 
     def test_manifest_calendar(self):
         sd = SheetDir(self.RULES, history={"s01": [ev("0001-01-01", {"set": "n", "to": 1}),

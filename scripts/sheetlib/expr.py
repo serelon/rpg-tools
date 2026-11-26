@@ -27,7 +27,7 @@ class ExprError(Exception):
 BUILTINS = frozenset([
     "sum", "count", "min", "max", "table", "catalog", "clamp", "if", "_if",
     "round", "floor", "ceil", "abs", "rank", "get",
-    "today", "day", "all", "any", "has", "span_open", "select",
+    "today", "day", "all", "any", "has", "span_open", "select", "bor", "bits",
 ])
 
 # Names that may never be a trait key's first segment, derived key, class,
@@ -221,6 +221,13 @@ def _num(x, what):
     if not is_number(x):
         raise ExprError("%s needs numbers, got %s" % (what, _typename(x)))
     return x
+
+
+def _bitmask(x, what):
+    """A non-negative whole number (integral floats from JSON are fine), as an int."""
+    if isinstance(x, bool) or not is_number(x) or x != int(x) or x < 0:
+        raise ExprError("%s needs non-negative whole numbers, got %r" % (what, x))
+    return int(x)
 
 
 def _finite(x):
@@ -530,6 +537,17 @@ class Evaluator:
             need(1)
             xs = _items(args[0], name)
             return all(bool(x) for x in xs) if name == "all" else any(bool(x) for x in xs)
+        if name == "bor":
+            need(1)
+            acc = 0
+            for x in _items(args[0], "bor"):
+                if x is None:
+                    continue
+                acc |= _bitmask(x, "bor()")
+            return acc
+        if name == "bits":
+            need(1)
+            return bin(_bitmask(args[0], "bits()")).count("1")
         if name == "select":
             need(2)
             xs, flags = _items(args[0], "select"), _items(args[1], "select")
